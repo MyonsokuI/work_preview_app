@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import './App.css'
-import ThemeList from "./pages/ThemeList"
-import QuestionList from "./pages/QuestionList"
 import AdminConsole from "./pages/admin/AdminConsole"
 function App() {
   // "home" ならテーマ一覧、"questions" なら問題一覧を表示する
