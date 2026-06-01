@@ -19,17 +19,6 @@ function App() {
   };
 
   return (
-    // <main>
-    //   {screen === "home" && (
-    //     // Homeコンポーネントに、クリック時のイベントを渡す
-    //     <ThemeList onSelectTheme={handleSelectTheme} />
-    //   )}
-
-    //   {screen === "questions" && (
-    //     // QuestionListコンポーネントに、必要なデータと戻るボタンの処理を渡す
-    //     <QuestionList themeId={selectedThemeId} onBack={handleBackToHome} />
-    //   )}
-    // </main>
     <AdminConsole />
   )
 }
