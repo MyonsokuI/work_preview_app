@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.repository.UserRepository;
 import com.example.demo.entity.User;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUser(Long id) {
+    public User getUser(Integer id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
     }
