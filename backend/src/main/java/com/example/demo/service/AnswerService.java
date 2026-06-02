@@ -21,23 +21,21 @@ public class AnswerService {
         return answerRepository.save(answer);
     }
 
-    public Answer updateAnswer(Long id, Answer updated) {
+    public Answer updateAnswer(Integer id, Answer updated) {
 
         Answer existing = answerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("回答が見つかりません"));
 
         existing.setAnswerContent(updated.getAnswerContent());
-        existing.setUser(updated.getUser());
-        existing.setQuestion(updated.getQuestion());
 
         return answerRepository.save(existing);
     }
 
-    public List<Answer> getMyAnswers(Long userId) {
+    public List<Answer> getMyAnswers(Integer userId) {
         return answerRepository.findByUser_UserId(userId);
     }
 
-    public List<Answer> getAnswersByQuestion(Long questionId) {
+    public List<Answer> getAnswersByQuestion(Integer questionId) {
         return answerRepository.findByQuestion_QuestionId(questionId);
     }
 }

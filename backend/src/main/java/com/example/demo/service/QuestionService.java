@@ -4,7 +4,6 @@ import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,22 +16,12 @@ public class QuestionService {
     }
 
     // テーマ別取得
-    // public List<Question> getQuestionsByTheme(Long themeId) {
-    // List<Question> results = new ArrayList<>();
-    // for (Question question : questionRepository.findAll()) {
-    // if (question.getPdf() != null &&
-    // themeId.equals(question.getPdf().getPdfId())) {
-    // results.add(question);
-    // }
-    // }
-    // return results;
-    // }
     public List<Question> getQuestionsByTheme(Integer themeId) {
         return questionRepository.findByPdf_PdfId(themeId);
     }
 
     // 単体取得
-    public Question getQuestion(Long id) {
+    public Question getQuestion(Integer id) {
         return questionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
     }
@@ -43,7 +32,7 @@ public class QuestionService {
     }
 
     // 更新
-    public Question updateQuestion(Long id, Question updated) {
+    public Question updateQuestion(Integer id, Question updated) {
 
         Question existing = getQuestion(id);
 
@@ -55,7 +44,7 @@ public class QuestionService {
     }
 
     // 削除
-    public void deleteQuestion(Long id) {
+    public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }
 }
