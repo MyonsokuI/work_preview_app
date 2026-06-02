@@ -37,7 +37,7 @@ public class PdfController {
      */
     @PutMapping("/{id}")
     public Pdf updateTheme(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @RequestBody Pdf pdf) {
 
         return pdfService.updateTheme(id, pdf);
@@ -48,7 +48,7 @@ public class PdfController {
      */
     @DeleteMapping("/{id}")
     public void deleteTheme(
-            @PathVariable Long id) {
+            @PathVariable Integer id) {
 
         pdfService.deleteTheme(id);
     }
