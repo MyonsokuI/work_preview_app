@@ -1,4 +1,4 @@
-package com.example.demo.dto.auth.response;
+package com.example.demo.dto.auth;
 
 import lombok.Data;
 
