@@ -5,5 +5,5 @@ import com.example.demo.entity.Question;
 import java.util.List;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
-    List<Question> findByPdfId(Long pdfId);
+    List<Question> findByPdf_PdfId(Integer pdfId);
 }

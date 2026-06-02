@@ -17,14 +17,18 @@ public class QuestionService {
     }
 
     // テーマ別取得
-    public List<Question> getQuestionsByTheme(Long themeId) {
-        List<Question> results = new ArrayList<>();
-        for (Question question : questionRepository.findAll()) {
-            if (question.getPdf() != null && themeId.equals(question.getPdf().getPdfId())) {
-                results.add(question);
-            }
-        }
-        return results;
+    // public List<Question> getQuestionsByTheme(Long themeId) {
+    // List<Question> results = new ArrayList<>();
+    // for (Question question : questionRepository.findAll()) {
+    // if (question.getPdf() != null &&
+    // themeId.equals(question.getPdf().getPdfId())) {
+    // results.add(question);
+    // }
+    // }
+    // return results;
+    // }
+    public List<Question> getQuestionsByTheme(Integer themeId) {
+        return questionRepository.findByPdf_PdfId(themeId);
     }
 
     // 単体取得

@@ -13,9 +13,9 @@ public class AuthService {
         this.userRepository = userRepository;
     }
 
-    public User login(String email, String password) {
+    public User login(String name, String password) {
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByName(name)
                 .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
 
         // ※本来はBCryptなどで比較（今は簡略化）
