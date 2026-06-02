@@ -7,8 +7,8 @@ export default function QuestionEditor({ currentQuestion, onSave }) {
     // 選択された問題が変わったら、フォーム内のテキストを同期する
     useEffect(() => {
         if (currentQuestion) {
-            setEditContent(currentQuestion.content);
-            setEditModelAnswer(currentQuestion.modelAnswer);
+            setEditContent(currentQuestion.questionText);
+            setEditModelAnswer(currentQuestion.correctAnswer);
         }
     }, [currentQuestion]);
 
