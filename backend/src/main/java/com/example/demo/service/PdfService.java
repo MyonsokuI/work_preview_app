@@ -23,7 +23,7 @@ public class PdfService {
         return pdfRepository.save(pdf);
     }
 
-    public Pdf updateTheme(Long id, Pdf updated) {
+    public Pdf updateTheme(Integer id, Pdf updated) {
 
         Pdf existing = pdfRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("テーマが見つかりません"));
@@ -33,7 +33,7 @@ public class PdfService {
         return pdfRepository.save(existing);
     }
 
-    public void deleteTheme(Long id) {
+    public void deleteTheme(Integer id) {
         pdfRepository.deleteById(id);
     }
 }
