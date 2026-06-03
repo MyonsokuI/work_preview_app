@@ -1,19 +1,24 @@
 package com.example.demo.dto.progress;
 
+import java.util.List;
+
 public class QuestionProgressDto {
     private Integer questionId;
     private String questionText;
-    private Long answeredUserCount; // 💡 この問題を解いたユニークな人数
-    private Long totalUserCount; // 💡 システム全体の総ユーザー数（分母）
+    private long answeredUserCount;
+    private long totalUserCount;
+    // 💡 このフィールドを追加にゃ！
+    private List<String> uncompletedUsers;
 
-    public QuestionProgressDto(Integer questionId, String questionText, Long answeredUserCount, Long totalUserCount) {
+    // コンストラクタ（既存の「SELECT new ...」の邪魔をしないように、引数4つのものはそのまま残すにゃ）
+    public QuestionProgressDto(Integer questionId, String questionText, long answeredUserCount, long totalUserCount) {
         this.questionId = questionId;
         this.questionText = questionText;
         this.answeredUserCount = answeredUserCount;
         this.totalUserCount = totalUserCount;
     }
 
-    // ゲッター・セッター（必須にゃ！）
+    // 💡 ゲッターとセッターを追加してにゃ
     public Integer getQuestionId() {
         return questionId;
     }
@@ -30,19 +35,28 @@ public class QuestionProgressDto {
         this.questionText = questionText;
     }
 
-    public Long getAnsweredUserCount() {
+    public long getAnsweredUserCount() {
         return answeredUserCount;
     }
 
-    public void setAnsweredUserCount(Long answeredUserCount) {
+    public void setAnsweredUserCount(long answeredUserCount) {
         this.answeredUserCount = answeredUserCount;
     }
 
-    public Long getTotalUserCount() {
+    public long getTotalUserCount() {
         return totalUserCount;
     }
 
-    public void setTotalUserCount(Long totalUserCount) {
+    public void setTotalUserCount(long totalUserCount) {
         this.totalUserCount = totalUserCount;
+    }
+
+    // 💡 未完了リスト用のゲッター・セッターにゃ
+    public List<String> getUncompletedUsers() {
+        return uncompletedUsers;
+    }
+
+    public void setUncompletedUsers(List<String> uncompletedUsers) {
+        this.uncompletedUsers = uncompletedUsers;
     }
 }
