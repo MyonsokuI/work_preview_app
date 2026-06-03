@@ -176,12 +176,53 @@ export default function AdminConsole() {
         await addQuestionToDB();
     };
 
-    const handleSaveQuestion = (newContent, newModelAnswer) => {
-        setThemes(themes.map(t => t.pdfId === activeThemeId ? {
-            ...t,
-            questions: t.questions.map(q => q.questionId === activeQuestionId ? { ...q, questionText: newContent, correctAnswer: newModelAnswer } : q)
-        } : t));
-        alert("変更を保存しました（子から親のStateを更新）");
+    // 💾 問題の変更保存処理
+    const handleSaveQuestion = (editContent, editModelAnswer) => {
+        // 💡 selectedQuestion ではなく、定義されている currentQuestion を使うにゃ！
+        if (!currentQuestion) {
+            alert("問題が選択されていませんにゃ");
+            return;
+        }
+
+        // Java側の QuestionRequest のフィールド名に完全に一致させるにゃ
+        const requestBody = {
+            questionText: editContent,
+            correctAnswer: editModelAnswer,
+            pdfId: activeThemeId // 💡 選択中のテーマID（activeThemeId）を確実に送るにゃ！
+        };
+
+        fetch(`http://localhost:8080/api/questions/${currentQuestion.questionId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("問題の更新に失敗しましたにゃ");
+                return res.json();
+            })
+            .then((updatedData) => {
+                alert("変更を保存しましたにゃ！");
+
+                // 💡 画面上のデータを即座に書き換える（同期する）処理を追加したにゃ！
+                // これをやらないと、DBが変わっても画面が古いままになってしまうにゃ。
+                setThemes(themes.map(t => {
+                    if (t.pdfId === activeThemeId) {
+                        return {
+                            ...t,
+                            questions: t.questions.map(q =>
+                                q.questionId === currentQuestion.questionId ? updatedData : q
+                            )
+                        };
+                    }
+                    return t;
+                }));
+            })
+            .catch((err) => {
+                console.error("更新エラー:", err);
+                alert("エラーが発生しましたにゃ: " + err.message);
+            });
     };
 
     return (
