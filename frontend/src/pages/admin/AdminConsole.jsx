@@ -211,7 +211,7 @@ export default function AdminConsole() {
                     <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />
                 )}
                 {activeTab === "progress" && (
-                    <ProgressChecker currentTheme={currentTheme} currentProgress={currentProgress} />
+                    <ProgressChecker currentTheme={currentTheme} />
                 )}
             </div>
         </div>
