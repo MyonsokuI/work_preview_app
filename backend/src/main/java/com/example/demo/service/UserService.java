@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.repository.UserRepository;
+import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
 
 import org.springframework.stereotype.Service;
@@ -16,12 +17,29 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> {
+                    UserResponse res = new UserResponse();
+                    res.setUserId(user.getUserId());
+                    res.setName(user.getName());
+                    res.setStatus(user.getStatus());
+                    return res;
+                })
+                .toList();
     }
 
-    public User getUser(Integer id) {
-        return userRepository.findById(id)
+    public UserResponse getUser(Integer id) {
+
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
+
+        UserResponse res = new UserResponse();
+        res.setUserId(user.getUserId());
+        res.setName(user.getName());
+        res.setStatus(user.getStatus());
+
+        return res;
     }
 }
