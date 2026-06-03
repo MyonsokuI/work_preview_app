@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.Pdf;
+import com.example.demo.dto.theme.ThemeRequest;
+import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.service.PdfService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,7 @@ public class PdfController {
      * テーマ一覧取得
      */
     @GetMapping
-    public List<Pdf> getThemes() {
+    public List<ThemeResponse> getThemes() {
         return pdfService.getAllThemes();
     }
 
@@ -28,19 +29,19 @@ public class PdfController {
      * テーマ作成
      */
     @PostMapping
-    public Pdf createTheme(@RequestBody Pdf pdf) {
-        return pdfService.createTheme(pdf);
+    public ThemeResponse createTheme(@RequestBody ThemeRequest request) {
+        return pdfService.createTheme(request);
     }
 
     /**
      * テーマ更新
      */
     @PutMapping("/{id}")
-    public Pdf updateTheme(
+    public ThemeResponse updateTheme(
             @PathVariable Integer id,
-            @RequestBody Pdf pdf) {
+            @RequestBody ThemeRequest request) {
 
-        return pdfService.updateTheme(id, pdf);
+        return pdfService.updateTheme(id, request);
     }
 
     /**
