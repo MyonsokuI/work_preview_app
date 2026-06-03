@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class QuestionController {
 
     private final QuestionService questionService;
@@ -42,9 +43,19 @@ public class QuestionController {
      * POST /api/questions
      */
     @PostMapping("/api/questions")
-    public Question createQuestion(
-            @RequestBody Question question) {
+    public Question createQuestion(@RequestBody com.example.demo.dto.question.request.QuestionRequest request) {
 
+        // 1. 保存用のQuestionオブジェクトを新しく作る
+        Question question = new Question();
+        question.setQuestionText(request.getQuestionText());
+        question.setCorrectAnswer(request.getCorrectAnswer());
+
+        // 2. 外部キーをマッピングするために、IDをセットしたPdfオブジェクトを生成して紐付ける
+        com.example.demo.entity.Pdf pdf = new com.example.demo.entity.Pdf();
+        pdf.setPdfId(request.getPdfId());
+        question.setPdf(pdf);
+
+        // 3. サービス層へ渡して保存
         return questionService.createQuestion(question);
     }
 
