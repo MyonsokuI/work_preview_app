@@ -77,9 +77,12 @@ public class QuestionService {
         existing.setQuestionText(request.getQuestionText());
         existing.setCorrectAnswer(request.getCorrectAnswer());
 
-        Pdf pdf = new Pdf();
-        pdf.setPdfId(request.getPdfId());
-        existing.setPdf(pdf);
+        // 💡 既存のPDFリレーションを守るための防衛ロジックにゃ！
+        if (request.getPdfId() != null) {
+            Pdf pdf = new Pdf();
+            pdf.setPdfId(request.getPdfId());
+            existing.setPdf(pdf);
+        } // request.getPdfId() が null の場合は existing.getPdf() をそのまま維持するので安全にゃ！
 
         Question saved = questionRepository.save(existing);
 
