@@ -12,28 +12,32 @@ export default function MainScreen() {
   const [answerInput, setAnswerInput] = useState("");
   const [saved, setSaved] = useState(false);
 
+  // ⭐ 折り畳み追加（重要）
+  const [openModelAnswer, setOpenModelAnswer] = useState(true);
+  const [openOtherAnswers, setOpenOtherAnswers] = useState(true);
+
   // =========================
-  // API取得（Spring Boot）
+  // API取得
   // =========================
   useEffect(() => {
-    fetch(`${API_BASE}/api/questions`) // ← 後でテーマAPIにしてもOK
+    fetch(`${API_BASE}/api/questions`)
       .then((res) => {
         if (!res.ok) throw new Error("API error");
         return res.json();
       })
       .then((data) => setQuestions(data))
-      .catch((err) => console.error("API失敗:", err));
+      .catch((err) => console.error(err));
   }, []);
 
   // =========================
-  // theme = pdf.title でグルーピング
+  // グルーピング
   // =========================
   const themes = useMemo(() => {
     const map = {};
 
     questions.forEach((q) => {
-      const themeName = q.pdf?.title || "未分類";
       const themeId = q.pdf?.pdfId;
+      const themeName = q.pdf?.title || "未分類";
 
       if (!map[themeId]) {
         map[themeId] = {
@@ -50,11 +54,45 @@ export default function MainScreen() {
   }, [questions]);
 
   // =========================
-  // 検索フィルタ
+  // 検索
   // =========================
-  const filteredThemes = themes.filter((t) =>
-    t.themeName.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredThemes = useMemo(() => {
+    const keyword = search.toLowerCase();
+
+    if (!keyword) return themes;
+
+    return themes
+      .map((t) => {
+        const themeMatch = t.themeName.toLowerCase().includes(keyword);
+
+        const matchedQuestions = t.questions.filter((q) =>
+          q.questionText.toLowerCase().includes(keyword)
+        );
+
+        if (!themeMatch && matchedQuestions.length === 0) {
+          return null;
+        }
+
+        return {
+          ...t,
+          questions: themeMatch ? t.questions : matchedQuestions,
+        };
+      })
+      .filter(Boolean);
+  }, [themes, search]);
+
+  // =========================
+  // 保存（仮）
+  // =========================
+  const handleSave = () => {
+    console.log({
+      questionId: selectedQuestion.questionId,
+      answer: answerInput,
+    });
+
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   // =========================
   // UI
@@ -67,7 +105,7 @@ export default function MainScreen() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="検索..."
+            placeholder="検索"
             style={styles.search}
           />
         </div>
@@ -78,7 +116,6 @@ export default function MainScreen() {
 
             return (
               <div key={theme.themeId}>
-                {/* THEME */}
                 <div
                   onClick={() =>
                     setOpenThemeId(isOpen ? null : theme.themeId)
@@ -91,26 +128,29 @@ export default function MainScreen() {
                   📁 {theme.themeName}
                 </div>
 
-                {/* QUESTIONS */}
-                {isOpen &&
-                  theme.questions.map((q) => (
-                    <div
-                      key={q.questionId}
-                      onClick={() => {
-                        setSelectedQuestion(q);
-                        setAnswerInput("");
-                      }}
-                      style={{
-                        ...styles.questionItem,
-                        background:
-                          selectedQuestion?.questionId === q.questionId
-                            ? "#dbeafe"
-                            : "transparent",
-                      }}
-                    >
-                      {highlight(q.questionText, search)}
-                    </div>
-                  ))}
+                {isOpen && (
+                  <div>
+                    {theme.questions.map((q) => (
+                      <div
+                        key={q.questionId}
+                        onClick={() => {
+                          setSelectedQuestion(q);
+                          setAnswerInput("");
+                          setSaved(false);
+                        }}
+                        style={{
+                          ...styles.questionItem,
+                          background:
+                            selectedQuestion?.questionId === q.questionId
+                              ? "#dbeafe"
+                              : "transparent",
+                        }}
+                      >
+                        {q.questionText}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -124,43 +164,60 @@ export default function MainScreen() {
         ) : (
           <div style={styles.card}>
             {/* QUESTION */}
-            <div style={styles.label}>問題</div>
             <h3>{selectedQuestion.questionText}</h3>
 
             {/* ANSWER INPUT */}
-            <div style={styles.label}>あなたの回答</div>
             <textarea
               value={answerInput}
               onChange={(e) => setAnswerInput(e.target.value)}
               style={styles.textarea}
-              placeholder="ここに回答を入力..."
+              placeholder="回答を入力"
             />
 
             <div style={styles.row}>
-              <button
-                onClick={() => setSaved(true)}
-                style={styles.button}
-              >
+              <button onClick={handleSave} style={styles.button}>
                 保存
               </button>
 
               {saved && <span style={{ color: "green" }}>保存しました</span>}
             </div>
 
-            {/* MODEL ANSWER */}
+            {/* ================= 模範解答（折り畳み） ================= */}
             <div style={styles.section}>
-              <div style={styles.label}>模範解答</div>
-              <div style={styles.box}>
-                {selectedQuestion.correctAnswer}
+              <div
+                style={styles.foldHeader}
+                onClick={() => setOpenModelAnswer(!openModelAnswer)}
+              >
+                <span>{openModelAnswer ? "▼" : "▶"}</span>
+                <span style={{ marginLeft: 6 }}>模範解答</span>
               </div>
+
+              {openModelAnswer && (
+                <div style={styles.box}>
+                  {selectedQuestion.correctAnswer}
+                </div>
+              )}
             </div>
 
-            {/* OTHER ANSWERS (ダミーUI) */}
+            {/* ================= 他ユーザー回答（折り畳み） ================= */}
             <div style={styles.section}>
-              <div style={styles.label}>他のユーザーの回答</div>
-              <div style={styles.boxMuted}>
-                まだ他のユーザーの回答はありません
+              <div
+                style={styles.foldHeader}
+                onClick={() =>
+                  setOpenOtherAnswers(!openOtherAnswers)
+                }
+              >
+                <span>{openOtherAnswers ? "▼" : "▶"}</span>
+                <span style={{ marginLeft: 6 }}>
+                  他のユーザーの回答
+                </span>
               </div>
+
+              {openOtherAnswers && (
+                <div style={styles.boxMuted}>
+                  まだ他のユーザーの回答はありません
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -170,26 +227,7 @@ export default function MainScreen() {
 }
 
 // =========================
-// ハイライト
-// =========================
-function highlight(text = "", keyword = "") {
-  if (!keyword) return text;
-
-  const parts = text.split(new RegExp(`(${keyword})`, "gi"));
-
-  return parts.map((p, i) =>
-    p.toLowerCase() === keyword.toLowerCase() ? (
-      <span key={i} style={{ background: "yellow" }}>
-        {p}
-      </span>
-    ) : (
-      p
-    )
-  );
-}
-
-// =========================
-// STYLE（画像寄せ）
+// STYLE
 // =========================
 const styles = {
   wrapper: {
@@ -201,7 +239,6 @@ const styles = {
   sidebar: {
     width: 320,
     borderRight: "1px solid #ddd",
-    background: "#fff",
     overflowY: "auto",
   },
 
@@ -214,7 +251,6 @@ const styles = {
     width: "100%",
     padding: 8,
     border: "1px solid #ddd",
-    borderRadius: 4,
   },
 
   tree: {
@@ -225,12 +261,10 @@ const styles = {
     padding: "8px 6px",
     fontWeight: "bold",
     cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
   },
 
   questionItem: {
-    padding: "6px 20px",
+    padding: "6px 18px",
     cursor: "pointer",
     fontSize: 13,
     borderRadius: 4,
@@ -249,27 +283,17 @@ const styles = {
     border: "1px solid #ddd",
   },
 
-  label: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#666",
-    marginTop: 12,
-  },
-
   textarea: {
     width: "100%",
     height: 120,
-    marginTop: 6,
-    padding: 10,
-    border: "1px solid #ddd",
-    borderRadius: 6,
+    marginTop: 10,
   },
 
   row: {
     display: "flex",
     gap: 10,
-    alignItems: "center",
     marginTop: 10,
+    alignItems: "center",
   },
 
   button: {
@@ -277,19 +301,25 @@ const styles = {
     background: "#2563eb",
     color: "#fff",
     border: "none",
-    borderRadius: 4,
     cursor: "pointer",
   },
 
   section: {
-    marginTop: 16,
+    marginTop: 20,
+  },
+
+  foldHeader: {
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer",
+    fontWeight: "bold",
+    marginBottom: 8,
   },
 
   box: {
     background: "#f3f4f6",
     padding: 10,
     borderRadius: 6,
-    marginTop: 6,
   },
 
   boxMuted: {
@@ -297,7 +327,6 @@ const styles = {
     padding: 10,
     borderRadius: 6,
     color: "#999",
-    marginTop: 6,
   },
 
   empty: {
