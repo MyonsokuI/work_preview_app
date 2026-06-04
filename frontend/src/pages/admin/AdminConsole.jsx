@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // 💡 navigate を使うためにインポートを追加にゃ！
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import QuestionEditor from "../../components/admin/QuestionEditor";
 import ProgressChecker from "../../components/admin/ProgressChecker";
@@ -6,6 +7,7 @@ import ProgressChecker from "../../components/admin/ProgressChecker";
 export default function AdminConsole() {
     // --- 状態（State）の定義 ---
     const [themes, setThemes] = useState([]);
+    const navigate = useNavigate(); // 💡 画面遷移用のフックを定義にゃ！
 
     const [progressData] = useState({
         1: { completedCount: 12, totalCount: 15, completionRate: 80, uncompletedUsers: [{ userId: 3, name: "鈴木 一郎", remainingCount: 1, lastActive: "2026/05/30" }] },
@@ -16,20 +18,16 @@ export default function AdminConsole() {
     const [activeQuestionId, setActiveQuestionId] = useState(null);
     const [activeTab, setActiveTab] = useState("edit");
 
-    // --- 🔌 データロード処理（API通信版 ＆ モック版切り替え可能コード） ---
+    // --- 🔌 データロード処理 ---
     useEffect(() => {
-        // ==========================================
-        // 🟢 パターンA：データベース（API）からロードするリアルバージョン
-        // ==========================================
         const fetchThemesFromDB = async () => {
             try {
                 const response = await fetch("http://localhost:8080/api/themes");
-                const result = await response.json(); // 直接 [ {...}, {...} ] という配列が返ってくる想定
+                const result = await response.json();
 
                 if (result && result.length > 0) {
                     setThemes(result);
 
-                    // 初期選択状態の設定
                     const firstTheme = result[0];
                     setActiveThemeId(firstTheme.pdfId);
                     if (firstTheme.questions && firstTheme.questions.length > 0) {
@@ -42,9 +40,6 @@ export default function AdminConsole() {
             }
         };
 
-        // ==========================================
-        // 🟡 パターンB：データを通さない（API通信しない）モックバージョン
-        // ==========================================
         const loadMockData = () => {
             const mockThemes = [
                 {
@@ -69,9 +64,7 @@ export default function AdminConsole() {
             setActiveQuestionId(101);
         };
 
-        // 💡 切り替えスイッチ
         fetchThemesFromDB();
-        // loadMockData();    
     }, []);
 
     // --- 計算用変数 ---
@@ -86,20 +79,16 @@ export default function AdminConsole() {
         setActiveTab(tabType);
     };
 
-    // 🚀 【重要修正】文字列ではなく、Sidebarから渡される本物のテーマオブジェクトを受け取るように変更
     const handleAddTheme = (newThemeObject) => {
         setThemes([...themes, newThemeObject]);
-
-        // 追加された新規テーマを自動的に選択状態にする
         setActiveThemeId(newThemeObject.pdfId);
-        setActiveQuestionId(null); // 新規テーマにはまだ問題がないためnullにする
+        setActiveQuestionId(null);
     };
 
     const handleDeleteTheme = (deletedThemeId) => {
         const updatedThemes = themes.filter(t => t.pdfId !== deletedThemeId);
         setThemes(updatedThemes);
 
-        // 削除したテーマが現在選択中だった場合の処理を安全に調整
         if (activeThemeId === deletedThemeId) {
             if (updatedThemes.length > 0) {
                 const nextTheme = updatedThemes[0];
@@ -122,31 +111,25 @@ export default function AdminConsole() {
         ));
     };
 
-    // 🟢 問題追加の通信と画面反映の処理にゃ！
+    // 🟢 問題追加の通信と画面反映
     const handleAddQuestion = async (themeId) => {
         try {
-            // 1. Java側の QuestionRequest が求めている項目を揃える
             const requestBody = {
                 pdfId: themeId,
                 questionText: "新しい問題内容",
                 correctAnswer: "模範解答"
             };
 
-            // 2. 正しいURL（/api/questions）に POST リクエストを送信
             const response = await fetch("http://localhost:8080/api/questions", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) throw new Error("問題の作成に失敗しましたにゃ");
 
-            // 3. サーバー側（PostgreSQL）からID入りの本物のデータを受け取る
             const savedQuestion = await response.json();
 
-            // 4. 画面（State）をリアルタイム更新するにゃ！
             setThemes(themes.map(t => {
                 if (t.pdfId === themeId) {
                     return {
@@ -157,19 +140,17 @@ export default function AdminConsole() {
                 return t;
             }));
 
-            // 新しく追加された問題を自動選択状態にして、すぐに編集できるようにするにゃ！
             setActiveQuestionId(savedQuestion.questionId);
             setActiveTab("edit");
-
             alert("新しい問題を追加しましたにゃ！");
 
         } catch (error) {
             console.error("問題追加APIとの通信に失敗しましたにゃ:", error);
-            alert("サーバーとの通信に失敗しました。ローカルのみの追加は行いませんにゃ。");
+            alert("サーバーとの通信に失敗しました。");
         }
     };
 
-    // 💾 問題の変更保存処理（完全に整えた版にゃ！）
+    // 💾 問題の変更保存処理
     const handleSaveQuestion = (editContent, editModelAnswer) => {
         if (!currentQuestion) {
             alert("編集する問題が選択されていませんにゃ");
@@ -186,9 +167,7 @@ export default function AdminConsole() {
 
         fetch(`http://localhost:8080/api/questions/${currentQuestion.questionId}`, {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody),
         })
             .then((res) => {
@@ -198,7 +177,6 @@ export default function AdminConsole() {
             .then((updatedData) => {
                 alert("変更を保存しましたにゃ！");
 
-                // 画面上の大元の状態（themes）を、型を崩さずに綺麗に同期する処理にゃ！
                 setThemes(themes.map(t => {
                     if (t.pdfId === targetPdfId) {
                         return {
@@ -219,6 +197,13 @@ export default function AdminConsole() {
             });
     };
 
+    // 💡 管理者用ログアウト処理を追加にゃ！
+    const handleLogout = () => {
+        localStorage.removeItem("currentUser"); // セッションクリア
+        alert("管理者画面からログアウトしましたにゃ！");
+        navigate("/login"); // ログイン画面へ戻る
+    };
+
     return (
         <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif", color: "#333" }}>
             <AdminSidebar
@@ -230,7 +215,7 @@ export default function AdminConsole() {
                 onAddTheme={handleAddTheme}
                 onDeleteTheme={handleDeleteTheme}
                 onUpdateTheme={handleUpdateTheme}
-                onShowProgress={() => setActiveTab("progress")}
+                onLogout={handleLogout} // 👈 全体進捗の代わりにログアウト関数を渡すにゃ！
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>

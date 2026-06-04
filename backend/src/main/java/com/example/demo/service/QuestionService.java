@@ -94,7 +94,6 @@ public class QuestionService {
         return res;
     }
 
-    // 削除
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }

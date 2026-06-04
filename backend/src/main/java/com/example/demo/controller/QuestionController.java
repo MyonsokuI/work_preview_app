@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*")
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:5173")
 public class QuestionController {
 
     private final QuestionService questionService;
@@ -57,14 +58,11 @@ public class QuestionController {
         return questionService.updateQuestion(id, question);
     }
 
-    /**
-     * 問題削除
-     * DELETE /api/questions/{id}
-     */
-    @DeleteMapping("/api/questions/{id}")
-    public void deleteQuestion(
-            @PathVariable Integer id) {
-
+    // ==========================================
+    // ⑥ 削除
+    // ==========================================
+    @DeleteMapping("/questions/{id}")
+    public void deleteQuestion(@PathVariable Integer id) {
         questionService.deleteQuestion(id);
     }
 }

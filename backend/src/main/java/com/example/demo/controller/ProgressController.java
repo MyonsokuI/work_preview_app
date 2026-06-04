@@ -33,12 +33,13 @@ public class ProgressController {
             String sql = "SELECT u.name FROM users u " +
                     "WHERE u.status = 'USER' " +
                     "AND u.user_id NOT IN (" +
-                    "  SELECT a.user_id FROM answers a " +
-                    "  WHERE a.question_id = ? AND a.user_id IS NOT NULL" +
+                    " SELECT a.user_id FROM answers a " +
+                    " WHERE a.question_id = ? AND a.user_id IS NOT NULL" +
                     ")";
 
             // SQLを実行して、まだ解いていない人の名前のリストを取得にゃ
-            List<String> uncompletedNames = jdbcTemplate.queryForList(sql, String.class, stats.getQuestionId());
+            List<String> uncompletedNames = jdbcTemplate.queryForList(sql, String.class,
+                    stats.getQuestionId());
 
             // DTOにリストをセットするにゃ
             stats.setUncompletedUsers(uncompletedNames);

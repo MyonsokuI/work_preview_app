@@ -66,9 +66,9 @@ public class PdfController {
         return pdfService.updateTheme(id, request);
     }
 
-    /**
-     * テーマ削除
-     */
+    // /**
+    // * テーマ削除
+    // */
     @DeleteMapping("/{id}")
     public void deleteTheme(
             @PathVariable Integer id) {
