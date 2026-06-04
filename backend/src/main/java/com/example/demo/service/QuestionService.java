@@ -1,5 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.question.QuestionRequest;
+import com.example.demo.dto.question.QuestionResponse;
+import com.example.demo.entity.Pdf;
 import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
 import org.springframework.stereotype.Service;
@@ -16,35 +19,81 @@ public class QuestionService {
     }
 
     // テーマ別取得
-    public List<Question> getQuestionsByTheme(Integer themeId) {
-        return questionRepository.findByPdf_PdfId(themeId);
+    public List<QuestionResponse> getQuestionsByTheme(Integer themeId) {
+
+        return questionRepository.findByPdf_PdfId(themeId)
+                .stream()
+                .map(q -> {
+                    QuestionResponse qr = new QuestionResponse();
+                    qr.setQuestionId(q.getQuestionId());
+                    qr.setQuestionText(q.getQuestionText());
+                    qr.setCorrectAnswer(q.getCorrectAnswer());
+                    return qr;
+                })
+                .toList();
     }
 
     // 単体取得
-    public Question getQuestion(Integer id) {
-        return questionRepository.findById(id)
+    public QuestionResponse getQuestion(Integer id) {
+
+        Question q = questionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
+
+        QuestionResponse res = new QuestionResponse();
+        res.setQuestionId(q.getQuestionId());
+        res.setQuestionText(q.getQuestionText());
+        res.setCorrectAnswer(q.getCorrectAnswer());
+
+        return res;
     }
 
     // 作成
-    public Question createQuestion(Question question) {
-        return questionRepository.save(question);
+    public QuestionResponse createQuestion(QuestionRequest request) {
+
+        Question question = new Question();
+        question.setQuestionText(request.getQuestionText());
+        question.setCorrectAnswer(request.getCorrectAnswer());
+
+        Pdf pdf = new Pdf();
+        pdf.setPdfId(request.getPdfId());
+        question.setPdf(pdf);
+
+        Question saved = questionRepository.save(question);
+
+        QuestionResponse res = new QuestionResponse();
+        res.setQuestionId(saved.getQuestionId());
+        res.setQuestionText(saved.getQuestionText());
+        res.setCorrectAnswer(saved.getCorrectAnswer());
+
+        return res;
     }
 
     // 更新
-    public Question updateQuestion(Integer id, Question updated) {
+    public QuestionResponse updateQuestion(Integer id, QuestionRequest request) {
 
-        Question existing = getQuestion(id);
+        Question existing = questionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
 
-        existing.setQuestionText(updated.getQuestionText());
-        existing.setCorrectAnswer(updated.getCorrectAnswer());
-        existing.setPdf(updated.getPdf());
+        existing.setQuestionText(request.getQuestionText());
+        existing.setCorrectAnswer(request.getCorrectAnswer());
 
-        return questionRepository.save(existing);
+        Pdf pdf = new Pdf();
+        pdf.setPdfId(request.getPdfId());
+        existing.setPdf(pdf);
+
+        Question saved = questionRepository.save(existing);
+
+        QuestionResponse res = new QuestionResponse();
+        res.setQuestionId(saved.getQuestionId());
+        res.setQuestionText(saved.getQuestionText());
+        res.setCorrectAnswer(saved.getCorrectAnswer());
+
+        return res;
     }
 
     // 削除
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }
+
 }
