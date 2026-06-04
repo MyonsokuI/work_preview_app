@@ -4,7 +4,6 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.dto.auth.LoginRequest;
 import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.entity.User;
-import com.example.demo.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service

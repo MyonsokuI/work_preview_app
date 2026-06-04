@@ -2,7 +2,6 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.auth.LoginRequest;
 import com.example.demo.dto.auth.LoginResponse;
-import com.example.demo.entity.User;
 import com.example.demo.service.AuthService;
 
 import org.springframework.web.bind.annotation.*;

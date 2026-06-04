@@ -2,7 +2,6 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.answer.AnswerRequest;
 import com.example.demo.dto.answer.AnswerResponse;
-import com.example.demo.entity.Answer;
 import com.example.demo.service.AnswerService;
 import org.springframework.web.bind.annotation.*;
 
