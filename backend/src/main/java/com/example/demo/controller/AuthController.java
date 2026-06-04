@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.auth.request.LoginRequest;
-import com.example.demo.dto.auth.response.LoginResponse;
+import com.example.demo.dto.auth.LoginRequest;
+import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.entity.User;
 import com.example.demo.service.AuthService;
 
@@ -21,17 +21,7 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
 
-        User user = authService.login(
-                request.getUserId(),
-                request.getPassword());
-
-        LoginResponse response = new LoginResponse();
-
-        response.setUserId(user.getUserId());
-        response.setName(user.getName());
-        response.setStatus(user.getStatus());
-
-        return response;
+        return authService.login(request);
     }
 
     @PostMapping("/logout")

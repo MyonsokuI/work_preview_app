@@ -49,6 +49,18 @@ public class AnswerService {
 		return toResponse(saved);
 	}
 
+	public AnswerResponse updateAnswer(Integer id, AnswerRequest request) {
+
+		Answer answer = answerRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("回答が見つかりません"));
+
+		answer.setAnswerContent(request.getAnswerContent());
+
+		Answer saved = answerRepository.save(answer);
+
+		return toResponse(saved);
+	}
+
 	public List<AnswerResponse> getMyAnswers(Integer userId) {
 		return answerRepository.findByUser_UserId(userId)
 				.stream()
