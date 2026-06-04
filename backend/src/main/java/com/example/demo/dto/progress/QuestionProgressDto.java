@@ -7,10 +7,19 @@ public class QuestionProgressDto {
     private String questionText;
     private long answeredUserCount;
     private long totalUserCount;
-    // 💡 このフィールドを追加にゃ！
     private List<String> uncompletedUsers;
 
-    // コンストラクタ（既存の「SELECT new ...」の邪魔をしないように、引数4つのものはそのまま残すにゃ）
+    // 🚀 【これが足りなかったにゃ！】デフォルトコンストラクタを追加
+    public QuestionProgressDto() {
+    }
+
+    // ★JPQLの「SELECT new ...」に対応するコンストラクタ（残しておいて安全にゃ）
+    public QuestionProgressDto(Integer questionId, long answeredUserCount) {
+        this.questionId = questionId;
+        this.answeredUserCount = answeredUserCount;
+    }
+
+    // 既存の引数4つのコンストラクタ
     public QuestionProgressDto(Integer questionId, String questionText, long answeredUserCount, long totalUserCount) {
         this.questionId = questionId;
         this.questionText = questionText;
@@ -18,7 +27,7 @@ public class QuestionProgressDto {
         this.totalUserCount = totalUserCount;
     }
 
-    // 💡 ゲッターとセッターを追加してにゃ
+    // 💡 ゲッターとセッター（変更なし）
     public Integer getQuestionId() {
         return questionId;
     }
@@ -51,7 +60,6 @@ public class QuestionProgressDto {
         this.totalUserCount = totalUserCount;
     }
 
-    // 💡 未完了リスト用のゲッター・セッターにゃ
     public List<String> getUncompletedUsers() {
         return uncompletedUsers;
     }
