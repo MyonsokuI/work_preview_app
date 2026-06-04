@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.theme.ThemeRequest;
+import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.PdfRepository;
 import org.springframework.stereotype.Service;
@@ -15,22 +17,47 @@ public class PdfService {
         this.pdfRepository = pdfRepository;
     }
 
-    public List<Pdf> getAllThemes() {
-        return pdfRepository.findAll();
+    public List<ThemeResponse> getAllThemes() {
+
+        return pdfRepository.findAll()
+                .stream()
+                .map(pdf -> {
+                    ThemeResponse res = new ThemeResponse();
+                    res.setPdfId(pdf.getPdfId());
+                    res.setTitle(pdf.getTitle());
+                    return res;
+                })
+                .toList();
     }
 
-    public Pdf createTheme(Pdf pdf) {
-        return pdfRepository.save(pdf);
+    public ThemeResponse createTheme(ThemeRequest request) {
+
+        Pdf pdf = new Pdf();
+        pdf.setTitle(request.getTitle());
+
+        Pdf saved = pdfRepository.save(pdf);
+
+        ThemeResponse response = new ThemeResponse();
+        response.setPdfId(saved.getPdfId());
+        response.setTitle(saved.getTitle());
+
+        return response;
     }
 
-    public Pdf updateTheme(Integer id, Pdf updated) {
+    public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
 
         Pdf existing = pdfRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("テーマが見つかりません"));
 
         existing.setTitle(updated.getTitle());
 
-        return pdfRepository.save(existing);
+        Pdf saved = pdfRepository.save(existing);
+
+        ThemeResponse response = new ThemeResponse();
+        response.setPdfId(saved.getPdfId());
+        response.setTitle(saved.getTitle());
+
+        return response;
     }
 
     public void deleteTheme(Integer id) {

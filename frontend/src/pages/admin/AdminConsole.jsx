@@ -122,66 +122,101 @@ export default function AdminConsole() {
         ));
     };
 
-    // ➕ 問題追加の処理
-    const handleAddQuestion = async (targetThemeId) => {
-        const addQuestionToDB = async () => {
-            try {
-                const response = await fetch("http://localhost:8080/api/questions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        pdfId: targetThemeId,
-                        questionText: "新しい問題内容",
-                        correctAnswer: "模範解答をここに入力"
-                    }),
-                });
-
-                const result = await response.json();
-                if (result) {
-                    const dbNewQuestion = result;
-
-                    setThemes(themes.map(t =>
-                        t.pdfId === targetThemeId
-                            ? { ...t, questions: [...(t.questions || []), dbNewQuestion] }
-                            : t
-                    ));
-
-                    handleSelectQuestion(targetThemeId, dbNewQuestion.questionId, "edit");
-                }
-            } catch (error) {
-                console.error("問題追加APIとの通信に失敗したため、一時的にローカルで追加します:", error);
-                addQuestionLocal();
-            }
-        };
-
-        const addQuestionLocal = () => {
-            const newQId = Date.now();
-            const mockNewQuestion = {
-                questionId: newQId,
-                questionText: "新しい問題内容（ローカル追加）",
-                correctAnswer: "模範解答をここに入力"
+    // 🟢 問題追加の通信と画面反映の処理にゃ！
+    const handleAddQuestion = async (themeId) => {
+        try {
+            // 1. Java側の QuestionRequest が求めている項目を揃える
+            const requestBody = {
+                pdfId: themeId,
+                questionText: "新しい問題内容",
+                correctAnswer: "模範解答"
             };
 
-            setThemes(themes.map(t =>
-                t.pdfId === targetThemeId
-                    ? { ...t, questions: [...(t.questions || []), mockNewQuestion] }
-                    : t
-            ));
+            // 2. 正しいURL（/api/questions）に POST リクエストを送信
+            const response = await fetch("http://localhost:8080/api/questions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestBody),
+            });
 
-            handleSelectQuestion(targetThemeId, newQId, "edit");
-        };
+            if (!response.ok) throw new Error("問題の作成に失敗しましたにゃ");
 
-        await addQuestionToDB();
+            // 3. サーバー側（PostgreSQL）からID入りの本物のデータを受け取る
+            const savedQuestion = await response.json();
+
+            // 4. 画面（State）をリアルタイム更新するにゃ！
+            setThemes(themes.map(t => {
+                if (t.pdfId === themeId) {
+                    return {
+                        ...t,
+                        questions: [...(t.questions || []), savedQuestion]
+                    };
+                }
+                return t;
+            }));
+
+            // 新しく追加された問題を自動選択状態にして、すぐに編集できるようにするにゃ！
+            setActiveQuestionId(savedQuestion.questionId);
+            setActiveTab("edit");
+
+            alert("新しい問題を追加しましたにゃ！");
+
+        } catch (error) {
+            console.error("問題追加APIとの通信に失敗しましたにゃ:", error);
+            alert("サーバーとの通信に失敗しました。ローカルのみの追加は行いませんにゃ。");
+        }
     };
 
-    const handleSaveQuestion = (newContent, newModelAnswer) => {
-        setThemes(themes.map(t => t.pdfId === activeThemeId ? {
-            ...t,
-            questions: t.questions.map(q => q.questionId === activeQuestionId ? { ...q, questionText: newContent, correctAnswer: newModelAnswer } : q)
-        } : t));
-        alert("変更を保存しました（子から親のStateを更新）");
+    // 💾 問題の変更保存処理（完全に整えた版にゃ！）
+    const handleSaveQuestion = (editContent, editModelAnswer) => {
+        if (!currentQuestion) {
+            alert("編集する問題が選択されていませんにゃ");
+            return;
+        }
+
+        const targetPdfId = currentTheme?.pdfId || activeThemeId;
+
+        const requestBody = {
+            questionText: editContent,
+            correctAnswer: editModelAnswer,
+            pdfId: targetPdfId
+        };
+
+        fetch(`http://localhost:8080/api/questions/${currentQuestion.questionId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("サーバー側での問題更新に失敗しましたにゃ");
+                return res.json();
+            })
+            .then((updatedData) => {
+                alert("変更を保存しましたにゃ！");
+
+                // 画面上の大元の状態（themes）を、型を崩さずに綺麗に同期する処理にゃ！
+                setThemes(themes.map(t => {
+                    if (t.pdfId === targetPdfId) {
+                        return {
+                            ...t,
+                            questions: (t.questions || []).map(q =>
+                                q.questionId === currentQuestion.questionId
+                                    ? { ...q, questionText: updatedData.questionText, correctAnswer: updatedData.correctAnswer }
+                                    : q
+                            )
+                        };
+                    }
+                    return t;
+                }));
+            })
+            .catch((err) => {
+                console.error("更新エラーにゃ:", err);
+                alert("エラーが発生しましたにゃ: " + err.message);
+            });
     };
 
     return (

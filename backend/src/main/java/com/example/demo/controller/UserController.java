@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.User;
+import com.example.demo.dto.user.UserResponse;
 import com.example.demo.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
 public class UserController {
 
     private final UserService userService;
@@ -20,7 +21,15 @@ public class UserController {
      * ユーザー一覧取得
      */
     @GetMapping
-    public List<User> getUsers() {
+    public List<UserResponse> getUsers() {
         return userService.getAllUsers();
+    }
+
+    /**
+     * 指定されたIDのユーザーを取得
+     */
+    @GetMapping("/{id}")
+    public UserResponse getUser(@PathVariable Integer id) {
+        return userService.getUser(id);
     }
 }
