@@ -15,35 +15,30 @@ public class QuestionService {
         this.questionRepository = questionRepository;
     }
 
-    // テーマ別取得
+    public List<Question> getAllQuestions() {
+        return questionRepository.findAll();
+    }
+
     public List<Question> getQuestionsByTheme(Integer themeId) {
         return questionRepository.findByPdf_PdfId(themeId);
     }
 
-    // 単体取得
     public Question getQuestion(Integer id) {
         return questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
+                .orElseThrow(() -> new RuntimeException("Question not found"));
     }
 
-    // 作成
     public Question createQuestion(Question question) {
         return questionRepository.save(question);
     }
 
-    // 更新
     public Question updateQuestion(Integer id, Question updated) {
-
-        Question existing = getQuestion(id);
-
-        existing.setQuestionText(updated.getQuestionText());
-        existing.setCorrectAnswer(updated.getCorrectAnswer());
-        existing.setPdf(updated.getPdf());
-
-        return questionRepository.save(existing);
+        Question q = getQuestion(id);
+        q.setQuestionText(updated.getQuestionText());
+        q.setCorrectAnswer(updated.getCorrectAnswer());
+        return questionRepository.save(q);
     }
 
-    // 削除
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }
