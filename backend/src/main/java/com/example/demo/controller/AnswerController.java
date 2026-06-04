@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.answer.AnswerRequest;
+import com.example.demo.dto.answer.AnswerResponse;
 import com.example.demo.entity.Answer;
 import com.example.demo.service.AnswerService;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +20,13 @@ public class AnswerController {
 
     /**
      * 回答登録
-     * POST /api/answers
      */
     @PostMapping("/answers")
-    public Answer createAnswer(@RequestBody Answer answer) {
-        return answerService.createAnswer(answer);
+    public AnswerResponse createAnswer(
+            @RequestBody AnswerRequest request,
+            @RequestParam Integer userId) {
+
+        return answerService.createAnswer(request, userId);
     }
 
     /**
@@ -30,11 +34,11 @@ public class AnswerController {
      * PUT /api/answers/{id}
      */
     @PutMapping("/answers/{id}")
-    public Answer updateAnswer(
+    public AnswerResponse updateAnswer(
             @PathVariable Integer id,
-            @RequestBody Answer answer) {
+            @RequestBody AnswerRequest request) {
 
-        return answerService.updateAnswer(id, answer);
+        return answerService.updateAnswer(id, request);
     }
 
     /**
@@ -42,7 +46,7 @@ public class AnswerController {
      * GET /api/answers/my?userId=1
      */
     @GetMapping("/answers/my")
-    public List<Answer> getMyAnswers(
+    public List<AnswerResponse> getMyAnswers(
             @RequestParam Integer userId) {
 
         return answerService.getMyAnswers(userId);
@@ -53,7 +57,7 @@ public class AnswerController {
      * GET /api/questions/{questionId}/answers
      */
     @GetMapping("/questions/{questionId}/answers")
-    public List<Answer> getAnswersByQuestion(
+    public List<AnswerResponse> getAnswersByQuestion(
             @PathVariable Integer questionId) {
 
         return answerService.getAnswersByQuestion(questionId);

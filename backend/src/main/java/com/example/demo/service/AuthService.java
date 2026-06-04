@@ -28,9 +28,10 @@ public class AuthService {
             throw new RuntimeException("パスワードが違います");
         }
 
-				LoginResponse response = new LoginResponse();
-				response.setUserId(user.getUserId());
-				response.setName(user.getName());
+        LoginResponse response = new LoginResponse();
+        response.setUserId(user.getUserId());
+        response.setName(user.getName());
+        response.setStatus(user.getStatus());
 
         return response;
     }
