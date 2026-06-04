@@ -1,5 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.repository.UserRepository;
+import com.example.demo.dto.auth.LoginRequest;
+import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -13,7 +16,9 @@ public class AuthService {
         this.userRepository = userRepository;
     }
 
-    public User login(Integer userId, String password) {
+    public LoginResponse login(LoginRequest request) {
+        Integer userId = request.getUserId();
+        String password = request.getPassword();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
@@ -23,6 +28,10 @@ public class AuthService {
             throw new RuntimeException("パスワードが違います");
         }
 
-        return user;
+				LoginResponse response = new LoginResponse();
+				response.setUserId(user.getUserId());
+				response.setName(user.getName());
+
+        return response;
     }
 }
