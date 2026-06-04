@@ -1,11 +1,13 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.progress.QuestionProgressDto;
+import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate; // 💡 確実な引き算のために使うにゃ
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -17,34 +19,45 @@ public class ProgressController {
     private QuestionRepository questionRepository;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate; // 💡 自動注入にゃ！
+    private JdbcTemplate jdbcTemplate;
 
     @GetMapping("/progress")
     public List<QuestionProgressDto> getProgress() {
-        // 1. さっき成功した「進捗率」のリストをそのまま取得するにゃ
-        List<QuestionProgressDto> statsList = questionRepository.getQuestionProgressStats();
+        // 🚀 1. DBに登録されている「すべての問題」を愚直に全件取得するにゃ！
+        // これで追加・編集したばかりの問題も100%漏れなくリストに入ってくるにゃ！
+        List<Question> allQuestions = questionRepository.findAll();
+        List<QuestionProgressDto> resultList = new ArrayList<>();
 
-        // 2. 取得したリストをループで回して、「未完了の人の名前」を裏から詰めるにゃ！
-        for (QuestionProgressDto stats : statsList) {
+        for (Question q : allQuestions) {
+            QuestionProgressDto dto = new QuestionProgressDto();
+            dto.setQuestionId(q.getQuestionId());
 
-            // 💡 SQLの解説:
-            // 一般ユーザー(status='USER')の中で、
-            // 「answersテーブルに、このquestion_idで解答を記録していない人」の名前(name)を全件抜くにゃ。
-            String sql = "SELECT u.name FROM users u " +
-                    "WHERE u.status = 'USER' " +
+            // 💡 2. 未完了の受講生リストをSQLで取得（大文字・小文字のブレもUPPERで防衛にゃ！）
+            String uncompletedSql = "SELECT u.name FROM users u " +
+                    "WHERE UPPER(u.status) = 'USER' " +
                     "AND u.user_id NOT IN (" +
                     " SELECT a.user_id FROM answers a " +
                     " WHERE a.question_id = ? AND a.user_id IS NOT NULL" +
                     ")";
+            List<String> uncompletedUsers = jdbcTemplate.queryForList(uncompletedSql, String.class, q.getQuestionId());
+            dto.setUncompletedUsers(uncompletedUsers);
 
-            // SQLを実行して、まだ解いていない人の名前のリストを取得にゃ
-            List<String> uncompletedNames = jdbcTemplate.queryForList(sql, String.class,
-                    stats.getQuestionId());
+            // 💡 3. 完了した人数をSQLで綺麗に数えるにゃ！
+            String answeredSql = "SELECT COUNT(DISTINCT a.user_id) FROM answers a " +
+                    "JOIN users u ON a.user_id = u.user_id " +
+                    "WHERE a.question_id = ? AND UPPER(u.status) = 'USER'";
+            Integer answeredCount = jdbcTemplate.queryForObject(answeredSql, Integer.class, q.getQuestionId());
+            dto.setAnsweredUserCount(answeredCount != null ? answeredCount : 0);
 
-            // DTOにリストをセットするにゃ
-            stats.setUncompletedUsers(uncompletedNames);
+            // 🚀 【ここが分母の決定打！】
+            // 「一般ユーザーの総数」を確実に割り出してDTOに入れるにゃ！
+            String totalUserSql = "SELECT COUNT(*) FROM users WHERE UPPER(status) = 'USER'";
+            Integer totalCount = jdbcTemplate.queryForObject(totalUserSql, Integer.class);
+            dto.setTotalUserCount(totalCount != null ? totalCount : 0);
+
+            resultList.add(dto);
         }
 
-        return statsList;
+        return resultList;
     }
 }

@@ -11,15 +11,15 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
 
     List<Question> findByPdf_PdfId(Integer pdfId);
 
-    // ★進捗取得（これを追加）
-    // @Query("""
-    // SELECT new com.example.demo.dto.progress.QuestionProgressDto(
-    // q.id,
-    // COUNT(a.id)
-    // )
-    // FROM Question q
-    // LEFT JOIN Answer a ON a.question.id = q.id
-    // GROUP BY q.id
-    // """)
-    // List<QuestionProgressDto> getQuestionProgressStats();
+    // 🚀 フィールド名をエンティティ（questionId, answerId）に完全に合わせたにゃ！
+    @Query("""
+            SELECT new com.example.demo.dto.progress.QuestionProgressDto(
+                q.questionId,
+                COUNT(a.answerId)
+            )
+            FROM Question q
+            LEFT JOIN Answer a ON a.question.questionId = q.questionId
+            GROUP BY q.questionId
+            """)
+    List<QuestionProgressDto> getQuestionProgressStats();
 }

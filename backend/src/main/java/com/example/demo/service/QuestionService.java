@@ -94,6 +94,19 @@ public class QuestionService {
         return res;
     }
 
+    public List<QuestionResponse> getAllQuestions() {
+        return questionRepository.findAll()
+                .stream()
+                .map(q -> {
+                    QuestionResponse qr = new QuestionResponse();
+                    qr.setQuestionId(q.getQuestionId());
+                    qr.setQuestionText(q.getQuestionText());
+                    qr.setCorrectAnswer(q.getCorrectAnswer());
+                    return qr;
+                })
+                .toList();
+    }
+
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }
