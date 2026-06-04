@@ -116,7 +116,7 @@ export default function AdminConsole() {
         try {
             const requestBody = {
                 pdfId: themeId,
-                questionText: "新しい問題内容（ローカル）",
+                questionText: "新しい問題内容",
                 correctAnswer: "模範解答"
             };
 

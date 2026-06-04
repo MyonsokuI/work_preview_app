@@ -12,16 +12,21 @@ export default function ProgressChecker({ currentTheme }) {
                 if (!res.ok) throw new Error("進捗データの取得に失敗しましたにゃ");
                 return res.json();
             })
+            // 🟢 useEffect 内のこの部分を差し替えるにゃ！
+            // 🟢 useEffect 内の .then((data) => { ... }) 部分にゃ！
             .then((data) => {
                 if (currentTheme && currentTheme.questions && currentTheme.questions.length > 0) {
+                    // 現在のテーマに属する問題だけでフィルタリングしつつ、Javaからのデータをガッチャンコするにゃ
                     const combined = currentTheme.questions.map((q) => {
+                        // Javaから届いたデータ（data）の中から、一致するquestionIdを探すにゃ
                         const matched = data.find((item) => String(item.questionId) === String(q.questionId));
+
                         return {
                             questionId: q.questionId,
                             questionText: q.questionText,
+                            // 💡 マッチすればJavaの値を使い、追加直後などでマッチしなければ安全に初期値を詰めるにゃ！
                             answeredUserCount: matched ? matched.answeredUserCount : 0,
-                            totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 9),
-                            // 💡 Javaから届いた未完了受講生リスト。なければ空配列にするにゃ
+                            totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 8),
                             uncompletedUsers: matched ? matched.uncompletedUsers : []
                         };
                     });
