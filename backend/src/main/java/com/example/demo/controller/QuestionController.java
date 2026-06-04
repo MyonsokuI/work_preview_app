@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.Question;
+import com.example.demo.dto.question.QuestionRequest;
+import com.example.demo.dto.question.QuestionResponse;
 import com.example.demo.service.QuestionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,7 @@ public class QuestionController {
      * GET /api/themes/{themeId}/questions
      */
     @GetMapping("/api/themes/{themeId}/questions")
-    public List<Question> getQuestionsByTheme(
-            @PathVariable Integer themeId) {
+    public List<QuestionResponse> getQuestionsByTheme(@PathVariable Integer themeId) {
 
         return questionService.getQuestionsByTheme(themeId);
     }
@@ -31,9 +31,7 @@ public class QuestionController {
      * GET /api/questions/{id}
      */
     @GetMapping("/api/questions/{id}")
-    public Question getQuestion(
-            @PathVariable Integer id) {
-
+    public QuestionResponse getQuestion(@PathVariable Integer id) {
         return questionService.getQuestion(id);
     }
 
@@ -42,10 +40,8 @@ public class QuestionController {
      * POST /api/questions
      */
     @PostMapping("/api/questions")
-    public Question createQuestion(
-            @RequestBody Question question) {
-
-        return questionService.createQuestion(question);
+    public QuestionResponse createQuestion(@RequestBody QuestionRequest request) {
+        return questionService.createQuestion(request);
     }
 
     /**
@@ -53,9 +49,9 @@ public class QuestionController {
      * PUT /api/questions/{id}
      */
     @PutMapping("/api/questions/{id}")
-    public Question updateQuestion(
+    public QuestionResponse updateQuestion(
             @PathVariable Integer id,
-            @RequestBody Question question) {
+            @RequestBody QuestionRequest question) {
 
         return questionService.updateQuestion(id, question);
     }

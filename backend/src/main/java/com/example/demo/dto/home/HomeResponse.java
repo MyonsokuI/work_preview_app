@@ -3,7 +3,6 @@ package com.example.demo.dto.home;
 import java.util.List;
 
 import com.example.demo.dto.answer.AnswerResponse;
-import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.dto.theme.ThemeResponse;
 
 import lombok.Data;
@@ -12,5 +11,4 @@ import lombok.Data;
 public class HomeResponse {
     private List<ThemeResponse> themes;
     private List<AnswerResponse> recentAnswers;
-    private LoginResponse user;
 }
