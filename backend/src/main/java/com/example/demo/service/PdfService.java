@@ -6,6 +6,7 @@ import com.example.demo.entity.Pdf;
 import com.example.demo.repository.PdfRepository;
 import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class PdfService {
         this.pdfRepository = pdfRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ThemeResponse> getAllThemes() {
 
         return pdfRepository.findAll()
@@ -31,6 +33,7 @@ public class PdfService {
                 .toList();
     }
 
+    @Transactional
     public ThemeResponse createTheme(ThemeRequest request) {
 
         Pdf pdf = new Pdf();
@@ -44,7 +47,8 @@ public class PdfService {
 
         return response;
     }
-
+    
+    @Transactional
     public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
 
         Pdf existing = pdfRepository.findById(id)
@@ -61,6 +65,7 @@ public class PdfService {
         return response;
     }
 
+    @Transactional
     public void deleteTheme(Integer id) {
         pdfRepository.deleteById(id);
     }
