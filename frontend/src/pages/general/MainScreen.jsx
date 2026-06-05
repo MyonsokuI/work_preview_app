@@ -7,6 +7,9 @@ export default function MainScreen() {
   const [activeThemeId, setActiveThemeId] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
 
+  // 課題表示のフィルタ
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const [answerInput, setAnswerInput] = useState("");
   const [search, setSearch] = useState("");
 
@@ -118,6 +121,45 @@ export default function MainScreen() {
           placeholder="検索"
           style={styles.search}
         />
+
+        <div style={{ marginTop: "10px" }}>
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="all"
+              checked={statusFilter === "all"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            すべて
+          </label>
+
+          <br />
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="completed"
+              checked={statusFilter === "completed"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            完了
+          </label>
+
+          <br />
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="uncompleted"
+              checked={statusFilter === "uncompleted"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            未完了
+          </label>
+        </div>
 
         {filteredThemes.map((theme) => {
           const isActive = theme.pdfId === activeThemeId;

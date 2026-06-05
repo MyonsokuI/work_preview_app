@@ -7,4 +7,5 @@ public class QuestionResponse {
     private Integer questionId;
     private String questionText;
     private String correctAnswer;
+    private Boolean answered;
 }
