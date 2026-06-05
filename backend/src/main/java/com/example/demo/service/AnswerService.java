@@ -9,6 +9,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,5 +86,23 @@ public class AnswerService {
 		res.setSubmittedAt(answer.getSubmittedAt());
 		res.setUserName(answer.getUser().getName());
 		return res;
+	}
+
+	// 💡 クラスの閉じカッコ（}）の内側に正しく配置しました
+	@Transactional
+	public AnswerResponse upsertAnswer(AnswerRequest request, Integer userId) {
+		return answerRepository
+				.findFirstByUser_UserIdAndQuestion_QuestionIdOrderByAnswerIdDesc(userId, request.getQuestionId())
+				.map(existingAnswer -> {
+					// 【更新ルート】
+					existingAnswer.setAnswerContent(request.getAnswerContent());
+					existingAnswer.setSubmittedAt(LocalDateTime.now());
+					Answer saved = answerRepository.save(existingAnswer);
+					return toResponse(saved);
+				})
+				.orElseGet(() -> {
+					// 【新規ルート】
+					return createAnswer(request, userId);
+				});
 	}
 }

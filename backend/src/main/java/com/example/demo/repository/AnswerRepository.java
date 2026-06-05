@@ -14,4 +14,10 @@ public interface AnswerRepository extends JpaRepository<Answer, Integer> {
     boolean existsByUser_UserIdAndQuestion_QuestionId(
             Integer userId,
             Integer questionId);
+    // 📂 com.example.demo.repository.AnswerRepository.java
+
+    // 🔥 メソッド名の末尾を OrderByIdDesc から OrderByAnswerIdDesc に変更します
+    java.util.Optional<Answer> findFirstByUser_UserIdAndQuestion_QuestionIdOrderByAnswerIdDesc(Integer userId,
+            Integer questionId);
+
 }
