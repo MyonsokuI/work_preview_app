@@ -49,7 +49,7 @@ public class UserService {
     public UserResponse createUser(UserRequest req) {
 
         if (userRepository.existsById(req.getUserId())) {
-            throw new RuntimeException("ID重複");
+            throw new BusinessException("ID重複");
         }
 
         User user = new User();
