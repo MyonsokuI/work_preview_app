@@ -6,6 +6,7 @@ import com.example.demo.entity.Answer;
 import com.example.demo.repository.AnswerRepository;
 import com.example.demo.repository.QuestionRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
 
@@ -36,11 +37,11 @@ public class AnswerService {
 
 		answer.setQuestion(
 				questionRepository.findById(request.getQuestionId())
-						.orElseThrow(() -> new RuntimeException("問題が見つかりません")));
+						.orElseThrow(() -> new BusinessException("問題が見つかりません")));
 
 		answer.setUser(
 				userRepository.findById(userId)
-						.orElseThrow(() -> new RuntimeException("ユーザーが見つかりません")));
+						.orElseThrow(() -> new BusinessException("ユーザーが見つかりません")));
 
 		answer.setSubmittedAt(LocalDateTime.now());
 
@@ -52,7 +53,7 @@ public class AnswerService {
 	public AnswerResponse updateAnswer(Integer id, AnswerRequest request) {
 
 		Answer answer = answerRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("回答が見つかりません"));
+				.orElseThrow(() -> new BusinessException("回答が見つかりません"));
 
 		answer.setAnswerContent(request.getAnswerContent());
 

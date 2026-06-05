@@ -4,6 +4,7 @@ import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.PdfRepository;
+import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public class PdfService {
     public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
 
         Pdf existing = pdfRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("テーマが見つかりません"));
+                .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
 
         existing.setTitle(updated.getTitle());
 
