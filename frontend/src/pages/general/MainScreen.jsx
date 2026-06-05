@@ -10,6 +10,10 @@ export default function MainScreen() {
   const [answerInput, setAnswerInput] = useState("");
   const [search, setSearch] = useState("");
 
+  // 模範解答・他人回答の表示/非表示
+  const [isModelOpen, setIsModelOpen] = useState(false);
+  const [isAnswersOpen, setIsAnswersOpen] = useState(false);
+
   // =========================
   // API（Adminと完全統一）
   // =========================
@@ -62,6 +66,44 @@ export default function MainScreen() {
       };
     })
     .filter(Boolean);
+
+  // =========================
+  // 他の人の回答一覧を保持
+  // =========================
+  const [answers, setAnswers] = useState([]);
+
+  // 問題が選択されたら、その問題の回答一覧を取得
+  useEffect(() => {
+    // 問題未選択なら何もしない
+    if (!activeQuestion) return;
+
+    fetch(
+      `http://localhost:8080/api/questions/${activeQuestion.questionId}/answers`
+    )
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("回答取得に失敗しました");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // 取得した回答一覧を保存
+
+        setAnswers(data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+    console.log(answers);
+
+  }, [activeQuestion]);
+
+
+  // ★問題切り替え検知
+  useEffect(() => {
+    setIsModelOpen(false);
+    setIsAnswersOpen(false);
+  }, [activeQuestion?.questionId]);
 
   // =========================
   // UI
@@ -137,11 +179,55 @@ export default function MainScreen() {
 
             <hr />
 
+            {/* ==========================
+                模範解答
+            ========================== */}
             <div>
-              <b>模範解答</b>
-              <div style={styles.box}>
-                {activeQuestion.correctAnswer}
-              </div>
+              <b style={{ cursor: "pointer" }} onClick={() => setIsModelOpen((prev) => !prev)}>
+                模範解答{isModelOpen ? "▶" : "▼"}
+              </b>
+
+              {isModelOpen && (
+                <div style={styles.box}>
+                  {activeQuestion.correctAnswer}
+                </div>
+              )}
+            </div>
+
+            {/* ==========================
+                他の人の回答一覧
+            ========================== */}
+            <div style={{ marginTop: "20px" }}>
+              <b style={{ cursor: "pointer" }} onClick={() => setIsAnswersOpen((prev) => !prev)}>
+                他の人の回答{isAnswersOpen ? "▶" : "▼"}
+              </b>
+
+              {isAnswersOpen && (
+                /* 回答が0件の場合 */
+                <div>
+                  {
+                    answers.length === 0 ? (
+                      <div style={styles.box}>
+                        回答はありません
+                      </div>
+                    ) : (
+                      /* 回答一覧を表示 */
+                      answers.map((answer) => (
+                        <div
+                          key={answer.answerId}
+                          style={{
+                            ...styles.box,
+                            marginTop: "8px",
+                          }}
+                        >
+                          {answer.userName}さんの回答: <br />
+                          {answer.answerContent}
+                        </div>
+                      ))
+                    )
+                  }
+                </div>
+              )}
             </div>
           </div>
         )}

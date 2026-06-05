@@ -82,6 +82,7 @@ public class AnswerService {
 		res.setQuestionId(answer.getQuestion().getQuestionId());
 		res.setUserId(answer.getUser().getUserId());
 		res.setSubmittedAt(answer.getSubmittedAt());
+		res.setUserName(answer.getUser().getName());
 		return res;
 	}
 }
