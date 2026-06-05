@@ -8,6 +8,7 @@ import com.example.demo.repository.QuestionRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.exception.BusinessException;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class AnswerService {
 	}
 
 	// DTO入力 → DTO出力
+	@Transactional
 	public AnswerResponse createAnswer(AnswerRequest request, Integer userId) {
 
 		Answer answer = new Answer();
@@ -51,6 +53,7 @@ public class AnswerService {
 		return toResponse(saved);
 	}
 
+	@Transactional
 	public AnswerResponse updateAnswer(Integer id, AnswerRequest request) {
 
 		Answer answer = answerRepository.findById(id)
@@ -63,6 +66,7 @@ public class AnswerService {
 		return toResponse(saved);
 	}
 
+	@Transactional(readOnly = true)
 	public List<AnswerResponse> getMyAnswers(Integer userId) {
 		return answerRepository.findByUser_UserId(userId)
 				.stream()
@@ -70,6 +74,7 @@ public class AnswerService {
 				.toList();
 	}
 
+	@Transactional(readOnly = true)
 	public List<AnswerResponse> getAnswersByQuestion(Integer questionId) {
 		return answerRepository.findByQuestion_QuestionId(questionId)
 				.stream()

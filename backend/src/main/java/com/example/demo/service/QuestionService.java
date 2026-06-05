@@ -7,6 +7,7 @@ import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
 import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class QuestionService {
     }
 
     // テーマ別取得
+    @Transactional(readOnly = true)
     public List<QuestionResponse> getQuestionsByTheme(Integer themeId) {
 
         return questionRepository.findByPdf_PdfId(themeId)
@@ -35,6 +37,7 @@ public class QuestionService {
     }
 
     // 単体取得
+    @Transactional(readOnly = true)
     public QuestionResponse getQuestion(Integer id) {
 
         Question q = questionRepository.findById(id)
@@ -49,6 +52,7 @@ public class QuestionService {
     }
 
     // 作成
+    @Transactional
     public QuestionResponse createQuestion(QuestionRequest request) {
 
         Question question = new Question();
@@ -70,6 +74,7 @@ public class QuestionService {
     }
 
     // 更新
+    @Transactional
     public QuestionResponse updateQuestion(Integer id, QuestionRequest request) {
 
         Question existing = questionRepository.findById(id)
@@ -95,6 +100,7 @@ public class QuestionService {
         return res;
     }
 
+    @Transactional(readOnly = true)
     public List<QuestionResponse> getAllQuestions() {
         return questionRepository.findAll()
                 .stream()
@@ -108,6 +114,7 @@ public class QuestionService {
                 .toList();
     }
 
+    @Transactional
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
     }

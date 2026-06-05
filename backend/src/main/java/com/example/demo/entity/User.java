@@ -1,10 +1,16 @@
 package com.example.demo.entity;
 
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "users")
+@EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,4 +29,10 @@ public class User {
 
     @Column(length = 20)
     private String status; // active / inactive / admin など
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }
