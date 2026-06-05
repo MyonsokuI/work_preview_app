@@ -4,6 +4,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
+import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,7 @@ public class UserService {
     public UserResponse getUser(Integer id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
+                .orElseThrow(() -> new BusinessException("ユーザーが見つかりません"));
 
         UserResponse res = new UserResponse();
         res.setUserId(user.getUserId());
@@ -48,7 +49,7 @@ public class UserService {
     public UserResponse createUser(UserRequest req) {
 
         if (userRepository.existsById(req.getUserId())) {
-            throw new RuntimeException("ID重複");
+            throw new BusinessException("ID重複");
         }
 
         User user = new User();

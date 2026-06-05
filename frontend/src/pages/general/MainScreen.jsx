@@ -21,6 +21,11 @@ export default function MainScreen() {
   const [activeThemeId, setActiveThemeId] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
 
+  // 課題表示のフィルタ
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [answerInput, setAnswerInput] = useState("");
+  const [search, setSearch] = useState("");
   // questionId -> answer
   const [answerMap, setAnswerMap] = useState({});
   const [saved, setSaved] = useState(false);
@@ -51,7 +56,7 @@ export default function MainScreen() {
   // =========================
   useEffect(() => {
     if (!userId) return;
-    
+
     fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -108,7 +113,7 @@ export default function MainScreen() {
 
     const questionId = activeQuestion.questionId ?? activeQuestion.question_id;
     const key = String(questionId);
-    
+
     // 💡 追記：画面上のtextareaから直接最新の入力内容を引っこ抜く
     const textareaElem = document.querySelector("textarea");
     const content = textareaElem ? textareaElem.value : (answerMap[key]?.answerContent || "");
@@ -153,7 +158,7 @@ export default function MainScreen() {
   // =========================
   // 他の人の回答一覧を保持
   // =========================
-  const [answers, setAnswers] = useState([]);
+  const [otherAnswers, setOtherAnswers] = useState([]);
 
   // 問題が選択されたら、その問題の回答一覧を取得
   useEffect(() => {
@@ -171,16 +176,16 @@ export default function MainScreen() {
       })
       .then((data) => {
         // 取得した回答一覧を保存
+        const filtered = data.filter(
+          (a) => a.userId !== userId); // 自分の回答は除外
 
-        setAnswers(data);
+        setOtherAnswers(filtered);
       })
       .catch((err) => {
         console.error(err);
       });
-    console.log(answers);
 
   }, [activeQuestion]);
-
 
   // ★問題切り替え検知
   useEffect(() => {
@@ -195,6 +200,52 @@ export default function MainScreen() {
     <div style={styles.wrapper}>
       {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="検索"
+          style={styles.search}
+        />
+
+        <div style={{
+          marginTop: "10px",
+          display: "flex",
+          gap: "12px",
+        }}>
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="all"
+              checked={statusFilter === "all"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            すべて
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="completed"
+              checked={statusFilter === "completed"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            完了
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="uncompleted"
+              checked={statusFilter === "uncompleted"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            未完了
+          </label>
+        </div>
+
         {themes.map((theme) => {
           const isActive = theme.pdfId === activeThemeId;
 
@@ -214,26 +265,42 @@ export default function MainScreen() {
               </div>
 
               {isActive &&
-                theme.questions?.map((q) => {
+                theme.questions?.filter((q) => {
                   const qid = q.questionId ?? q.question_id;
+                  // 完了のみ表示
+                  if (statusFilter === "completed") {
+                    return !!answerMap[qid];
+                  }
 
-                  return (
-                    <div
-                      key={qid}
-                      onClick={() => setActiveQuestion(q)}
-                      style={{
-                        ...styles.question,
-                        background:
-                          (activeQuestion?.questionId ?? activeQuestion?.question_id) === qid
-                            ? "#dbeafe"
-                            : "transparent",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      📝 {q.questionText}
-                    </div>
-                  );
-                })}
+                  // 未完了のみ表示
+                  if (statusFilter === "uncompleted") {
+                    return !answerMap[qid];
+                  }
+
+                  // すべて表示
+                  return true;
+                })
+
+                  .map((q) => {
+                    const qid = q.questionId ?? q.question_id;
+
+                    return (
+                      <div
+                        key={qid}
+                        onClick={() => setActiveQuestion(q)}
+                        style={{
+                          ...styles.question,
+                          background:
+                            (activeQuestion?.questionId ?? activeQuestion?.question_id) === qid
+                              ? "#dbeafe"
+                              : "transparent",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        📝 {q.questionText}
+                      </div>
+                    );
+                  })}
             </div>
           );
         })}
@@ -319,24 +386,25 @@ export default function MainScreen() {
                 /* 回答が0件の場合 */
                 <div>
                   {
-                    answers.length === 0 ? (
+                    otherAnswers.length === 0 ? (
                       <div style={styles.box}>
                         回答はありません
                       </div>
                     ) : (
                       /* 回答一覧を表示 */
-                      answers.map((answer) => (
-                        <div
-                          key={answer.answerId}
-                          style={{
-                            ...styles.box,
-                            marginTop: "8px",
-                          }}
-                        >
-                          {answer.userName}さんの回答: <br />
-                          {answer.answerContent}
-                        </div>
-                      ))
+                      otherAnswers
+                        .map((answer) => (
+                          <div
+                            key={answer.answerId}
+                            style={{
+                              ...styles.box,
+                              marginTop: "8px",
+                            }}
+                          >
+                            {answer.userName}さんの回答: <br />
+                            {answer.answerContent}
+                          </div>
+                        ))
                     )
                   }
                 </div>

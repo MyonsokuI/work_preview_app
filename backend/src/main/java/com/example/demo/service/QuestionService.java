@@ -5,6 +5,7 @@ import com.example.demo.dto.question.QuestionResponse;
 import com.example.demo.entity.Pdf;
 import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
+import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class QuestionService {
     public QuestionResponse getQuestion(Integer id) {
 
         Question q = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
+                .orElseThrow(() -> new BusinessException("問題が見つかりません"));
 
         QuestionResponse res = new QuestionResponse();
         res.setQuestionId(q.getQuestionId());
@@ -72,7 +73,7 @@ public class QuestionService {
     public QuestionResponse updateQuestion(Integer id, QuestionRequest request) {
 
         Question existing = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("問題が見つかりません"));
+                .orElseThrow(() -> new BusinessException("問題が見つかりません"));
 
         existing.setQuestionText(request.getQuestionText());
         existing.setCorrectAnswer(request.getCorrectAnswer());
