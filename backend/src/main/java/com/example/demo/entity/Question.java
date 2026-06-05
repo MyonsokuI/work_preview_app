@@ -1,5 +1,7 @@
 package com.example.demo.entity;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,4 +26,9 @@ public class Question {
 
     @Column(columnDefinition = "TEXT")
     private String correctAnswer;
+
+    // 🚀 ここを追記にゃ！
+    // 問題が消えたら、その問題に対する回答（answers）も残さずシュッと全消去するにゃ！
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Answer> answers;
 }

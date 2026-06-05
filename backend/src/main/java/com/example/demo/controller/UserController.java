@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,14 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    /**
+     * ユーザー登録
+     */
+    @PostMapping
+    public UserResponse createUser(@RequestBody UserRequest request) {
+        return userService.createUser(request);
     }
 
     /**

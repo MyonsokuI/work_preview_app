@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.repository.UserRepository;
+import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
 import com.example.demo.exception.BusinessException;
@@ -40,6 +41,30 @@ public class UserService {
         res.setUserId(user.getUserId());
         res.setName(user.getName());
         res.setStatus(user.getStatus());
+
+        return res;
+    }
+
+    // ユーザー登録
+    public UserResponse createUser(UserRequest req) {
+
+        if (userRepository.existsById(req.getUserId())) {
+            throw new RuntimeException("ID重複");
+        }
+
+        User user = new User();
+        user.setUserId(req.getUserId());
+        user.setName(req.getName());
+        user.setPassword(req.getPassword());
+        user.setStatus("USER");
+
+        User saved = userRepository.save(user);
+
+        // Entity → Response に変換
+        UserResponse res = new UserResponse();
+        res.setUserId(saved.getUserId());
+        res.setName(saved.getName());
+        res.setStatus(saved.getStatus());
 
         return res;
     }
