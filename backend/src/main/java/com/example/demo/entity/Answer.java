@@ -5,8 +5,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
 @Entity
 @Table(name = "answers")
+@EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,4 +33,11 @@ public class Answer {
     private String answerContent;
 
     private LocalDateTime submittedAt;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
 }
