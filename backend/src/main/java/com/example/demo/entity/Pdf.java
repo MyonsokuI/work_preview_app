@@ -1,5 +1,7 @@
 package com.example.demo.entity;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,4 +19,7 @@ public class Pdf {
 
     @Column(nullable = false, length = 25)
     private String title;
+
+    @OneToMany(mappedBy = "pdf", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Question> questions;
 }
