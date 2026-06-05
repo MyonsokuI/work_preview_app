@@ -111,6 +111,29 @@ export default function AdminConsole() {
         ));
     };
 
+    // 🚀 💡 【新機能】問題削除が成功した時にStateを同期する処理にゃ！
+    const handleDeleteQuestionState = (themeId, questionId) => {
+        setThemes((prevThemes) => {
+            return prevThemes.map((theme) => {
+                if (theme.pdfId === themeId) {
+                    // 該当するテーマを見つけたら、その中の questions 配列から指定された questionId を除外するにゃ！
+                    return {
+                        ...theme,
+                        questions: (theme.questions || []).filter((q) => q.questionId !== questionId)
+                    };
+                }
+                return theme;
+            });
+        });
+
+        // 💡 防衛＆親切設計：もし今消した問題が「現在右側で編集中の問題」だったら、
+        // 右側のエディタを閉じるか、代わりの問題を選択するか、進捗画面に逃がしてあげるにゃ
+        if (activeQuestionId === questionId) {
+            setActiveQuestionId(null);
+            setActiveTab("progress"); // エディタの中身が空っぽになるので、自動で進捗タブに切り替えてあげるにゃ
+        }
+    };
+
     // 🟢 問題追加の通信と画面反映
     const handleAddQuestion = async (themeId) => {
         try {
@@ -215,7 +238,8 @@ export default function AdminConsole() {
                 onAddTheme={handleAddTheme}
                 onDeleteTheme={handleDeleteTheme}
                 onUpdateTheme={handleUpdateTheme}
-                onLogout={handleLogout} // 👈 全体進捗の代わりにログアウト関数を渡すにゃ！
+                onLogout={handleLogout} // 全体進捗の代わりにログアウト関数を渡すにゃ！
+                onDeleteQuestion={handleDeleteQuestionState} // 🚀 💡 ここでさっき作った関数をサイドバーに引き渡すにゃ！
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>
