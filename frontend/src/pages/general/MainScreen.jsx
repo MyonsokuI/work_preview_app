@@ -3,69 +3,152 @@ import React, { useEffect, useState } from "react";
 const API_BASE = "http://localhost:8080";
 
 export default function MainScreen() {
+  // 💡 Login.jsxが保存した「currentUser」オブジェクトから実際のユーザーIDを動的に取得
+  const [userId, setUserId] = useState(() => {
+    try {
+      const savedUserStr = localStorage.getItem("currentUser");
+      if (savedUserStr) {
+        const userObj = JSON.parse(savedUserStr);
+        return userObj.userId ? Number(userObj.userId) : null;
+      }
+    } catch (e) {
+      console.error("ユーザー情報のパースに失敗したにゃ:", e);
+    }
+    return null;
+  });
+
   const [themes, setThemes] = useState([]);
   const [activeThemeId, setActiveThemeId] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
 
-  const [answerInput, setAnswerInput] = useState("");
-  const [search, setSearch] = useState("");
+  // questionId -> answer
+  const [answerMap, setAnswerMap] = useState({});
+  const [saved, setSaved] = useState(false);
 
   // 模範解答・他人回答の表示/非表示
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
 
   // =========================
-  // API（Adminと完全統一）
+  // テーマ取得
   // =========================
   useEffect(() => {
     fetch(`${API_BASE}/api/themes`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("THEMES:", data);
         setThemes(data);
 
         if (data.length > 0) {
           setActiveThemeId(data[0].pdfId);
-
-          if (data[0].questions?.length > 0) {
-            setActiveQuestion(data[0].questions[0]);
-          }
+          setActiveQuestion(data[0].questions?.[0] || null);
         }
       })
-      .catch((err) => console.error(err));
+      .catch(console.error);
   }, []);
 
   // =========================
-  // 現在のテーマ
+  // 回答取得
+  // =========================
+  useEffect(() => {
+    if (!userId) return;
+    
+    fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("answers raw:", data);
+
+        const map = {};
+
+        data.forEach((a) => {
+          const questionId = a.questionId ?? a.question_id;
+          const answerId = a.answerId ?? a.answer_id;
+          const answerContent =
+            a.answerContent ?? a.answer_content ?? "";
+
+          const submittedAt =
+            a.submittedAt ?? a.submitted_at ?? a.createdAt;
+
+          if (!questionId) return;
+
+          const key = String(questionId);
+          const existing = map[key];
+          const existingTime = existing?.submittedAt ? new Date(existing.submittedAt) : 0;
+          const newTime = submittedAt ? new Date(submittedAt) : 0;
+
+          if (!existing || newTime > existingTime) {
+            map[key] = {
+              ...a,
+              questionId,
+              answerId,
+              answerContent,
+              submittedAt,
+            };
+          }
+        });
+
+        setAnswerMap(map);
+      })
+      .catch(console.error);
+  }, [userId]);
+
+  // =========================
+  // 現在テーマ
   // =========================
   const currentTheme =
     themes.find((t) => t.pdfId === activeThemeId) || themes[0];
 
   // =========================
-  // 検索フィルタ（テーマ単位）
+  // 保存（★新規の組み合わせでも確実に文字を送るよう追記）
   // =========================
-  const filteredThemes = themes
-    .map((theme) => {
-      if (!search) return theme;
+  const handleSave = async () => {
+    if (!activeQuestion || !userId) {
+      alert("ログイン情報が見つからないか、問題が選択されていません");
+      return;
+    }
 
-      const matchTheme = theme.title
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
+    const questionId = activeQuestion.questionId ?? activeQuestion.question_id;
+    const key = String(questionId);
+    
+    // 💡 追記：画面上のtextareaから直接最新の入力内容を引っこ抜く
+    const textareaElem = document.querySelector("textarea");
+    const content = textareaElem ? textareaElem.value : (answerMap[key]?.answerContent || "");
 
-      const filteredQuestions = theme.questions?.filter((q) =>
-        q.questionText?.toLowerCase().includes(search.toLowerCase())
-      );
+    try {
+      const res = await fetch(`${API_BASE}/api/answers/upsert?userId=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionId: questionId,
+          answerContent: content, // 最新のテキストを確実に送信！
+        }),
+      });
 
-      if (!matchTheme && (!filteredQuestions || filteredQuestions.length === 0)) {
-        return null;
-      }
+      if (!res.ok) throw new Error("保存に失敗しました");
 
-      return {
-        ...theme,
-        questions: matchTheme ? theme.questions : filteredQuestions,
+      const result = await res.json();
+      console.log("SAVE RESULT:", result);
+
+      const normalizedKey = String(result.questionId ?? questionId);
+      const normalized = {
+        ...result,
+        questionId: result.questionId ?? questionId,
+        answerId: result.answerId,
+        answerContent: result.answerContent ?? content,
+        submittedAt: result.submittedAt,
       };
-    })
-    .filter(Boolean);
+
+      setAnswerMap((prev) => ({
+        ...prev,
+        [normalizedKey]: normalized,
+      }));
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    } catch (err) {
+      console.error(err);
+      alert("保存失敗");
+    }
+  };
 
   // =========================
   // 他の人の回答一覧を保持
@@ -110,21 +193,13 @@ export default function MainScreen() {
   // =========================
   return (
     <div style={styles.wrapper}>
-      {/* SIDEBAR */}
+      {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="検索"
-          style={styles.search}
-        />
-
-        {filteredThemes.map((theme) => {
+        {themes.map((theme) => {
           const isActive = theme.pdfId === activeThemeId;
 
           return (
             <div key={theme.pdfId}>
-              {/* フォルダ */}
               <div
                 onClick={() => {
                   setActiveThemeId(theme.pdfId);
@@ -138,29 +213,33 @@ export default function MainScreen() {
                 📁 {theme.title}
               </div>
 
-              {/* 問題一覧 */}
               {isActive &&
-                theme.questions?.map((q) => (
-                  <div
-                    key={q.questionId}
-                    onClick={() => setActiveQuestion(q)}
-                    style={{
-                      ...styles.question,
-                      background:
-                        activeQuestion?.questionId === q.questionId
-                          ? "#dbeafe"
-                          : "transparent",
-                    }}
-                  >
-                    {q.questionText}
-                  </div>
-                ))}
+                theme.questions?.map((q) => {
+                  const qid = q.questionId ?? q.question_id;
+
+                  return (
+                    <div
+                      key={qid}
+                      onClick={() => setActiveQuestion(q)}
+                      style={{
+                        ...styles.question,
+                        background:
+                          (activeQuestion?.questionId ?? activeQuestion?.question_id) === qid
+                            ? "#dbeafe"
+                            : "transparent",
+                        fontWeight: "normal",
+                      }}
+                    >
+                      📝 {q.questionText}
+                    </div>
+                  );
+                })}
             </div>
           );
         })}
       </div>
 
-      {/* MAIN */}
+      {/* ================= MAIN ================= */}
       <div style={styles.main}>
         {!activeQuestion ? (
           <div>問題を選択してください</div>
@@ -168,16 +247,50 @@ export default function MainScreen() {
           <div style={styles.card}>
             <h3>{activeQuestion.questionText}</h3>
 
+            {/* ================= ANSWER ================= */}
             <textarea
-              value={answerInput}
-              onChange={(e) => setAnswerInput(e.target.value)}
+              value={
+                (() => {
+                  const qid =
+                    activeQuestion.questionId ??
+                    activeQuestion.question_id;
+
+                  return (
+                    answerMap[String(qid)]?.answerContent || ""
+                  );
+                })()
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+
+                const qid =
+                  activeQuestion.questionId ??
+                  activeQuestion.question_id;
+
+                setAnswerMap((prev) => ({
+                  ...prev,
+                  [String(qid)]: {
+                    ...prev[String(qid)],
+                    answerContent: value,
+                    questionId: qid,
+                  },
+                }));
+              }}
               style={styles.textarea}
               placeholder="回答を入力"
             />
 
-            <button style={styles.button}>保存（仮）</button>
+            <div style={{ marginTop: 10 }}>
+              <button onClick={handleSave} style={styles.button}>
+                保存
+              </button>
 
-            <hr />
+              {saved && (
+                <span style={{ color: "green", marginLeft: 10 }}>
+                  保存しました
+                </span>
+              )}
+            </div>
 
             {/* ==========================
                 模範解答
@@ -238,60 +351,50 @@ export default function MainScreen() {
 
 // =========================
 const styles = {
-  wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
-
+  wrapper: {
+    display: "flex",
+    height: "100vh",
+    fontFamily: "sans-serif",
+  },
   sidebar: {
     width: 320,
     borderRight: "1px solid #ddd",
-    padding: 10,
     overflowY: "auto",
+    padding: 10,
   },
-
-  search: {
-    width: "100%",
-    padding: 8,
-    marginBottom: 10,
-  },
-
   theme: {
-    padding: "8px",
+    padding: 8,
     fontWeight: "bold",
     cursor: "pointer",
     borderRadius: 4,
   },
-
   question: {
     padding: "6px 16px",
-    fontSize: 13,
     cursor: "pointer",
+    fontSize: 13,
     borderRadius: 4,
   },
-
   main: {
     flex: 1,
     padding: 20,
   },
-
   card: {
-    padding: 20,
     border: "1px solid #ddd",
+    padding: 20,
     borderRadius: 8,
   },
-
   textarea: {
     width: "100%",
     height: 120,
     marginTop: 10,
   },
-
   button: {
-    marginTop: 10,
     padding: "6px 12px",
   },
-
   box: {
     background: "#f3f4f6",
     padding: 10,
     marginTop: 8,
+    borderRadius: 6,
   },
 };
