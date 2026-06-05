@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
+    const navigate = useNavigate();
     const [form, setForm] = useState({
         userId: "",
         name: "",
@@ -50,7 +52,8 @@ export default function Register() {
             const data = await res.json();
             console.log("登録成功:", data);
 
-            setMessage("登録成功しました");
+            // 👉 ログイン画面へ戻る
+            navigate("/login");
 
             // クリア
             setForm({
