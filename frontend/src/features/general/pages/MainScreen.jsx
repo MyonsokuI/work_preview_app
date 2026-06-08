@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = "http://localhost:8080";
+import { userApi } from "../api/userApi"; // 💡 共通API関数をインポートしたにゃ！
 
 export default function MainScreen() {
   const navigate = useNavigate();
-  
-  // 💡 追記：textareaの文字を安全に取得するための参照(Ref)を作成。これでquerySelectorを完全排除！
+
+  // textareaの文字を安全に取得するための参照(Ref)
   const textareaRef = useRef(null);
 
   // ユーザー情報を取得
@@ -29,10 +28,6 @@ export default function MainScreen() {
 
   // 課題表示のフィルタ
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const [answerInput, setAnswerInput] = useState("");
-  const [search, setSearch] = useState("");
-  // questionId -> answer
   const [answerMap, setAnswerMap] = useState({});
   const [saved, setSaved] = useState(false);
 
@@ -42,6 +37,9 @@ export default function MainScreen() {
 
   // 検索キーワード用のState
   const [searchQuery, setSearchQuery] = useState("");
+
+  // 他の人の回答一覧を保持
+  const [otherAnswers, setOtherAnswers] = useState([]);
 
   // =========================
   // 🛡️ ログインチェックガード
@@ -59,18 +57,18 @@ export default function MainScreen() {
     if (window.confirm("ログアウトしますか？")) {
       localStorage.removeItem("currentUser");
       localStorage.clear();
-      setUserId(null); // userIdをnullにすることで、上のガードが働き/loginへ強制移動します
+      setUserId(null); // Guardを働かせて/loginへ強制移動
     }
   };
 
   // =========================
-  // テーマ取得
+  // 📁 テーマ取得
   // =========================
   useEffect(() => {
     if (!userId) return;
 
-    fetch(`${API_BASE}/api/themes`)
-      .then((res) => res.json())
+    // 💡 共通API関数（getThemes）に置き換えにゃ！
+    userApi.getThemes()
       .then((data) => {
         setThemes(data);
 
@@ -79,30 +77,26 @@ export default function MainScreen() {
           setActiveQuestion(data[0].questions?.[0] || null);
         }
       })
-      .catch(console.error);
+      .catch((err) => console.error("テーマ取得エラーにゃ:", err));
   }, [userId]);
 
   // =========================
-  // 回答取得
+  // 📝 自分の回答取得
   // =========================
   useEffect(() => {
     if (!userId) return;
 
-    fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
-      .then((res) => res.json())
+    // 💡 共通API関数（getMyAnswers）に置き換えにゃ！
+    userApi.getMyAnswers(userId)
       .then((data) => {
         console.log("answers raw:", data);
-
         const map = {};
 
         data.forEach((a) => {
           const questionId = a.questionId ?? a.question_id;
           const answerId = a.answerId ?? a.answer_id;
-          const answerContent =
-            a.answerContent ?? a.answer_content ?? "";
-
-          const submittedAt =
-            a.submittedAt ?? a.submitted_at ?? a.createdAt;
+          const answerContent = a.answerContent ?? a.answer_content ?? "";
+          const submittedAt = a.submittedAt ?? a.submitted_at ?? a.createdAt;
 
           if (!questionId) return;
 
@@ -124,11 +118,11 @@ export default function MainScreen() {
 
         setAnswerMap(map);
       })
-      .catch(console.error);
+      .catch((err) => console.error("回答取得エラーにゃ:", err));
   }, [userId]);
 
   // =========================
-  // 保存
+  // 💾 回答の保存(共通upsert)
   // =========================
   const handleSave = async () => {
     if (!activeQuestion || !userId) {
@@ -138,23 +132,11 @@ export default function MainScreen() {
 
     const questionId = activeQuestion.questionId ?? activeQuestion.question_id;
     const key = String(questionId);
-    
-    // 💡 修正：フリーズの原因だったquerySelectorを廃止し、Refから安全に最新値を取得
     const content = textareaRef.current ? textareaRef.current.value : (answerMap[key]?.answerContent || "");
 
     try {
-      const res = await fetch(`${API_BASE}/api/answers/upsert?userId=${userId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: questionId,
-          answerContent: content,
-        }),
-      });
-
-      if (!res.ok) throw new Error("保存に失敗しました");
-
-      const result = await res.json();
+      // 💡 共通API関数（upsertAnswer）に置き換えにゃ！
+      const result = await userApi.upsertAnswer(userId, questionId, content);
       console.log("SAVE RESULT:", result);
 
       const normalizedKey = String(result.questionId ?? questionId);
@@ -175,55 +157,46 @@ export default function MainScreen() {
       setTimeout(() => setSaved(false), 1200);
     } catch (err) {
       console.error(err);
-      alert("保存失敗");
+      alert(err.message || "保存失敗にゃ");
     }
   };
 
   // =========================
-  // 他の人の回答一覧を保持
+  // 👥 他の人の回答一覧の取得
   // =========================
-  const [otherAnswers, setOtherAnswers] = useState([]);
-
   useEffect(() => {
     if (!activeQuestion) return;
 
-    fetch(`${API_BASE}/api/questions/${activeQuestion.questionId}/answers`)
-      .then((res) => {
-        if (!res.ok) throw new Error("回答取得に失敗しました");
-        return res.json();
-      })
-      .then((data) => {
-        // 取得した回答一覧を保存
-        const filtered = data.filter(
-          (a) => a.userId !== userId); // 自分の回答は除外
+    const targetQuestionId = activeQuestion.questionId ?? activeQuestion.question_id;
 
+    // 💡 共通API関数（getOtherAnswers）に置き換えにゃ！
+    userApi.getOtherAnswers(targetQuestionId)
+      .then((data) => {
+        // 自分の回答は除外してセット
+        const filtered = data.filter((a) => a.userId !== userId);
         setOtherAnswers(filtered);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("他人の回答取得エラーにゃ:", err);
       });
 
-  }, [activeQuestion]);
+  }, [activeQuestion, userId]);
 
-  // ★問題切り替え検知
+  // ★問題切り替え時、アコーディオンを閉じる
   useEffect(() => {
     setIsModelOpen(false);
     setIsAnswersOpen(false);
-  }, [activeQuestion?.questionId]);
+  }, [activeQuestion?.questionId, activeQuestion?.question_id]);
 
   // 未ログイン時は画面描画を一瞬止めるガード
   if (!userId) {
     return <div style={{ padding: 20 }}>ログイン画面へ移動中...</div>;
   }
 
-  // =========================
-  // UI
-  // =========================
   return (
     <div style={styles.wrapper}>
       {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
-        {/*左上の検索欄とログアウトボタンのエリア*/}
         <div style={styles.topBar}>
           <input
             type="text"
@@ -237,11 +210,7 @@ export default function MainScreen() {
           </button>
         </div>
 
-        <div style={{
-          marginTop: "10px",
-          display: "flex",
-          gap: "12px",
-        }}>
+        <div style={{ marginTop: "10px", display: "flex", gap: "12px" }}>
           <label>
             <input
               type="radio"
@@ -252,7 +221,6 @@ export default function MainScreen() {
             />
             すべて
           </label>
-
           <label>
             <input
               type="radio"
@@ -263,7 +231,6 @@ export default function MainScreen() {
             />
             完了
           </label>
-
           <label>
             <input
               type="radio"
@@ -274,17 +241,15 @@ export default function MainScreen() {
             />
             未完了
           </label>
-          </div>
+        </div>
 
         {themes.map((theme) => {
-          // 検索処理
           const filteredQuestions = theme.questions?.filter((q) => {
             if (!searchQuery) return true;
             return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
           }) || [];
 
           if (searchQuery && filteredQuestions.length === 0) return null;
-
           const isActive = theme.pdfId === activeThemeId;
 
           return (
@@ -307,22 +272,13 @@ export default function MainScreen() {
               {isActive &&
                 theme.questions?.filter((q) => {
                   const qid = q.questionId ?? q.question_id;
-                  // 完了のみ表示
-                  if (statusFilter === "completed") {
-                    return !!answerMap[qid];
-                  }
-
-                  // 未完了のみ表示
-                  if (statusFilter === "uncompleted") {
-                    return !answerMap[qid];
-                  }
-
-                  // すべて表示
+                  if (statusFilter === "completed") return !!answerMap[qid];
+                  if (statusFilter === "uncompleted") return !answerMap[qid];
                   return true;
                 })
-
                   .map((q) => {
                     const qid = q.questionId ?? q.question_id;
+                    const currentActiveId = activeQuestion?.questionId ?? activeQuestion?.question_id;
 
                     return (
                       <div
@@ -330,10 +286,7 @@ export default function MainScreen() {
                         onClick={() => setActiveQuestion(q)}
                         style={{
                           ...styles.question,
-                          background:
-                            (activeQuestion?.questionId ?? activeQuestion?.question_id) === qid
-                              ? "#dbeafe"
-                              : "transparent",
+                          background: currentActiveId === qid ? "#dbeafe" : "transparent",
                           fontWeight: "normal",
                         }}
                       >
@@ -354,13 +307,12 @@ export default function MainScreen() {
           <div style={styles.card}>
             <h3>{activeQuestion.questionText}</h3>
 
-            {/* ================= ANSWER ================= */}
             <textarea
-              ref={textareaRef} // 💡 追記：Refをここに紐付け
+              ref={textareaRef}
               value={
                 (() => {
                   const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-                  return answerMap[String(qid)]?.answerContent || ""
+                  return answerMap[String(qid)]?.answerContent || "";
                 })()
               }
               onChange={(e) => {
@@ -384,7 +336,6 @@ export default function MainScreen() {
               <button onClick={handleSave} style={styles.button}>
                 保存
               </button>
-
               {saved && (
                 <span style={{ color: "green", marginLeft: 10 }}>
                   保存しました
@@ -392,14 +343,11 @@ export default function MainScreen() {
               )}
             </div>
 
-            {/* ==========================
-                模範解答
-            ========================== */}
+            {/* 模範解答エリア */}
             <div style={{ marginBottom: 15 }}>
               <b style={{ cursor: "pointer" }} onClick={() => setIsModelOpen((prev) => !prev)}>
                 模範解答 {isModelOpen ? "▲" : "▼"}
               </b>
-
               {isModelOpen && (
                 <div style={styles.box}>
                   {activeQuestion.correctAnswer}
@@ -407,38 +355,31 @@ export default function MainScreen() {
               )}
             </div>
 
-            {/* ==========================
-                他の人の回答一覧
-            ========================== */}
+            {/* 他の人の回答一覧 */}
             <div style={{ marginTop: "20px" }}>
               <b style={{ cursor: "pointer" }} onClick={() => setIsAnswersOpen((prev) => !prev)}>
                 他の人の回答 {isAnswersOpen ? "▲" : "▼"}
               </b>
-
               {isAnswersOpen && (
                 <div>
-                  {
-                    otherAnswers.length === 0 ? (
-                      <div style={styles.box}>
-                        回答はありません
+                  {otherAnswers.length === 0 ? (
+                    <div style={styles.box}>
+                      回答はありません
+                    </div>
+                  ) : (
+                    otherAnswers.map((answer) => (
+                      <div
+                        key={answer.answerId}
+                        style={{
+                          ...styles.box,
+                          marginTop: "8px",
+                        }}
+                      >
+                        {answer.userName}さんの回答: <br />
+                        {answer.answerContent}
                       </div>
-                    ) : (
-                      /* 回答一覧を表示 */
-                      otherAnswers
-                        .map((answer) => (
-                          <div
-                            key={answer.answerId}
-                            style={{
-                              ...styles.box,
-                              marginTop: "8px",
-                            }}
-                          >
-                            {answer.userName}さんの回答: <br />
-                            {answer.answerContent}
-                          </div>
-                        ))
-                    )
-                  }
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -451,74 +392,16 @@ export default function MainScreen() {
 
 // =========================
 const styles = {
-  wrapper: {
-    display: "flex",
-    height: "100vh",
-    fontFamily: "sans-serif",
-  },
-  sidebar: {
-    width: 320,
-    borderRight: "1px solid #ddd",
-    overflowY: "auto",
-    padding: 10,
-  },
-  topBar: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "15px",
-    paddingBottom: "10px",
-    borderBottom: "1px solid #eee",
-  },
-  searchInput: {
-    flex: 1,
-    padding: "6px 10px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    fontSize: "13px",
-  },
-  logoutButton: {
-    padding: "6px 10px",
-    borderRadius: "4px",
-    border: "1px solid #dee2e6",
-    background: "#f8f9fa",
-    cursor: "pointer",
-    fontSize: "12px",
-    fontWeight: "bold",
-  },
-  theme: {
-    padding: 8,
-    fontWeight: "bold",
-    cursor: "pointer",
-    borderRadius: 4,
-  },
-  question: {
-    padding: "6px 16px",
-    cursor: "pointer",
-    fontSize: 13,
-    borderRadius: 4,
-  },
-  main: {
-    flex: 1,
-    padding: 20,
-  },
-  card: {
-    border: "1px solid #ddd",
-    padding: 20,
-    borderRadius: 8,
-  },
-  textarea: {
-    width: "100%",
-    height: 120,
-    marginTop: 10,
-  },
-  button: {
-    padding: "6px 12px",
-  },
-  box: {
-    background: "#f3f4f6",
-    padding: 10,
-    marginTop: 8,
-    borderRadius: 6,
-    fontSize: "14px",
-  },
+  wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
+  sidebar: { width: 320, borderRight: "1px solid #ddd", overflowY: "auto", padding: 10 },
+  topBar: { display: "flex", gap: "8px", marginBottom: "15px", paddingBottom: "10px", borderBottom: "1px solid #eee" },
+  searchInput: { flex: 1, padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "13px" },
+  logoutButton: { padding: "6px 10px", borderRadius: "4px", border: "1px solid #dee2e6", background: "#f8f9fa", cursor: "pointer", fontSize: "12px", fontWeight: "bold" },
+  theme: { padding: 8, fontWeight: "bold", cursor: "pointer", borderRadius: 4 },
+  question: { padding: "6px 16px", cursor: "pointer", fontSize: 13, borderRadius: 4 },
+  main: { flex: 1, padding: 20 },
+  card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
+  textarea: { width: "100%", height: 120, marginTop: 10 },
+  button: { padding: "6px 12px" },
+  box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6, fontSize: "14px" },
 };

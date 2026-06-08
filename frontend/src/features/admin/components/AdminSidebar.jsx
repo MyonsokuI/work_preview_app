@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { adminApi } from "../api/adminApi"
 
 export default function AdminSidebar({
     themes,
@@ -13,92 +14,71 @@ export default function AdminSidebar({
     onDeleteQuestion
 }) {
     const [newThemeName, setNewThemeName] = useState("");
-    const [searchQuery, setSearchQuery] = useState(""); // 🚀 💡 検索キーワードを保持するStateにゃ！
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // 🟢 テーマ追加の処理
+    // 🟢 テーマ追加
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!newThemeName.trim()) return;
 
         try {
-            const response = await fetch("http://localhost:8080/api/themes", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: newThemeName.trim() }),
-            });
-
-            if (!response.ok) throw new Error("テーマの作成に失敗しました");
-
-            const savedPdf = await response.json();
+            // 💡 共通API関数に置き換え
+            const savedPdf = await adminApi.createTheme(newThemeName.trim());
             onAddTheme({ pdfId: savedPdf.pdfId, title: savedPdf.title, questions: [] });
             setNewThemeName("");
         } catch (error) {
-            console.error("テーマ作成APIの通信に失敗しました:", error);
+            console.error("テーマ作成に失敗しました:", error);
             alert("サーバーとの通信に失敗しました。");
         }
     };
 
-    // 🔴 テーマ削除の処理
+    // 🔴 テーマ削除
     const handleDelete = async (e, themeId) => {
         e.stopPropagation();
         if (!window.confirm("このテーマを削除してもよろしいですか？\n※紐づく問題もすべて削除されます。")) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/themes/${themeId}`, {
-                method: "DELETE",
-            });
-            if (response.ok) {
-                onDeleteTheme(themeId);
-            } else {
-                alert("削除に失敗しました。");
-            }
+            // 💡 共通API関数に置き換え
+            await adminApi.deleteTheme(themeId);
+            onDeleteTheme(themeId);
         } catch (error) {
-            console.error("テーマ削除APIとの通信に失敗しました:", error);
+            console.error("テーマ削除に失敗しました:", error);
             alert("サーバーとの通信に失敗しました。");
         }
     };
 
-    // 🟡 テーマ編集の処理
+    // 🟡 テーマ編集
     const handleEdit = async (e, themeId, currentTitle) => {
         e.stopPropagation();
         const newName = window.prompt("新しいテーマ名を入力してください：", currentTitle);
         if (newName === null || !newName.trim()) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/themes/${themeId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: newName.trim() }),
-            });
-            if (!response.ok) throw new Error("テーマ名の更新に失敗しました");
-
-            const updatedPdf = await response.json();
+            // 💡 共通API関数に置き換え
+            const updatedPdf = await adminApi.updateTheme(themeId, newName.trim());
             onUpdateTheme(themeId, updatedPdf.title);
         } catch (error) {
-            console.error("テーマ更新APIとの通信に失敗しました:", error);
+            console.error("テーマ更新に失敗しました:", error);
             alert("サーバーとの通信に失敗しました。");
         }
     };
 
-    // 🔴 問題削除の処理
+    // 🔴 問題削除
     const handleQuestionDelete = async (e, questionId, themeId) => {
         e.stopPropagation();
         if (!window.confirm("この問題を削除してもよろしいですか？\n※受講者の回答データもすべて削除されます。")) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/questions/${questionId}`, {
-                method: "DELETE",
-            });
-            if (response.ok) {
-                onDeleteQuestion(themeId, questionId);
-            } else {
-                alert("問題の削除に失敗しました。");
-            }
+            // 💡 共通API関数に置き換え
+            await adminApi.deleteQuestion(questionId);
+            onDeleteQuestion(themeId, questionId);
         } catch (error) {
-            console.error("問題削除APIとの通信に失敗しました:", error);
+            console.error("問題削除に失敗しました:", error);
             alert("サーバーとの通信に失敗しました。");
         }
     };
+
+    // --- 以下、JSXや検索ロジックは変更なし ---
 
     // ==========================================\n    // 🚀 💡 【検索の魔法】入力文字でテーマ・問題をフィルタリングするロジックにゃ！\n    // ==========================================
     const filteredThemes = themes.map((theme) => {

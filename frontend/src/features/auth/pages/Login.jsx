@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authApi } from "../api/loginApi"; // 💡 共通API関数をインポートするにゃ！
 
 export default function Login() {
     const [userId, setUserId] = useState("");
@@ -10,23 +11,9 @@ export default function Login() {
         e.preventDefault();
 
         try {
-            const response = await fetch("http://localhost:8080/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    userId: Number(userId),
-                    password: password
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("ユーザーIDまたはパスワードが違いますにゃ");
-            }
-
-            // Java側の LoginResponse (userId, name, status) を受け取るにゃ
-            const userData = await response.json();
+            // 💡 共通API関数に置き換えて、生のfetchを隠蔽したにゃ！
+            // 💡 入力された文字列の userId をここで数値型に変換して渡すにゃ
+            const userData = await authApi.login(Number(userId), password);
 
             // 💡 ログイン情報をブラウザのローカルストレージに保存
             localStorage.setItem("currentUser", JSON.stringify(userData));
@@ -44,7 +31,7 @@ export default function Login() {
 
         } catch (error) {
             console.error("ログインエラーにゃ:", error);
-            alert(error.message);
+            alert(error.message); // API側から投げられた「ユーザーIDまたはパスワードが〜」のエラーメッセージが表示されるにゃ
         }
     };
 
@@ -86,7 +73,7 @@ export default function Login() {
             <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #eee", textAlign: "center" }}>
                 <p style={{ fontSize: "13px", color: "#666", marginBottom: "8px", marginTop: 0 }}>はじめて利用する方はこちら 🐾</p>
                 <button
-                    type="button" // ⚠️ これを省略するとformの一部と判定されて勝手にサブミットしちゃうから必須にゃ！
+                    type="button" // ⚠️ これを省略するとformの一部と判定されて勝プーンとサブミットしちゃうから必須にゃ！
                     onClick={() => navigate("/user/register")} // 💡 指定されたURLへシュッと遷移するにゃ！
                     style={{
                         width: "100%",

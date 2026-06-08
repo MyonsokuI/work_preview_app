@@ -1,30 +1,21 @@
 import { useState, useEffect } from "react";
+import { adminApi } from "../api/adminApi"; // 💡 インポートを追加
 
 export default function ProgressChecker({ currentTheme }) {
     const [progressList, setProgressList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    // 問題ごとに未完了リストを開閉するための状態管理にゃ
     const [openUsersId, setOpenUsersId] = useState({});
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/admin/progress")
-            .then((res) => {
-                if (!res.ok) throw new Error("進捗データの取得に失敗しましたにゃ");
-                return res.json();
-            })
-            // 🟢 useEffect 内のこの部分を差し替えるにゃ！
-            // 🟢 useEffect 内の .then((data) => { ... }) 部分にゃ！
+        // 💡 共通API関数を呼び出し
+        adminApi.getProgress()
             .then((data) => {
                 if (currentTheme && currentTheme.questions && currentTheme.questions.length > 0) {
-                    // 現在のテーマに属する問題だけでフィルタリングしつつ、Javaからのデータをガッチャンコするにゃ
                     const combined = currentTheme.questions.map((q) => {
-                        // Javaから届いたデータ（data）の中から、一致するquestionIdを探すにゃ
                         const matched = data.find((item) => String(item.questionId) === String(q.questionId));
-
                         return {
                             questionId: q.questionId,
                             questionText: q.questionText,
-                            // 💡 マッチすればJavaの値を使い、追加直後などでマッチしなければ安全に初期値を詰めるにゃ！
                             answeredUserCount: matched ? matched.answeredUserCount : 0,
                             totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 8),
                             uncompletedUsers: matched ? matched.uncompletedUsers : []
@@ -41,6 +32,8 @@ export default function ProgressChecker({ currentTheme }) {
                 setIsLoading(false);
             });
     }, [currentTheme]);
+
+    // --- 以下、JSX等は変更なし ---
 
     // 未完了リストの表示・非表示を切り替える関数にゃ
     const toggleUncompleted = (id) => {
