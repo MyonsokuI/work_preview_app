@@ -13,7 +13,7 @@ export default function AdminConsole() {
     const [activeQuestionId, setActiveQuestionId] = useState(null);
     const [activeTab, setActiveTab] = useState("edit");
     const [creatingQuestion, setCreatingQuestion] = useState(null);
-    const [selectedTheme, setSelectedTheme] = useState(null);
+
     // --- データ取得 ---
     useEffect(() => {
         const loadThemes = async () => {
@@ -36,6 +36,12 @@ export default function AdminConsole() {
         setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
     };
 
+    // 新しいハンドラを作成
+    const handleShowThemeProgress = (themeId) => {
+        setActiveThemeId(themeId);
+        setActiveTab("progress"); // 💡 進捗タブを強制的に選択
+        setCreatingQuestion(null); // 新規作成モードは解除
+    };
     const handleSaveQuestion = async (data) => {
         try {
             const body = {
@@ -81,7 +87,6 @@ export default function AdminConsole() {
         <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
             <AdminSidebar
                 themes={themes}
-                onSelectTheme={setSelectedTheme}
                 activeQuestionId={activeQuestionId}
                 activeTab={activeTab}
                 onSelectQuestion={(tid, qid, tab) => {
@@ -95,6 +100,7 @@ export default function AdminConsole() {
                 onAddTheme={(t) => setThemes([...themes, t])}
                 onLogout={() => navigate("/login")}
                 onDeleteQuestion={handleDeleteQuestion}
+                onShowProgress={handleShowThemeProgress} // 💡 渡す
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>
@@ -119,7 +125,7 @@ export default function AdminConsole() {
                 ) : (
                     <>
                         {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />}
-                        {activeTab === "progress" && <ProgressChecker currentTheme={selectedTheme} />}
+                        {activeTab === "progress" && <ProgressChecker currentTheme={currentTheme} />}
                     </>
                 )}
             </div>

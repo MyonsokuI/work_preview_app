@@ -8,35 +8,44 @@ export default function ProgressChecker({ currentTheme }) {
     const [openUsersId, setOpenUsersId] = useState({});
 
     useEffect(() => {
-        adminApi.getProgress()
-            .then((data) => {
-                if (currentTheme?.questions?.length > 0) {
-                    const combined = currentTheme.questions.map((q) => {
-                        const matched = data.find(
-                            (item) => String(item.questionId) === String(q.questionId)
-                        );
+        const fetchProgress = async () => {
+            setIsLoading(true);
+            try {
+                // 1. 全件の進捗データを取得
+                const data = await adminApi.getProgress();
 
-                        return {
-                            questionId: q.questionId,
-                            questionText: q.questionText,
-                            answeredUserCount: matched ? matched.answeredUserCount : 0,
-                            totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 8),
-                            uncompletedUsers: matched ? matched.uncompletedUsers : []
-                        };
-                    });
+                // 2. 選択中のテーマに紐づく問題IDリストを取得
+                const themeQuestionIds = currentTheme?.questions?.map(q => String(q.questionId)) || [];
 
-                    setProgressList(combined);
-                } else {
-                    setProgressList(data);
-                }
+                // 3. 選択中のテーマに含まれる問題の進捗だけをフィルタリング
+                const filtered = data.filter(item => themeQuestionIds.includes(String(item.questionId)));
 
-                setIsLoading(false);
-            })
-            .catch((err) => {
+                // 4. 並び順をテーマ内の問題順に整える
+                const ordered = currentTheme.questions.map(q => {
+                    const matched = filtered.find(item => String(item.questionId) === String(q.questionId));
+                    return {
+                        questionId: q.questionId,
+                        questionText: q.questionText,
+                        answeredUserCount: matched ? matched.answeredUserCount : 0,
+                        totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 0),
+                        uncompletedUsers: matched ? matched.uncompletedUsers : []
+                    };
+                });
+
+                setProgressList(ordered);
+            } catch (err) {
                 console.error(err);
+            } finally {
                 setIsLoading(false);
-            });
-    }, [currentTheme]);
+            }
+        };
+
+        if (currentTheme) {
+            fetchProgress();
+        }
+    }, [currentTheme]); // 💡 currentThemeが変わるたびに実行される
+
+    // ...以下（toggleUncompleted や レンダリング部分はそのまま）
 
     const toggleUncompleted = (id) => {
         setOpenUsersId((prev) => ({
