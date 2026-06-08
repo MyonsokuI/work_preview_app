@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // 💡 navigate を使うためにインポートを追加にゃ！
-import AdminSidebar from "../../components/admin/AdminSidebar";
-import QuestionEditor from "../../components/admin/QuestionEditor";
-import ProgressChecker from "../../components/admin/ProgressChecker";
+import { useNavigate } from "react-router-dom";
+import AdminSidebar from "../components/AdminSidebar";
+import QuestionEditor from "../components/QuestionEditor";
+import ProgressChecker from "../components/ProgressChecker";
 
 export default function AdminConsole() {
     // --- 状態（State）の定義 ---
     const [themes, setThemes] = useState([]);
-    const navigate = useNavigate(); // 💡 画面遷移用のフックを定義にゃ！
+    const navigate = useNavigate();
 
     const [progressData] = useState({
         1: { completedCount: 12, totalCount: 15, completionRate: 80, uncompletedUsers: [{ userId: 3, name: "鈴木 一郎", remainingCount: 1, lastActive: "2026/05/30" }] },
@@ -116,7 +116,6 @@ export default function AdminConsole() {
         setThemes((prevThemes) => {
             return prevThemes.map((theme) => {
                 if (theme.pdfId === themeId) {
-                    // 該当するテーマを見つけたら、その中の questions 配列から指定された questionId を除外するにゃ！
                     return {
                         ...theme,
                         questions: (theme.questions || []).filter((q) => q.questionId !== questionId)
@@ -126,13 +125,11 @@ export default function AdminConsole() {
             });
         });
 
-        // 💡 防衛＆親切設計：もし今消した問題が「現在右側で編集中の問題」だったら、
-        // 右側のエディタを閉じるか、代わりの問題を選択するか、進捗画面に逃がしてあげるにゃ
         if (activeQuestionId === questionId) {
             setActiveQuestionId(null);
-            setActiveTab("progress"); // エディタの中身が空っぽになるので、自動で進捗タブに切り替えてあげるにゃ
+            setActiveTab("progress");
         }
-    };
+    }; // 💡 余分だった括弧を1つ削除しました
 
     // 🟢 問題追加の通信と画面反映
     const handleAddQuestion = async (themeId) => {
@@ -222,9 +219,9 @@ export default function AdminConsole() {
 
     // 💡 管理者用ログアウト処理を追加にゃ！
     const handleLogout = () => {
-        localStorage.removeItem("currentUser"); // セッションクリア
+        localStorage.removeItem("currentUser");
         alert("管理者画面からログアウトしましたにゃ！");
-        navigate("/login"); // ログイン画面へ戻る
+        navigate("/login");
     };
 
     return (
@@ -238,8 +235,8 @@ export default function AdminConsole() {
                 onAddTheme={handleAddTheme}
                 onDeleteTheme={handleDeleteTheme}
                 onUpdateTheme={handleUpdateTheme}
-                onLogout={handleLogout} // 全体進捗の代わりにログアウト関数を渡すにゃ！
-                onDeleteQuestion={handleDeleteQuestionState} // 🚀 💡 ここでさっき作った関数をサイドバーに引き渡すにゃ！
+                onLogout={handleLogout}
+                onDeleteQuestion={handleDeleteQuestionState}
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>
@@ -260,4 +257,4 @@ export default function AdminConsole() {
             </div>
         </div>
     );
-}
+} // コンポーネント全体の閉じ括弧

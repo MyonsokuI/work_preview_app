@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authApi } from "../api/registerApi"; // 💡 共通のauthApiをインポートにゃ！
 
 export default function Register() {
     const navigate = useNavigate();
@@ -23,7 +24,6 @@ export default function Register() {
     // 登録処理
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         setMessage("");
 
         // パスワード一致チェック
@@ -33,29 +33,14 @@ export default function Register() {
         }
 
         try {
-            const res = await fetch("http://localhost:8080/api/users", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    userId: Number(form.userId),
-                    name: form.name,
-                    password: form.password,
-                }),
-            });
-
-            if (!res.ok) {
-                throw new Error("登録に失敗しました");
-            }
-
-            const data = await res.json();
+            // 💡 生のfetchを廃止し、共通API関数（registerUser）を呼び出すように変更したにゃ！
+            const data = await authApi.registerUser(form.userId, form.name, form.password);
             console.log("登録成功:", data);
 
             // 👉 ログイン画面へ戻る
             navigate("/login");
 
-            // クリア
+            // フォームのクリア
             setForm({
                 userId: "",
                 name: "",
@@ -64,7 +49,7 @@ export default function Register() {
             });
         } catch (err) {
             console.error(err);
-            setMessage("エラーが発生しました");
+            setMessage(err.message || "エラーが発生しましたにゃ");
         }
     };
 

@@ -1,9 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/auth/Login";
-import AdminConsole from "./pages/admin/AdminConsole"; // さっき直した管理者画面にゃ！
-import UserDashboard from "./pages/general/UserDashboard";
-import MainScreen from "./pages/general/MainScreen"; // さっき直したユーザーダッシュボードにゃ！
-import Register from "./pages/general/Register"; // さっき直した登録画面にゃ！
+import Login from "./features/auth/pages/Login";
+import AdminConsole from "./features/admin/pages/AdminConsole"; // さっき直した管理者画面にゃ！
+import MainScreen from "./features/general/pages/MainScreen"; // さっき直したユーザーダッシュボードにゃ！
+import Register from "./features/general/pages/Register"; // さっき直した登録画面にゃ！
 
 export default function App() {
   return (
