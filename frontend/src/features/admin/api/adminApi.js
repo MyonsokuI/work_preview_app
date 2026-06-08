@@ -83,7 +83,7 @@ export const adminApi = {
     // 回答に紐づくレビュー一覧取得
     async getReviewsByAnswer(answerId) {
         const response = await fetch(
-            `${BASE_URL}/reviews/answer/${answerId}`
+            `${BASE_URL}/answers/${answerId}/reviews`
         );
 
         if (!response.ok) {
