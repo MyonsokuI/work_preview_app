@@ -1,4 +1,3 @@
-
 -- =====================================
 -- DB Initialization Script (Final ER)
 -- PostgreSQL
@@ -17,7 +16,9 @@ CREATE TABLE users (
     user_id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    status VARCHAR(20)
+    status VARCHAR(20),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 
 -- =====================================
@@ -25,7 +26,9 @@ CREATE TABLE users (
 -- =====================================
 CREATE TABLE pdf (
     pdf_id SERIAL PRIMARY KEY,
-    title VARCHAR(25)
+    title VARCHAR(25),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 
 -- =====================================
@@ -36,6 +39,8 @@ CREATE TABLE questions (
     pdf_id INTEGER,
     question_text TEXT,
     correct_answer TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     CONSTRAINT fk_questions_pdf
         FOREIGN KEY (pdf_id)
         REFERENCES pdf(pdf_id)
@@ -51,6 +56,8 @@ CREATE TABLE answers (
     question_id INTEGER,
     answer_content TEXT,
     submitted_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     CONSTRAINT fk_answers_user
         FOREIGN KEY (user_id)
         REFERENCES users(user_id)
@@ -73,4 +80,3 @@ INSERT INTO pdf (title) VALUES
 
 INSERT INTO questions (pdf_id, question_text, correct_answer) VALUES
 (1, 'Javaとは何か？', 'プログラミング言語');
-
