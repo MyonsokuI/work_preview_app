@@ -5,6 +5,7 @@ import lombok.Setter;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime; // 💡 追加
 
 @Getter
 @Setter
@@ -18,4 +19,9 @@ public class QuestionRequest {
 
     @NotBlank(message = "正解は必須です")
     private String correctAnswer;
+
+    // 💡 フロントからステータスと公開・終了時間を受け取れるように追記にゃ！
+    private String status;
+    private LocalDateTime openAt;
+    private LocalDateTime closeAt;
 }

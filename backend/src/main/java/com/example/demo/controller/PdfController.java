@@ -16,7 +16,7 @@ import java.util.List;
 public class PdfController {
 
     private final PdfService pdfService;
-    private final QuestionService questionService; // 🚀 QuestionServiceを追記
+    private final QuestionService questionService;
 
     // コンストラクタにQuestionServiceを追加
     public PdfController(PdfService pdfService, QuestionService questionService) {
@@ -30,7 +30,7 @@ public class PdfController {
      */
     @GetMapping
     public List<ThemeWithQuestionsResponse> getThemes() {
-        // 1. 全てのテーマ（Pdf）を取得
+        // 1. 全てのテーマ（Pdf）を取得 (Service側で既にステータスや日時がセットされているにゃ)
         List<ThemeResponse> pdfList = pdfService.getAllThemes();
 
         // 2. 各テーマに紐づく問題をQuestionServiceから取得して、ひとつのデータ構造にまとめる
@@ -38,6 +38,11 @@ public class PdfController {
             ThemeWithQuestionsResponse response = new ThemeWithQuestionsResponse();
             response.setPdfId(pdf.getPdfId());
             response.setTitle(pdf.getTitle());
+
+            // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替えるにゃ！
+            response.setStatus(pdf.getStatus());
+            response.setOpenAt(pdf.getOpenAt());
+            response.setCloseAt(pdf.getCloseAt());
 
             // 🚀 現在のテーマID（Integer）に紐づく問題一覧をServiceから取得
             List<QuestionResponse> questionList = questionService.getQuestionsByTheme(pdf.getPdfId());
@@ -66,13 +71,11 @@ public class PdfController {
         return pdfService.updateTheme(id, request);
     }
 
-    // /**
-    // * テーマ削除
-    // */
+    /**
+     * テーマ削除
+     */
     @DeleteMapping("/{id}")
-    public void deleteTheme(
-            @PathVariable Integer id) {
-
+    public void deleteTheme(@PathVariable Integer id) {
         pdfService.deleteTheme(id);
     }
 }
