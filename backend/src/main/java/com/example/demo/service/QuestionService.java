@@ -2,116 +2,105 @@ package com.example.demo.service;
 
 import com.example.demo.dto.question.QuestionRequest;
 import com.example.demo.dto.question.QuestionResponse;
-import com.example.demo.entity.Pdf;
 import com.example.demo.entity.Question;
+import com.example.demo.entity.Pdf;
 import com.example.demo.repository.QuestionRepository;
+import com.example.demo.repository.PdfRepository;
 import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
+    private final PdfRepository pdfRepository; // テーマ取得用にインジェクションにゃ
 
-    public QuestionService(QuestionRepository questionRepository) {
+    public QuestionService(QuestionRepository questionRepository, PdfRepository pdfRepository) {
         this.questionRepository = questionRepository;
+        this.pdfRepository = pdfRepository;
     }
 
-    // テーマ別取得
     @Transactional(readOnly = true)
-    public List<QuestionResponse> getQuestionsByTheme(Integer themeId) {
-
-        return questionRepository.findByPdf_PdfId(themeId)
-                .stream()
-                .map(q -> {
-                    QuestionResponse qr = new QuestionResponse();
-                    qr.setQuestionId(q.getQuestionId());
-                    qr.setQuestionText(q.getQuestionText());
-                    qr.setCorrectAnswer(q.getCorrectAnswer());
-                    return qr;
-                })
-                .toList();
+    public List<QuestionResponse> getAllQuestions() {
+        return questionRepository.findAll().stream().map(this::convertToResponse).toList();
     }
 
-    // 単体取得
+    @Transactional(readOnly = true)
+    public List<QuestionResponse> getQuestionsByTheme(Integer pdfId) {
+        return questionRepository.findByPdf_PdfId(pdfId).stream().map(this::convertToResponse).toList();
+    }
+
     @Transactional(readOnly = true)
     public QuestionResponse getQuestion(Integer id) {
-
         Question q = questionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("問題が見つかりません"));
-
-        QuestionResponse res = new QuestionResponse();
-        res.setQuestionId(q.getQuestionId());
-        res.setQuestionText(q.getQuestionText());
-        res.setCorrectAnswer(q.getCorrectAnswer());
-
-        return res;
+        return convertToResponse(q);
     }
 
-    // 作成
+    /**
+     * 🟢 問題新規作成（フロントで全部入力し終わった後にインサートされるにゃ！）
+     */
     @Transactional
     public QuestionResponse createQuestion(QuestionRequest request) {
+        Pdf pdf = pdfRepository.findById(request.getPdfId())
+                .orElseThrow(() -> new BusinessException("指定されたテーマが見つかりません"));
 
-        Question question = new Question();
-        question.setQuestionText(request.getQuestionText());
-        question.setCorrectAnswer(request.getCorrectAnswer());
+        Question q = new Question();
+        q.setPdf(pdf);
+        q.setQuestionText(request.getQuestionText());
+        q.setCorrectAnswer(request.getCorrectAnswer());
+        q.setOpenAt(request.getOpenAt());
+        q.setCloseAt(request.getCloseAt());
 
-        Pdf pdf = new Pdf();
-        pdf.setPdfId(request.getPdfId());
-        question.setPdf(pdf);
+        // 💡 登録時のステータス決定ロジック（Themeと同じにゃ！）
+        if ("draft".equalsIgnoreCase(request.getStatus())) {
+            q.setStatus("draft");
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
+                q.setStatus("scheduled");
+            } else {
+                q.setStatus("published");
+            }
+        }
 
-        Question saved = questionRepository.save(question);
-
-        QuestionResponse res = new QuestionResponse();
-        res.setQuestionId(saved.getQuestionId());
-        res.setQuestionText(saved.getQuestionText());
-        res.setCorrectAnswer(saved.getCorrectAnswer());
-
-        return res;
+        Question saved = questionRepository.save(q);
+        return convertToResponse(saved);
     }
 
-    // 更新
+    /**
+     * 💾 問題更新
+     */
     @Transactional
     public QuestionResponse updateQuestion(Integer id, QuestionRequest request) {
-
         Question existing = questionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("問題が見つかりません"));
 
         existing.setQuestionText(request.getQuestionText());
         existing.setCorrectAnswer(request.getCorrectAnswer());
+        existing.setOpenAt(request.getOpenAt());
+        existing.setCloseAt(request.getCloseAt());
 
-        // 💡 既存のPDFリレーションを守るための防衛ロジックにゃ！
-        if (request.getPdfId() != null) {
-            Pdf pdf = new Pdf();
-            pdf.setPdfId(request.getPdfId());
-            existing.setPdf(pdf);
-        } // request.getPdfId() が null の場合は existing.getPdf() をそのまま維持するので安全にゃ！
+        // 💡 更新時のステータス決定ロジック
+        if ("draft".equalsIgnoreCase(request.getStatus())) {
+            existing.setStatus("draft");
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            if (request.getCloseAt() != null && request.getCloseAt().isBefore(now)) {
+                existing.setStatus("closed");
+            } else if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
+                existing.setStatus("scheduled");
+            } else {
+                existing.setStatus("published");
+            }
+        }
 
         Question saved = questionRepository.save(existing);
-
-        QuestionResponse res = new QuestionResponse();
-        res.setQuestionId(saved.getQuestionId());
-        res.setQuestionText(saved.getQuestionText());
-        res.setCorrectAnswer(saved.getCorrectAnswer());
-
-        return res;
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestionResponse> getAllQuestions() {
-        return questionRepository.findAll()
-                .stream()
-                .map(q -> {
-                    QuestionResponse qr = new QuestionResponse();
-                    qr.setQuestionId(q.getQuestionId());
-                    qr.setQuestionText(q.getQuestionText());
-                    qr.setCorrectAnswer(q.getCorrectAnswer());
-                    return qr;
-                })
-                .toList();
+        return convertToResponse(saved);
     }
 
     @Transactional
@@ -119,4 +108,15 @@ public class QuestionService {
         questionRepository.deleteById(id);
     }
 
+    // Entity -> ResponseDTO 詰め替えヘルパー
+    private QuestionResponse convertToResponse(Question q) {
+        QuestionResponse res = new QuestionResponse();
+        res.setQuestionId(q.getQuestionId());
+        res.setQuestionText(q.getQuestionText());
+        res.setCorrectAnswer(q.getCorrectAnswer());
+        res.setStatus(q.getStatus());
+        res.setOpenAt(q.getOpenAt());
+        res.setCloseAt(q.getCloseAt());
+        return res;
+    }
 }
