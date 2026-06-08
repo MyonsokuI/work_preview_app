@@ -9,23 +9,28 @@ export const adminApi = {
         return response.json();
     },
 
-    async createTheme(title) {
+    // 💡 拡張：引数をオブジェクト (themeData) で受け取るように変更にゃ！
+    // themeData の中身のイメージ： { title, status, openAt, closeAt }
+    async createTheme(themeData) {
         const response = await fetch(`${BASE_URL}/themes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title }),
+            // Java側の ThemeRequest にそのままマッピングできるようにJSON化するにゃ🐾
+            body: JSON.stringify(themeData),
         });
         if (!response.ok) throw new Error("テーマの作成に失敗しました");
         return response.json();
     },
 
-    async updateTheme(themeId, title) {
+    // 💡 拡張：更新時もタイトルだけでなく、時間やステータスもまとめて更新できるように変更にゃ！
+    // themeData の中身のイメージ： { title, status, openAt, closeAt }
+    async updateTheme(themeId, themeData) {
         const response = await fetch(`${BASE_URL}/themes/${themeId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title }),
+            body: JSON.stringify(themeData),
         });
-        if (!response.ok) throw new Error("テーマ名の更新に失敗しました");
+        if (!response.ok) throw new Error("テーマの更新に失敗しました");
         return response.json();
     },
 
@@ -34,7 +39,7 @@ export const adminApi = {
             method: "DELETE",
         });
         if (!response.ok) throw new Error("テーマの削除に失敗しました");
-        return response.ok; // もしくは response.json() など
+        return response.ok;
     },
 
     // --- 問題 (Questions) 関連 ---
