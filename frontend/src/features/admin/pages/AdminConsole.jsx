@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
-import QuestionEditor from "../components/QuestionEditor";
-import ProgressChecker from "../components/ProgressChecker";
+import AdminSidebar from "../components/sidebar/AdminSidebar";
+import QuestionEditor from "../components/questioneditor/QuestionEditor";
+import ProgressChecker from "../components/progresschecker/ProgressChecker";
 import { adminApi } from "../api/adminApi"; // 💡 作成したAPIサービスをインポート
 
 export default function AdminConsole() {
@@ -13,7 +13,7 @@ export default function AdminConsole() {
     const [activeQuestionId, setActiveQuestionId] = useState(null);
     const [activeTab, setActiveTab] = useState("edit");
     const [creatingQuestion, setCreatingQuestion] = useState(null);
-
+    const [selectedTheme, setSelectedTheme] = useState(null);
     // --- データ取得 ---
     useEffect(() => {
         const loadThemes = async () => {
@@ -81,10 +81,12 @@ export default function AdminConsole() {
         <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
             <AdminSidebar
                 themes={themes}
+                onSelectTheme={setSelectedTheme}
                 activeQuestionId={activeQuestionId}
                 activeTab={activeTab}
-                // 💡 修正箇所：第3引数の tab をそのまま反映させることでタブ固定を防ぐ
                 onSelectQuestion={(tid, qid, tab) => {
+                    // 💡 ここが重要：クリックされたら新規作成状態を解除する
+                    setCreatingQuestion(null);
                     setActiveThemeId(tid);
                     setActiveQuestionId(qid);
                     setActiveTab(tab);
@@ -117,7 +119,7 @@ export default function AdminConsole() {
                 ) : (
                     <>
                         {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />}
-                        {activeTab === "progress" && <ProgressChecker currentTheme={currentTheme} />}
+                        {activeTab === "progress" && <ProgressChecker currentTheme={selectedTheme} />}
                     </>
                 )}
             </div>
