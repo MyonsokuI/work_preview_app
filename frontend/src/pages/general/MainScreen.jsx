@@ -1,103 +1,209 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = "http://localhost:8080";
 
 export default function MainScreen() {
+  const navigate = useNavigate();
+  
+  // 💡 追記：textareaの文字を安全に取得するための参照(Ref)を作成。これでquerySelectorを完全排除！
+  const textareaRef = useRef(null);
+
+  // ユーザー情報を取得
+  const [userId, setUserId] = useState(() => {
+    try {
+      const savedUserStr = localStorage.getItem("currentUser");
+      if (savedUserStr) {
+        const userObj = JSON.parse(savedUserStr);
+        return userObj.userId ? Number(userObj.userId) : null;
+      }
+    } catch (e) {
+      console.error("ユーザー情報のパースに失敗したにゃ:", e);
+    }
+    return null;
+  });
+
   const [themes, setThemes] = useState([]);
   const [activeThemeId, setActiveThemeId] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
 
+  // 課題表示のフィルタ
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const [answerInput, setAnswerInput] = useState("");
   const [search, setSearch] = useState("");
+  // questionId -> answer
+  const [answerMap, setAnswerMap] = useState({});
+  const [saved, setSaved] = useState(false);
 
   // 模範解答・他人回答の表示/非表示
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
 
+  // 検索キーワード用のState
+  const [searchQuery, setSearchQuery] = useState("");
+
   // =========================
-  // API（Adminと完全統一）
+  // 🛡️ ログインチェックガード
   // =========================
   useEffect(() => {
+    if (!userId) {
+      navigate("/login", { replace: true });
+    }
+  }, [userId, navigate]);
+
+  // =========================
+  // 🛠️ ログアウト処理
+  // =========================
+  const handleLogout = () => {
+    if (window.confirm("ログアウトしますか？")) {
+      localStorage.removeItem("currentUser");
+      localStorage.clear();
+      setUserId(null); // userIdをnullにすることで、上のガードが働き/loginへ強制移動します
+    }
+  };
+
+  // =========================
+  // テーマ取得
+  // =========================
+  useEffect(() => {
+    if (!userId) return;
+
     fetch(`${API_BASE}/api/themes`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("THEMES:", data);
         setThemes(data);
 
         if (data.length > 0) {
           setActiveThemeId(data[0].pdfId);
-
-          if (data[0].questions?.length > 0) {
-            setActiveQuestion(data[0].questions[0]);
-          }
+          setActiveQuestion(data[0].questions?.[0] || null);
         }
       })
-      .catch((err) => console.error(err));
-  }, []);
+      .catch(console.error);
+  }, [userId]);
 
   // =========================
-  // 現在のテーマ
+  // 回答取得
   // =========================
-  const currentTheme =
-    themes.find((t) => t.pdfId === activeThemeId) || themes[0];
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("answers raw:", data);
+
+        const map = {};
+
+        data.forEach((a) => {
+          const questionId = a.questionId ?? a.question_id;
+          const answerId = a.answerId ?? a.answer_id;
+          const answerContent =
+            a.answerContent ?? a.answer_content ?? "";
+
+          const submittedAt =
+            a.submittedAt ?? a.submitted_at ?? a.createdAt;
+
+          if (!questionId) return;
+
+          const key = String(questionId);
+          const existing = map[key];
+          const existingTime = existing?.submittedAt ? new Date(existing.submittedAt) : 0;
+          const newTime = submittedAt ? new Date(submittedAt) : 0;
+
+          if (!existing || newTime > existingTime) {
+            map[key] = {
+              ...a,
+              questionId,
+              answerId,
+              answerContent,
+              submittedAt,
+            };
+          }
+        });
+
+        setAnswerMap(map);
+      })
+      .catch(console.error);
+  }, [userId]);
 
   // =========================
-  // 検索フィルタ（テーマ単位）
+  // 保存
   // =========================
-  const filteredThemes = themes
-    .map((theme) => {
-      if (!search) return theme;
+  const handleSave = async () => {
+    if (!activeQuestion || !userId) {
+      alert("ログイン情報が見つからないか、問題が選択されていません");
+      return;
+    }
 
-      const matchTheme = theme.title
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
+    const questionId = activeQuestion.questionId ?? activeQuestion.question_id;
+    const key = String(questionId);
+    
+    // 💡 修正：フリーズの原因だったquerySelectorを廃止し、Refから安全に最新値を取得
+    const content = textareaRef.current ? textareaRef.current.value : (answerMap[key]?.answerContent || "");
 
-      const filteredQuestions = theme.questions?.filter((q) =>
-        q.questionText?.toLowerCase().includes(search.toLowerCase())
-      );
+    try {
+      const res = await fetch(`${API_BASE}/api/answers/upsert?userId=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionId: questionId,
+          answerContent: content,
+        }),
+      });
 
-      if (!matchTheme && (!filteredQuestions || filteredQuestions.length === 0)) {
-        return null;
-      }
+      if (!res.ok) throw new Error("保存に失敗しました");
 
-      return {
-        ...theme,
-        questions: matchTheme ? theme.questions : filteredQuestions,
+      const result = await res.json();
+      console.log("SAVE RESULT:", result);
+
+      const normalizedKey = String(result.questionId ?? questionId);
+      const normalized = {
+        ...result,
+        questionId: result.questionId ?? questionId,
+        answerId: result.answerId,
+        answerContent: result.answerContent ?? content,
+        submittedAt: result.submittedAt,
       };
-    })
-    .filter(Boolean);
+
+      setAnswerMap((prev) => ({
+        ...prev,
+        [normalizedKey]: normalized,
+      }));
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    } catch (err) {
+      console.error(err);
+      alert("保存失敗");
+    }
+  };
 
   // =========================
   // 他の人の回答一覧を保持
   // =========================
-  const [answers, setAnswers] = useState([]);
+  const [otherAnswers, setOtherAnswers] = useState([]);
 
-  // 問題が選択されたら、その問題の回答一覧を取得
   useEffect(() => {
-    // 問題未選択なら何もしない
     if (!activeQuestion) return;
 
-    fetch(
-      `http://localhost:8080/api/questions/${activeQuestion.questionId}/answers`
-    )
+    fetch(`${API_BASE}/api/questions/${activeQuestion.questionId}/answers`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("回答取得に失敗しました");
-        }
+        if (!res.ok) throw new Error("回答取得に失敗しました");
         return res.json();
       })
       .then((data) => {
         // 取得した回答一覧を保存
+        const filtered = data.filter(
+          (a) => a.userId !== userId); // 自分の回答は除外
 
-        setAnswers(data);
+        setOtherAnswers(filtered);
       })
       .catch((err) => {
         console.error(err);
       });
-    console.log(answers);
 
   }, [activeQuestion]);
-
 
   // ★問題切り替え検知
   useEffect(() => {
@@ -105,30 +211,90 @@ export default function MainScreen() {
     setIsAnswersOpen(false);
   }, [activeQuestion?.questionId]);
 
+  // 未ログイン時は画面描画を一瞬止めるガード
+  if (!userId) {
+    return <div style={{ padding: 20 }}>ログイン画面へ移動中...</div>;
+  }
+
   // =========================
   // UI
   // =========================
   return (
     <div style={styles.wrapper}>
-      {/* SIDEBAR */}
+      {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="検索"
-          style={styles.search}
-        />
+        {/*左上の検索欄とログアウトボタンのエリア*/}
+        <div style={styles.topBar}>
+          <input
+            type="text"
+            placeholder="問題をキーワード検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={styles.searchInput}
+          />
+          <button onClick={handleLogout} style={styles.logoutButton}>
+            ログアウト
+          </button>
+        </div>
 
-        {filteredThemes.map((theme) => {
+        <div style={{
+          marginTop: "10px",
+          display: "flex",
+          gap: "12px",
+        }}>
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="all"
+              checked={statusFilter === "all"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            すべて
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="completed"
+              checked={statusFilter === "completed"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            完了
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="status"
+              value="uncompleted"
+              checked={statusFilter === "uncompleted"}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            未完了
+          </label>
+          </div>
+
+        {themes.map((theme) => {
+          // 検索処理
+          const filteredQuestions = theme.questions?.filter((q) => {
+            if (!searchQuery) return true;
+            return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
+          }) || [];
+
+          if (searchQuery && filteredQuestions.length === 0) return null;
+
           const isActive = theme.pdfId === activeThemeId;
 
           return (
             <div key={theme.pdfId}>
-              {/* フォルダ */}
               <div
                 onClick={() => {
                   setActiveThemeId(theme.pdfId);
-                  setActiveQuestion(theme.questions?.[0] || null);
+                  if (filteredQuestions.length > 0) {
+                    setActiveQuestion(filteredQuestions[0]);
+                  }
                 }}
                 style={{
                   ...styles.theme,
@@ -138,29 +304,49 @@ export default function MainScreen() {
                 📁 {theme.title}
               </div>
 
-              {/* 問題一覧 */}
               {isActive &&
-                theme.questions?.map((q) => (
-                  <div
-                    key={q.questionId}
-                    onClick={() => setActiveQuestion(q)}
-                    style={{
-                      ...styles.question,
-                      background:
-                        activeQuestion?.questionId === q.questionId
-                          ? "#dbeafe"
-                          : "transparent",
-                    }}
-                  >
-                    {q.questionText}
-                  </div>
-                ))}
+                theme.questions?.filter((q) => {
+                  const qid = q.questionId ?? q.question_id;
+                  // 完了のみ表示
+                  if (statusFilter === "completed") {
+                    return !!answerMap[qid];
+                  }
+
+                  // 未完了のみ表示
+                  if (statusFilter === "uncompleted") {
+                    return !answerMap[qid];
+                  }
+
+                  // すべて表示
+                  return true;
+                })
+
+                  .map((q) => {
+                    const qid = q.questionId ?? q.question_id;
+
+                    return (
+                      <div
+                        key={qid}
+                        onClick={() => setActiveQuestion(q)}
+                        style={{
+                          ...styles.question,
+                          background:
+                            (activeQuestion?.questionId ?? activeQuestion?.question_id) === qid
+                              ? "#dbeafe"
+                              : "transparent",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        📝 {q.questionText}
+                      </div>
+                    );
+                  })}
             </div>
           );
         })}
       </div>
 
-      {/* MAIN */}
+      {/* ================= MAIN ================= */}
       <div style={styles.main}>
         {!activeQuestion ? (
           <div>問題を選択してください</div>
@@ -168,23 +354,50 @@ export default function MainScreen() {
           <div style={styles.card}>
             <h3>{activeQuestion.questionText}</h3>
 
+            {/* ================= ANSWER ================= */}
             <textarea
-              value={answerInput}
-              onChange={(e) => setAnswerInput(e.target.value)}
+              ref={textareaRef} // 💡 追記：Refをここに紐付け
+              value={
+                (() => {
+                  const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+                  return answerMap[String(qid)]?.answerContent || ""
+                })()
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+                const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+
+                setAnswerMap((prev) => ({
+                  ...prev,
+                  [String(qid)]: {
+                    ...prev[String(qid)],
+                    answerContent: value,
+                    questionId: qid,
+                  },
+                }));
+              }}
               style={styles.textarea}
               placeholder="回答を入力"
             />
 
-            <button style={styles.button}>保存（仮）</button>
+            <div style={{ marginTop: 10, marginBottom: 20 }}>
+              <button onClick={handleSave} style={styles.button}>
+                保存
+              </button>
 
-            <hr />
+              {saved && (
+                <span style={{ color: "green", marginLeft: 10 }}>
+                  保存しました
+                </span>
+              )}
+            </div>
 
             {/* ==========================
                 模範解答
             ========================== */}
-            <div>
+            <div style={{ marginBottom: 15 }}>
               <b style={{ cursor: "pointer" }} onClick={() => setIsModelOpen((prev) => !prev)}>
-                模範解答{isModelOpen ? "▶" : "▼"}
+                模範解答 {isModelOpen ? "▲" : "▼"}
               </b>
 
               {isModelOpen && (
@@ -199,31 +412,31 @@ export default function MainScreen() {
             ========================== */}
             <div style={{ marginTop: "20px" }}>
               <b style={{ cursor: "pointer" }} onClick={() => setIsAnswersOpen((prev) => !prev)}>
-                他の人の回答{isAnswersOpen ? "▶" : "▼"}
+                他の人の回答 {isAnswersOpen ? "▲" : "▼"}
               </b>
 
               {isAnswersOpen && (
-                /* 回答が0件の場合 */
                 <div>
                   {
-                    answers.length === 0 ? (
+                    otherAnswers.length === 0 ? (
                       <div style={styles.box}>
                         回答はありません
                       </div>
                     ) : (
                       /* 回答一覧を表示 */
-                      answers.map((answer) => (
-                        <div
-                          key={answer.answerId}
-                          style={{
-                            ...styles.box,
-                            marginTop: "8px",
-                          }}
-                        >
-                          {answer.userName}さんの回答: <br />
-                          {answer.answerContent}
-                        </div>
-                      ))
+                      otherAnswers
+                        .map((answer) => (
+                          <div
+                            key={answer.answerId}
+                            style={{
+                              ...styles.box,
+                              marginTop: "8px",
+                            }}
+                          >
+                            {answer.userName}さんの回答: <br />
+                            {answer.answerContent}
+                          </div>
+                        ))
                     )
                   }
                 </div>
@@ -238,60 +451,74 @@ export default function MainScreen() {
 
 // =========================
 const styles = {
-  wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
-
+  wrapper: {
+    display: "flex",
+    height: "100vh",
+    fontFamily: "sans-serif",
+  },
   sidebar: {
     width: 320,
     borderRight: "1px solid #ddd",
-    padding: 10,
     overflowY: "auto",
+    padding: 10,
   },
-
-  search: {
-    width: "100%",
-    padding: 8,
-    marginBottom: 10,
+  topBar: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "15px",
+    paddingBottom: "10px",
+    borderBottom: "1px solid #eee",
   },
-
+  searchInput: {
+    flex: 1,
+    padding: "6px 10px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    fontSize: "13px",
+  },
+  logoutButton: {
+    padding: "6px 10px",
+    borderRadius: "4px",
+    border: "1px solid #dee2e6",
+    background: "#f8f9fa",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: "bold",
+  },
   theme: {
-    padding: "8px",
+    padding: 8,
     fontWeight: "bold",
     cursor: "pointer",
     borderRadius: 4,
   },
-
   question: {
     padding: "6px 16px",
-    fontSize: 13,
     cursor: "pointer",
+    fontSize: 13,
     borderRadius: 4,
   },
-
   main: {
     flex: 1,
     padding: 20,
   },
-
   card: {
-    padding: 20,
     border: "1px solid #ddd",
+    padding: 20,
     borderRadius: 8,
   },
-
   textarea: {
     width: "100%",
     height: 120,
     marginTop: 10,
   },
-
   button: {
-    marginTop: 10,
     padding: "6px 12px",
   },
-
   box: {
     background: "#f3f4f6",
     padding: 10,
     marginTop: 8,
+    borderRadius: 6,
+    fontSize: "14px",
   },
 };

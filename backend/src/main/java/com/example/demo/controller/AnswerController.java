@@ -62,4 +62,16 @@ public class AnswerController {
 
         return answerService.getAnswersByQuestion(questionId);
     }
+
+    /**
+     * 回答の登録または更新 (Upsert)
+     * POST /api/answers/upsert?userId=1
+     */
+    @PostMapping("/answers/upsert")
+    public AnswerResponse upsertAnswer(
+            @RequestBody AnswerRequest request,
+            @RequestParam Integer userId) {
+        
+        return answerService.upsertAnswer(request, userId);
+    }
 }
