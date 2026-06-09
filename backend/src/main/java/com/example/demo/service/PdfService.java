@@ -2,9 +2,10 @@ package com.example.demo.service;
 
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
+import com.example.demo.exception.BusinessException;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.PdfRepository;
-import com.example.demo.exception.BusinessException;
+import com.example.demo.util.StatusCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,19 +22,46 @@ public class PdfService {
     }
 
     // =========================================
+    // 🔥 管理者：全テーマ取得
+    // =========================================
+    @Transactional
+    public List<ThemeResponse> getAllThemesForAdmin() {
+        List<Pdf> all = refreshStatuses();
+        return all.stream().map(this::toResponse).toList();
+    }
+
+    // =========================================
     // 🔥 一般ユーザー：公開テーマのみ取得
     // =========================================
-    @Transactional(readOnly = true)
-    public List<ThemeResponse> getAllThemes() {
-
+    @Transactional
+    public List<ThemeResponse> getPublicThemes() {
+        List<Pdf> all = refreshStatuses();
         LocalDateTime now = LocalDateTime.now();
 
-        return pdfRepository.findAll()
-                .stream()
-                // 🔥 公開制御フィルタ（最重要）
+        return all.stream()
                 .filter(pdf -> isPublic(pdf, now))
                 .map(this::toResponse)
                 .toList();
+    }
+
+    private List<Pdf> refreshStatuses() {
+        List<Pdf> all = pdfRepository.findAll();
+        boolean needsUpdate = false;
+
+        for (Pdf pdf : all) {
+            String correctStatus = StatusCalculator.calculateStatus(
+                    pdf.getStatus(), pdf.getOpenAt(), pdf.getCloseAt());
+            if (!correctStatus.equals(pdf.getStatus())) {
+                pdf.setStatus(correctStatus);
+                needsUpdate = true;
+            }
+        }
+
+        if (needsUpdate) {
+            pdfRepository.saveAll(all);
+        }
+
+        return all;
     }
 
     // =========================================
@@ -46,19 +74,7 @@ public class PdfService {
         pdf.setTitle(request.getTitle());
         pdf.setOpenAt(request.getOpenAt());
         pdf.setCloseAt(request.getCloseAt());
-
-        // 🔥 ステータス決定
-        if ("draft".equalsIgnoreCase(request.getStatus())) {
-            pdf.setStatus("draft");
-        } else {
-            LocalDateTime now = LocalDateTime.now();
-
-            if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
-                pdf.setStatus("scheduled");
-            } else {
-                pdf.setStatus("published");
-            }
-        }
+        pdf.setStatus(StatusCalculator.calculateStatus(request.getStatus(), request.getOpenAt(), request.getCloseAt()));
 
         Pdf saved = pdfRepository.save(pdf);
         return toResponse(saved);
@@ -71,25 +87,13 @@ public class PdfService {
     public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
 
         Pdf existing = pdfRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
+                .orElseThrow(() -> new RuntimeException("テーマが見つかりません"));
 
         existing.setTitle(updated.getTitle());
         existing.setOpenAt(updated.getOpenAt());
         existing.setCloseAt(updated.getCloseAt());
-
-        if ("draft".equalsIgnoreCase(updated.getStatus())) {
-            existing.setStatus("draft");
-        } else {
-            LocalDateTime now = LocalDateTime.now();
-
-            if (updated.getCloseAt() != null && updated.getCloseAt().isBefore(now)) {
-                existing.setStatus("closed");
-            } else if (updated.getOpenAt() != null && updated.getOpenAt().isAfter(now)) {
-                existing.setStatus("scheduled");
-            } else {
-                existing.setStatus("published");
-            }
-        }
+        existing.setStatus(
+                StatusCalculator.calculateStatus(updated.getStatus(), updated.getOpenAt(), updated.getCloseAt()));
 
         Pdf saved = pdfRepository.save(existing);
         return toResponse(saved);

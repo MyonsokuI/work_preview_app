@@ -1,0 +1,78 @@
+/* Sidebar全体 */
+.sidebar {
+    width: 300px;
+    height: 100vh;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* 各テーマ項目 */
+.themeItem {
+    border-bottom: 1px solid #f8fafc;
+    transition: all 0.2s;
+}
+
+.themeHeader {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.themeHeader:hover {
+    background-color: #f1f5f9;
+}
+
+/* 問題リスト */
+.questionList {
+    padding-left: 24px;
+    padding-bottom: 8px;
+}
+
+.questionItem {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 8px;
+}
+
+.questionItem:hover {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+/* ボタン類 */
+.addButton {
+    width: 90%;
+    margin: 8px auto;
+    padding: 8px;
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.item {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* 選択時の強調スタイル */
+.active {
+    background-color: #e0f7fa;
+    /* 淡い青色 */
+    border-left: 4px solid #00796b;
+    /* 左側に太いアクセント線 */
+    font-weight: bold;
+    color: #00796b;
+}

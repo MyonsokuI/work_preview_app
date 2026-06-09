@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.dto.theme.ThemeWithQuestionsResponse;
@@ -30,10 +31,23 @@ public class PdfController {
      */
     @GetMapping
     public List<ThemeWithQuestionsResponse> getThemes() {
-        // 1. 全てのテーマ（Pdf）を取得 (Service側で既にステータスや日時がセットされているにゃ)
-        List<ThemeResponse> pdfList = pdfService.getAllThemes();
+        List<ThemeResponse> pdfList = pdfService.getPublicThemes();
 
-        // 2. 各テーマに紐づく問題をQuestionServiceから取得して、ひとつのデータ構造にまとめる
+        return buildThemeResponses(pdfList);
+    }
+
+    /**
+     * 管理者用のテーマ一覧取得（紐づく問題一覧も一緒に取得する）
+     * URL: http://localhost:8080/api/themes/admin
+     */
+    @GetMapping("/admin")
+    public List<ThemeWithQuestionsResponse> getAdminThemes() {
+        List<ThemeResponse> pdfList = pdfService.getAllThemesForAdmin();
+
+        return buildThemeResponses(pdfList);
+    }
+
+    private List<ThemeWithQuestionsResponse> buildThemeResponses(List<ThemeResponse> pdfList) {
         return pdfList.stream().map(pdf -> {
             ThemeWithQuestionsResponse response = new ThemeWithQuestionsResponse();
             response.setPdfId(pdf.getPdfId());
@@ -79,11 +93,5 @@ public class PdfController {
         pdfService.deleteTheme(id);
     }
 
-    @PutMapping("/{id}/status")
-public ThemeResponse updateStatus(
-        @PathVariable Integer id,
-        @RequestParam String status
-) {
-    return pdfService.updateStatus(id, status);
-}
+    
 }

@@ -5,6 +5,7 @@ import com.example.demo.dto.question.QuestionResponse;
 import com.example.demo.entity.Question;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.QuestionRepository;
+import com.example.demo.util.StatusCalculator;
 import com.example.demo.repository.PdfRepository;
 import com.example.demo.exception.BusinessException;
 import org.springframework.stereotype.Service;
@@ -29,9 +30,25 @@ public class QuestionService {
         return questionRepository.findAll().stream().map(this::convertToResponse).toList();
     }
 
-    @Transactional(readOnly = true)
+    // QuestionService.java 内の修正箇所
+    @Transactional
     public List<QuestionResponse> getQuestionsByTheme(Integer pdfId) {
-        return questionRepository.findByPdf_PdfId(pdfId).stream().map(this::convertToResponse).toList();
+        List<Question> questions = questionRepository.findByPdf_PdfId(pdfId);
+        boolean needsUpdate = false;
+
+        for (Question q : questions) {
+            String correctStatus = StatusCalculator.calculateStatus(q.getStatus(), q.getOpenAt(), q.getCloseAt());
+            if (!correctStatus.equals(q.getStatus())) {
+                q.setStatus(correctStatus);
+                needsUpdate = true;
+            }
+        }
+
+        if (needsUpdate) {
+            questionRepository.saveAll(questions);
+        }
+
+        return questions.stream().map(this::convertToResponse).toList();
     }
 
     @Transactional(readOnly = true)

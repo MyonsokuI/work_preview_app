@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import GeneralReview from "../components/general_review";
 
 const API_BASE = "http://localhost:8080";
 
@@ -359,7 +360,17 @@ export default function MainScreen() {
                 </div>
               )}
             </div>
+              {/* 自分の回答に対するレビュー表示 */}
+              {(() => {
+                const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+                const myAnswerId = answerMap[String(qid)]?.answerId;
 
+                return (
+                  <div style={{ marginTop: "40px" }}>
+                    <GeneralReview answerId={myAnswerId} />
+                  </div>
+                );
+              })()}
           </div>
         )}
       </div>
