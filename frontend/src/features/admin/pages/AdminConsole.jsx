@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
-import QuestionEditor from "../components/QuestionEditor";
-import ProgressChecker from "../components/ProgressChecker";
+import AdminSidebar from "../components/sidebar/AdminSidebar";
+import QuestionEditor from "../components/questioneditor/QuestionEditor";
+import ProgressChecker from "../components/progresschecker/ProgressChecker";
+import ReviewPanel from "../components/reviewPanel/ReviewPanel";
 import { adminApi } from "../api/adminApi"; // 💡 作成したAPIサービスをインポート
 
 export default function AdminConsole() {
@@ -36,6 +37,12 @@ export default function AdminConsole() {
         setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
     };
 
+    // 新しいハンドラを作成
+    const handleShowThemeProgress = (themeId) => {
+        setActiveThemeId(themeId);
+        setActiveTab("progress"); // 💡 進捗タブを強制的に選択
+        setCreatingQuestion(null); // 新規作成モードは解除
+    };
     const handleSaveQuestion = async (data) => {
         try {
             const body = {
@@ -83,8 +90,9 @@ export default function AdminConsole() {
                 themes={themes}
                 activeQuestionId={activeQuestionId}
                 activeTab={activeTab}
-                // 💡 修正箇所：第3引数の tab をそのまま反映させることでタブ固定を防ぐ
                 onSelectQuestion={(tid, qid, tab) => {
+                    // 💡 ここが重要：クリックされたら新規作成状態を解除する
+                    setCreatingQuestion(null);
                     setActiveThemeId(tid);
                     setActiveQuestionId(qid);
                     setActiveTab(tab);
@@ -93,6 +101,7 @@ export default function AdminConsole() {
                 onAddTheme={(t) => setThemes([...themes, t])}
                 onLogout={() => navigate("/login")}
                 onDeleteQuestion={handleDeleteQuestion}
+                onShowProgress={handleShowThemeProgress} // 💡 渡す
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>
@@ -103,6 +112,9 @@ export default function AdminConsole() {
                         <div style={{ display: "flex", gap: "8px" }}>
                             <button onClick={() => { setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "edit" ? "#0066cc" : "#fff", color: activeTab === "edit" ? "#fff" : "#333" }}>📝 問題の編集</button>
                             <button onClick={() => setActiveTab("progress")} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "progress" ? "#28a745" : "#fff", color: activeTab === "progress" ? "#fff" : "#333" }}>📊 受講者進捗確認</button>
+                            <button onClick={() => setActiveTab("review")}>
+                                💬 レビュー
+                            </button>
                         </div>
                     )}
                 </div>
@@ -118,6 +130,12 @@ export default function AdminConsole() {
                     <>
                         {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />}
                         {activeTab === "progress" && <ProgressChecker currentTheme={currentTheme} />}
+                        {activeTab === "review" && (
+                            <ReviewPanel
+                                theme={currentTheme}
+                                questionId={activeQuestionId}
+                            />
+                        )}
                     </>
                 )}
             </div>
