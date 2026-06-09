@@ -12,17 +12,14 @@ export default function ReviewPanel({ questionId }) {
     const reviewerId = 1;
 
     // ----------------------
-    // 回答取得
+    // 回答取得（API統一版）
     // ----------------------
     const loadAnswers = async (qid) => {
         if (!qid) return;
 
         setLoading(true);
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/questions/${qid}/answers`
-            );
-            const data = await res.json();
+            const data = await adminApi.getAnswersByQuestion(qid);
             setAnswers(data);
         } catch (err) {
             console.error("回答取得エラー:", err);

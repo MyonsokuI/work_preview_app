@@ -60,3 +60,19 @@
     cursor: pointer;
     font-weight: bold;
 }
+
+.item {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* 選択時の強調スタイル */
+.active {
+    background-color: #e0f7fa;
+    /* 淡い青色 */
+    border-left: 4px solid #00796b;
+    /* 左側に太いアクセント線 */
+    font-weight: bold;
+    color: #00796b;
+}

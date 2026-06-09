@@ -131,4 +131,16 @@ export const adminApi = {
 
         return response.ok;
     },
+    // 回答取得
+    async getAnswersByQuestion(questionId) {
+        const response = await fetch(
+            `${BASE_URL}/questions/${questionId}/answers`
+        );
+
+        if (!response.ok) {
+            throw new Error("回答取得に失敗しました");
+        }
+
+        return response.json();
+    }
 };
