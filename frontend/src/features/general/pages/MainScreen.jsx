@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE = "http://localhost:8080";
 
+// =========================
+// UIラベル（日本語化）
+// =========================
 const FILTERS = [
   { key: "all", label: "すべて" },
   { key: "completed", label: "完了" },
@@ -13,10 +16,16 @@ export default function MainScreen() {
   const navigate = useNavigate();
   const textareaRef = useRef(null);
 
+  // =========================
+  // userId
+  // =========================
   const [userId, setUserId] = useState(() => {
     try {
       const saved = localStorage.getItem("currentUser");
-      if (saved) return JSON.parse(saved).userId || null;
+      if (saved) {
+        const obj = JSON.parse(saved);
+        return obj.userId ? Number(obj.userId) : null;
+      }
     } catch {}
     return null;
   });
@@ -29,20 +38,23 @@ export default function MainScreen() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [answerMap, setAnswerMap] = useState({});
-  const [savedToast, setSavedToast] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
 
   const [otherAnswers, setOtherAnswers] = useState([]);
 
-  // =====================
-  // login
-  // =====================
+  // =========================
+  // ログインガード
+  // =========================
   useEffect(() => {
     if (!userId) navigate("/login", { replace: true });
-  }, [userId]);
+  }, [userId, navigate]);
 
+  // =========================
+  // ログアウト
+  // =========================
   const handleLogout = () => {
     if (window.confirm("ログアウトしますか？")) {
       localStorage.clear();
@@ -50,124 +62,152 @@ export default function MainScreen() {
     }
   };
 
-  // =====================
-  // fetch themes
-  // =====================
+  // =========================
+  // テーマ開閉（Set管理）
+  // =========================
+  const toggleTheme = (themeId) => {
+    setOpenThemes((prev) => {
+      const next = new Set(prev);
+      if (next.has(themeId)) next.delete(themeId);
+      else next.add(themeId);
+      return next;
+    });
+  };
+
+  // =========================
+  // テーマ取得
+  // =========================
   useEffect(() => {
     if (!userId) return;
+
     fetch(`${API_BASE}/api/themes`)
-      .then((r) => r.json())
-      .then(setThemes);
+      .then((res) => res.json())
+      .then(setThemes)
+      .catch(console.error);
   }, [userId]);
 
-  // =====================
-  // fetch answers
-  // =====================
+  // =========================
+  // 自分の回答取得
+  // =========================
   useEffect(() => {
     if (!userId) return;
 
     fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
-      .then((r) => r.json())
+      .then((res) => res.json())
       .then((data) => {
         const map = {};
+
         data.forEach((a) => {
           const qid = a.questionId ?? a.question_id;
-          map[String(qid)] = a;
+          if (!qid) return;
+
+          map[String(qid)] = {
+            answerId: a.answerId,
+            questionId: qid,
+            answerContent: a.answerContent ?? "",
+          };
         });
+
         setAnswerMap(map);
-      });
+      })
+      .catch(console.error);
   }, [userId]);
 
-  // =====================
-  // save answer
-  // =====================
+  // =========================
+  // 保存
+  // =========================
   const handleSave = async () => {
-    if (!activeQuestion) return;
+    if (!activeQuestion || !userId) return;
 
     const qid = activeQuestion.questionId ?? activeQuestion.question_id;
     const content = textareaRef.current?.value || "";
 
-    const res = await fetch(
-      `${API_BASE}/api/answers/upsert?userId=${userId}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/answers/upsert?userId=${userId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            questionId: qid,
+            answerContent: content,
+          }),
+        }
+      );
+
+      const result = await res.json();
+
+      setAnswerMap((prev) => ({
+        ...prev,
+        [String(qid)]: {
+          answerId: result.answerId,
           questionId: qid,
-          answerContent: content,
-        }),
-      }
-    );
+          answerContent: result.answerContent,
+        },
+      }));
 
-    const result = await res.json();
-
-    setAnswerMap((prev) => ({
-      ...prev,
-      [String(qid)]: result,
-    }));
-
-    setSavedToast(true);
-    setTimeout(() => setSavedToast(false), 1500);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // =====================
-  // other answers
-  // =====================
+  // =========================
+  // 他人回答取得
+  // =========================
   useEffect(() => {
     if (!activeQuestion) return;
 
     const qid = activeQuestion.questionId ?? activeQuestion.question_id;
 
     fetch(`${API_BASE}/api/questions/${qid}/answers`)
-      .then((r) => r.json())
+      .then((res) => res.json())
       .then((data) => {
-        setOtherAnswers(data.filter((a) => a.userId !== userId));
-      });
+        const filtered = data.filter((a) => a.userId !== userId);
+        setOtherAnswers(filtered);
+      })
+      .catch(console.error);
+  }, [activeQuestion, userId]);
+
+  // =========================
+  // モーダルリセット
+  // =========================
+  useEffect(() => {
+    setIsModelOpen(false);
+    setIsAnswersOpen(false);
   }, [activeQuestion]);
 
-  const toggleTheme = (id) => {
-    setOpenThemes((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const highlight = (text) => {
-    if (!searchQuery) return text;
-    const regex = new RegExp(`(${searchQuery})`, "gi");
-    return text.split(regex).map((part, i) =>
-      part.toLowerCase() === searchQuery.toLowerCase() ? (
-        <mark key={i}>{part}</mark>
-      ) : (
-        part
-      )
-    );
-  };
-
+  // =========================
+  // 進捗
+  // =========================
   const getProgress = (theme) => {
     const qs = theme.questions || [];
-    const done = qs.filter(
-      (q) => answerMap[String(q.questionId ?? q.question_id)]
-    ).length;
+    const total = qs.length;
 
-    return { done, total: qs.length };
+    const done = qs.filter((q) => {
+      const qid = q.questionId ?? q.question_id;
+      return !!answerMap[String(qid)];
+    }).length;
+
+    return { done, total };
   };
 
-  if (!userId) return null;
+  if (!userId) return <div>loading...</div>;
 
   return (
     <div style={styles.wrapper}>
 
-      {/* ================= LEFT ================= */}
+      {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
 
+        {/* TOP */}
         <div style={styles.topBar}>
           <input
             style={styles.search}
-            placeholder="検索"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="検索"
           />
 
           <button onClick={handleLogout} style={styles.logout}>
@@ -175,13 +215,14 @@ export default function MainScreen() {
           </button>
         </div>
 
+        {/* FILTER（日本語UI＋ボタン化） */}
         <div style={styles.filterRow}>
           {FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
               style={{
-                ...styles.filterBtn,
+                ...styles.filterButton,
                 background:
                   statusFilter === f.key ? "#2563eb" : "#f3f4f6",
                 color: statusFilter === f.key ? "#fff" : "#111",
@@ -192,79 +233,68 @@ export default function MainScreen() {
           ))}
         </div>
 
+        {/* ================= THEMES ================= */}
         {themes.map((theme) => {
-          const id = theme.pdfId;
-          const isOpen = openThemes.has(id);
+          const themeId = theme.pdfId;
+          const isOpen = openThemes.has(themeId);
           const { done, total } = getProgress(theme);
 
           return (
-            <div key={id} style={styles.themeCard}>
+            <div key={themeId}>
 
               <div
-                onClick={() => toggleTheme(id)}
+                onClick={() => toggleTheme(themeId)}
                 style={{
-                  ...styles.themeHeader,
-                  background: isOpen ? "#eef6ff" : "#fff",
+                  ...styles.theme,
+                  background: isOpen ? "#eef6ff" : "",
                 }}
               >
-                <div>
-                  📁 {theme.title}
-                </div>
+                📁 {theme.title}
 
-                <div style={styles.badge}>
+                <div style={styles.progressText}>
                   {done}/{total}
                 </div>
 
-                <div style={styles.bar}>
+                <div style={styles.progressBg}>
                   <div
                     style={{
+                      ...styles.progressBar,
                       width: total ? `${(done / total) * 100}%` : "0%",
-                      ...styles.barFill,
                     }}
                   />
                 </div>
               </div>
 
+              {/* ================= QUESTIONS ================= */}
               {isOpen &&
                 theme.questions
                   ?.filter((q) => {
                     const qid = q.questionId ?? q.question_id;
-                    const done = !!answerMap[String(qid)];
+                    const has = !!answerMap[String(qid)];
 
-                    if (statusFilter === "completed") return done;
-                    if (statusFilter === "uncompleted") return !done;
+                    if (statusFilter === "completed") return has;
+                    if (statusFilter === "uncompleted") return !has;
                     return true;
                   })
+                  .filter((q) =>
+                    searchQuery
+                      ? q.questionText
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                      : true
+                  )
                   .map((q) => {
                     const qid = q.questionId ?? q.question_id;
-                    const isActive =
-                      activeQuestion &&
-                      (activeQuestion.questionId ??
-                        activeQuestion.question_id) === qid;
-
                     const done = !!answerMap[String(qid)];
 
                     return (
                       <div
                         key={qid}
                         onClick={() => setActiveQuestion(q)}
-                        style={{
-                          ...styles.question,
-                          background: isActive ? "#e0f2fe" : "",
-                          borderLeft: isActive
-                            ? "4px solid #2563eb"
-                            : "4px solid transparent",
-                        }}
+                        style={styles.question}
                       >
-                        <span>{highlight(q.questionText)}</span>
-
-                        <span
-                          style={{
-                            color: done ? "#22c55e" : "#aaa",
-                          }}
-                        >
-                          {done ? "✔" : ""}
-                        </span>
+                        📝 {q.questionText}
+                        {done && <span style={{ color: "#22c55e" }}>✔</span>}
                       </div>
                     );
                   })}
@@ -273,8 +303,9 @@ export default function MainScreen() {
         })}
       </div>
 
-      {/* ================= RIGHT ================= */}
+      {/* ================= MAIN ================= */}
       <div style={styles.main}>
+
         {!activeQuestion ? (
           <div>問題を選択</div>
         ) : (
@@ -295,18 +326,16 @@ export default function MainScreen() {
               }
             />
 
-            <button onClick={handleSave} style={styles.saveBtn}>
-              保存
+            <button onClick={handleSave} style={styles.save}>
+              保存 {saved && "✔"}
             </button>
 
-            {savedToast && (
-              <div style={styles.toast}>保存完了 ✔</div>
-            )}
-
-            <div style={styles.section}>
-              <b onClick={() => setIsModelOpen(!isModelOpen)}>
+            {/* 模範解答 */}
+            <div>
+              <b onClick={() => setIsModelOpen((v) => !v)}>
                 模範解答 {isModelOpen ? "▲" : "▼"}
               </b>
+
               {isModelOpen && (
                 <div style={styles.box}>
                   {activeQuestion.correctAnswer}
@@ -314,17 +343,21 @@ export default function MainScreen() {
               )}
             </div>
 
-            <div style={styles.section}>
-              <b onClick={() => setIsAnswersOpen(!isAnswersOpen)}>
+            {/* 他人回答 */}
+            <div>
+              <b onClick={() => setIsAnswersOpen((v) => !v)}>
                 他の人の回答 {isAnswersOpen ? "▲" : "▼"}
               </b>
 
-              {isAnswersOpen &&
-                otherAnswers.map((a) => (
-                  <div key={a.answerId} style={styles.box}>
-                    {a.userName}: {a.answerContent}
-                  </div>
-                ))}
+              {isAnswersOpen && (
+                <div>
+                  {otherAnswers.map((a) => (
+                    <div key={a.answerId} style={styles.box}>
+                      {a.userName || "user"}: {a.answerContent}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>
@@ -334,38 +367,39 @@ export default function MainScreen() {
   );
 }
 
-// =====================
-// styles
-// =====================
+// =========================
+// STYLE
+// =========================
 const styles = {
   wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
-
-  sidebar: {
-    width: 340,
-    borderRight: "1px solid #ddd",
-    padding: 10,
-  },
+  sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10 },
 
   topBar: { display: "flex", gap: 8, marginBottom: 10 },
 
   search: {
     flex: 1,
-    padding: 6,
+    padding: "6px 10px",
     borderRadius: 6,
     border: "1px solid #ccc",
   },
 
   logout: {
-    padding: 6,
+    padding: "6px 10px",
     borderRadius: 6,
     border: "1px solid #ddd",
     background: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
   },
 
-  filterRow: { display: "flex", gap: 6, marginBottom: 10 },
+  filterRow: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 10,
+  },
 
-  filterBtn: {
-    padding: "5px 10px",
+  filterButton: {
+    padding: "6px 10px",
     borderRadius: 8,
     border: "1px solid #ddd",
     cursor: "pointer",
@@ -373,36 +407,16 @@ const styles = {
     fontWeight: "bold",
   },
 
-  themeCard: {
-    marginBottom: 10,
-    borderRadius: 10,
-    overflow: "hidden",
-    border: "1px solid #eee",
-  },
-
-  themeHeader: {
+  theme: {
     padding: 10,
+    borderRadius: 6,
     cursor: "pointer",
-    transition: "all 0.2s ease",
+    fontWeight: "bold",
   },
 
-  badge: {
-    fontSize: 12,
-    color: "#555",
-    marginTop: 4,
-  },
-
-  bar: {
-    height: 4,
-    background: "#eee",
-    borderRadius: 10,
-    marginTop: 6,
-  },
-
-  barFill: {
-    height: 4,
-    background: "#4ade80",
-  },
+  progressBg: { height: 4, background: "#eee", borderRadius: 10 },
+  progressBar: { height: 4, background: "#4ade80", borderRadius: 10 },
+  progressText: { fontSize: 11, marginTop: 3 },
 
   question: {
     padding: "6px 10px",
@@ -414,37 +428,19 @@ const styles = {
 
   main: { flex: 1, padding: 20 },
 
-  card: {
-    border: "1px solid #ddd",
-    padding: 20,
-    borderRadius: 10,
-  },
+  card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
 
-  textarea: {
-    width: "100%",
-    height: 120,
-    marginTop: 10,
-  },
+  textarea: { width: "100%", height: 120, marginTop: 10 },
 
-  saveBtn: {
+  save: {
     marginTop: 10,
     padding: "6px 14px",
-    borderRadius: 8,
-    border: "1px solid #ddd",
+    borderRadius: 6,
+    border: "1px solid #ccc",
     background: "#f8fafc",
+    cursor: "pointer",
     fontWeight: "bold",
   },
-
-  toast: {
-    marginTop: 10,
-    padding: 8,
-    background: "#22c55e",
-    color: "white",
-    borderRadius: 6,
-    width: "fit-content",
-  },
-
-  section: { marginTop: 15 },
 
   box: {
     background: "#f3f4f6",

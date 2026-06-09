@@ -78,4 +78,12 @@ public class PdfController {
     public void deleteTheme(@PathVariable Integer id) {
         pdfService.deleteTheme(id);
     }
+
+    @PutMapping("/{id}/status")
+public ThemeResponse updateStatus(
+        @PathVariable Integer id,
+        @RequestParam String status
+) {
+    return pdfService.updateStatus(id, status);
+}
 }
