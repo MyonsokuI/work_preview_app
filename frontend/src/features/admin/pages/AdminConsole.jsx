@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/sidebar/AdminSidebar";
 import QuestionEditor from "../components/questioneditor/QuestionEditor";
 import ProgressChecker from "../components/progresschecker/ProgressChecker";
+import ReviewPanel from "../components/reviewPanel/ReviewPanel";
 import { adminApi } from "../api/adminApi"; // 💡 作成したAPIサービスをインポート
 
 export default function AdminConsole() {
@@ -111,6 +112,9 @@ export default function AdminConsole() {
                         <div style={{ display: "flex", gap: "8px" }}>
                             <button onClick={() => { setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "edit" ? "#0066cc" : "#fff", color: activeTab === "edit" ? "#fff" : "#333" }}>📝 問題の編集</button>
                             <button onClick={() => setActiveTab("progress")} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "progress" ? "#28a745" : "#fff", color: activeTab === "progress" ? "#fff" : "#333" }}>📊 受講者進捗確認</button>
+                            <button onClick={() => setActiveTab("review")}>
+                                💬 レビュー
+                            </button>
                         </div>
                     )}
                 </div>
@@ -126,6 +130,12 @@ export default function AdminConsole() {
                     <>
                         {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />}
                         {activeTab === "progress" && <ProgressChecker currentTheme={currentTheme} />}
+                        {activeTab === "review" && (
+                            <ReviewPanel
+                                theme={currentTheme}
+                                questionId={activeQuestionId}
+                            />
+                        )}
                     </>
                 )}
             </div>

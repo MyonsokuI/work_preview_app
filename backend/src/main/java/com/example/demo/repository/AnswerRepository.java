@@ -4,7 +4,6 @@ import com.example.demo.entity.Answer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AnswerRepository extends JpaRepository<Answer, Integer> {
 
@@ -12,6 +11,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Integer> {
 
     List<Answer> findByQuestion_QuestionId(Integer questionId);
 
-    // 🚀 💡 【追加】特定のユーザーが特定の問題に回答したデータを1件だけ取得するにゃ！
-    Optional<Answer> findByUser_UserIdAndQuestion_QuestionId(Integer userId, Integer questionId);
+    // 🔥 メソッド名の末尾を OrderByIdDesc から OrderByAnswerIdDesc に変更します
+    java.util.Optional<Answer> findFirstByUser_UserIdAndQuestion_QuestionIdOrderByAnswerIdDesc(Integer userId,
+            Integer questionId);
 }

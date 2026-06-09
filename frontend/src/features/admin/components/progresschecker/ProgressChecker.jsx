@@ -9,30 +9,37 @@ export default function ProgressChecker({ currentTheme }) {
 
     useEffect(() => {
         const fetchProgress = async () => {
+            if (!currentTheme || !currentTheme.questions) return;
+
             setIsLoading(true);
+
             try {
-                // 1. 全件の進捗データを取得
                 const data = await adminApi.getProgress();
 
-                // 2. 選択中のテーマに紐づく問題IDリストを取得
-                const themeQuestionIds = currentTheme?.questions?.map(q => String(q.questionId)) || [];
+                const themeQuestions = currentTheme.questions || [];
 
-                // 3. 選択中のテーマに含まれる問題の進捗だけをフィルタリング
-                const filtered = data.filter(item => themeQuestionIds.includes(String(item.questionId)));
+                const themeQuestionIds = themeQuestions.map(q => String(q.questionId));
 
-                // 4. 並び順をテーマ内の問題順に整える
-                const ordered = currentTheme.questions.map(q => {
-                    const matched = filtered.find(item => String(item.questionId) === String(q.questionId));
+                const filtered = data.filter(item =>
+                    themeQuestionIds.includes(String(item.questionId))
+                );
+
+                const ordered = themeQuestions.map(q => {
+                    const matched = filtered.find(
+                        item => String(item.questionId) === String(q.questionId)
+                    );
+
                     return {
                         questionId: q.questionId,
                         questionText: q.questionText,
-                        answeredUserCount: matched ? matched.answeredUserCount : 0,
-                        totalUserCount: matched ? matched.totalUserCount : (data[0]?.totalUserCount || 0),
-                        uncompletedUsers: matched ? matched.uncompletedUsers : []
+                        answeredUserCount: matched?.answeredUserCount || 0,
+                        totalUserCount: matched?.totalUserCount || 0,
+                        uncompletedUsers: matched?.uncompletedUsers || []
                     };
                 });
 
                 setProgressList(ordered);
+
             } catch (err) {
                 console.error(err);
             } finally {
@@ -40,10 +47,8 @@ export default function ProgressChecker({ currentTheme }) {
             }
         };
 
-        if (currentTheme) {
-            fetchProgress();
-        }
-    }, [currentTheme]); // 💡 currentThemeが変わるたびに実行される
+        fetchProgress();
+    }, [currentTheme]);// 💡 currentThemeが変わるたびに実行される
 
     // ...以下（toggleUncompleted や レンダリング部分はそのまま）
 
