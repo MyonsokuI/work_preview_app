@@ -76,5 +76,59 @@ export const adminApi = {
         const response = await fetch(`${BASE_URL}/admin/progress`);
         if (!response.ok) throw new Error("進捗データの取得に失敗しました");
         return response.json();
-    }
+    },
+
+    // --- レビュー (Reviews) 関連 ---
+
+    // 回答に紐づくレビュー一覧取得
+    async getReviewsByAnswer(answerId) {
+        const response = await fetch(
+            `${BASE_URL}/answers/${answerId}/reviews`
+        );
+
+        if (!response.ok) {
+            throw new Error("レビュー一覧の取得に失敗しました");
+        }
+
+        return response.json();
+    },
+
+    // レビュー登録
+    async createReview(reviewerId, answerId, comment) {
+        const response = await fetch(
+            `${BASE_URL}/reviews?reviewerId=${reviewerId}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    answerId,
+                    comment,
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("レビューの登録に失敗しました");
+        }
+
+        return response.json();
+    },
+
+    // レビュー削除
+    async deleteReview(reviewId) {
+        const response = await fetch(
+            `${BASE_URL}/reviews/${reviewId}`,
+            {
+                method: "DELETE",
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("レビューの削除に失敗しました");
+        }
+
+        return response.ok;
+    },
 };
