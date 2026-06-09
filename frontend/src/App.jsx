@@ -3,6 +3,7 @@ import Login from "./features/auth/pages/Login";
 import AdminConsole from "./features/admin/pages/AdminConsole"; // さっき直した管理者画面にゃ！
 import MainScreen from "./features/general/pages/MainScreen"; // さっき直したユーザーダッシュボードにゃ！
 import Register from "./features/general/pages/Register"; // さっき直した登録画面にゃ！
+import AdminReview from "./features/admin/pages/AdminReview"; // さっき直したレビュー管理画面にゃ！
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         {/* 各画面のパス設定 */}
         <Route path="/login" element={<Login />} />
         <Route path="/admin/console" element={<AdminConsole />} />
+        <Route path="/admin/review" element={<AdminReview />} />
         <Route path="/user/dashboard" element={<MainScreen />} />
         <Route path="/user/register" element={<Register />} />
       </Routes>
