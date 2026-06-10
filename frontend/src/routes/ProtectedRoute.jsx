@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   let userRole = null;
   try {
     const decoded = jwtDecode(token);
-    userRole = decoded.role;
+    userRole = decoded.roles;
   } catch (error) {
     localStorage.removeItem("token");
     return <Navigate to="/login" replace />;
