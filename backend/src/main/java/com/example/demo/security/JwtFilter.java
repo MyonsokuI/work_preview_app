@@ -39,14 +39,19 @@ public class JwtFilter extends OncePerRequestFilter {
       Claims claims = jwtUtil.extractClaims(token);
       String role = claims.get("role", String.class);
 
+      if (role != null) {
         var authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())
+        );
         var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);
       }
 
+      request.setAttribute("userId", Integer.parseInt(claims.getSubject()));
+      request.setAttribute("role", claims.get("role"));
     }
 
+    // 🌟 これが正しい位置（if文の外、メソッドの中）に収まりましたにゃ！
     filterChain.doFilter(request, response);
   }
 }
