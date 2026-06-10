@@ -1,296 +1,301 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { userApi } from "../api/userApi"; // 💡 共通API関数をインポートしたにゃ！
+import GeneralReview from "../components/general_review";
+
+const API_BASE = "http://localhost:8080";
+
+// =========================
+// UIラベル（日本語化）
+// =========================
+const FILTERS = [
+  { key: "all", label: "すべて" },
+  { key: "completed", label: "完了" },
+  { key: "uncompleted", label: "未完了" },
+];
 
 export default function MainScreen() {
   const navigate = useNavigate();
-
-  // textareaの文字を安全に取得するための参照(Ref)
   const textareaRef = useRef(null);
 
-  // ユーザー情報を取得
+  // =========================
+  // userId
+  // =========================
   const [userId, setUserId] = useState(() => {
     try {
-      const savedUserStr = localStorage.getItem("currentUser");
-      if (savedUserStr) {
-        const userObj = JSON.parse(savedUserStr);
-        return userObj.userId ? Number(userObj.userId) : null;
+      const saved = localStorage.getItem("currentUser");
+      if (saved) {
+        const obj = JSON.parse(saved);
+        return obj.userId ? Number(obj.userId) : null;
       }
-    } catch (e) {
-      console.error("ユーザー情報のパースに失敗したにゃ:", e);
-    }
+    } catch {}
     return null;
   });
 
   const [themes, setThemes] = useState([]);
-  const [activeThemeId, setActiveThemeId] = useState(null);
+  const [openThemes, setOpenThemes] = useState(new Set());
   const [activeQuestion, setActiveQuestion] = useState(null);
 
-  // 課題表示のフィルタ
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [answerMap, setAnswerMap] = useState({});
   const [saved, setSaved] = useState(false);
 
-  // 模範解答・他人回答の表示/非表示
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
 
-  // 検索キーワード用のState
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // 他の人の回答一覧を保持
   const [otherAnswers, setOtherAnswers] = useState([]);
 
   // =========================
-  // 🛡️ ログインチェックガード
+  // ログインガード
   // =========================
   useEffect(() => {
-    if (!userId) {
-      navigate("/login", { replace: true });
-    }
+    if (!userId) navigate("/login", { replace: true });
   }, [userId, navigate]);
 
   // =========================
-  // 🛠️ ログアウト処理
+  // ログアウト
   // =========================
   const handleLogout = () => {
     if (window.confirm("ログアウトしますか？")) {
-      localStorage.removeItem("currentUser");
       localStorage.clear();
-      setUserId(null); // Guardを働かせて/loginへ強制移動
+      setUserId(null);
     }
   };
 
   // =========================
-  // 📁 テーマ取得
+  // テーマ開閉（Set管理）
+  // =========================
+  const toggleTheme = (themeId) => {
+    setOpenThemes((prev) => {
+      const next = new Set(prev);
+      if (next.has(themeId)) next.delete(themeId);
+      else next.add(themeId);
+      return next;
+    });
+  };
+
+  // =========================
+  // テーマ取得
   // =========================
   useEffect(() => {
     if (!userId) return;
 
-    // 💡 共通API関数（getThemes）に置き換えにゃ！
-    userApi.getThemes()
-      .then((data) => {
-        setThemes(data);
-
-        if (data.length > 0) {
-          setActiveThemeId(data[0].pdfId);
-          setActiveQuestion(data[0].questions?.[0] || null);
-        }
-      })
-      .catch((err) => console.error("テーマ取得エラーにゃ:", err));
+    fetch(`${API_BASE}/api/themes`)
+      .then((res) => res.json())
+      .then(setThemes)
+      .catch(console.error);
   }, [userId]);
 
   // =========================
-  // 📝 自分の回答取得
+  // 自分の回答取得
   // =========================
   useEffect(() => {
     if (!userId) return;
 
-    // 💡 共通API関数（getMyAnswers）に置き換えにゃ！
-    userApi.getMyAnswers(userId)
+    fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
+      .then((res) => res.json())
       .then((data) => {
-        console.log("answers raw:", data);
         const map = {};
 
         data.forEach((a) => {
-          const questionId = a.questionId ?? a.question_id;
-          const answerId = a.answerId ?? a.answer_id;
-          const answerContent = a.answerContent ?? a.answer_content ?? "";
-          const submittedAt = a.submittedAt ?? a.submitted_at ?? a.createdAt;
+          const qid = a.questionId ?? a.question_id;
+          if (!qid) return;
 
-          if (!questionId) return;
-
-          const key = String(questionId);
-          const existing = map[key];
-          const existingTime = existing?.submittedAt ? new Date(existing.submittedAt) : 0;
-          const newTime = submittedAt ? new Date(submittedAt) : 0;
-
-          if (!existing || newTime > existingTime) {
-            map[key] = {
-              ...a,
-              questionId,
-              answerId,
-              answerContent,
-              submittedAt,
-            };
-          }
+          map[String(qid)] = {
+            answerId: a.answerId,
+            questionId: qid,
+            answerContent: a.answerContent ?? "",
+          };
         });
 
         setAnswerMap(map);
       })
-      .catch((err) => console.error("回答取得エラーにゃ:", err));
+      .catch(console.error);
   }, [userId]);
 
   // =========================
-  // 💾 回答の保存(共通upsert)
+  // 保存
   // =========================
   const handleSave = async () => {
-    if (!activeQuestion || !userId) {
-      alert("ログイン情報が見つからないか、問題が選択されていません");
-      return;
-    }
+    if (!activeQuestion || !userId) return;
 
-    const questionId = activeQuestion.questionId ?? activeQuestion.question_id;
-    const key = String(questionId);
-    const content = textareaRef.current ? textareaRef.current.value : (answerMap[key]?.answerContent || "");
+    const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+    const content = textareaRef.current?.value || "";
 
     try {
-      // 💡 共通API関数（upsertAnswer）に置き換えにゃ！
-      const result = await userApi.upsertAnswer(userId, questionId, content);
-      console.log("SAVE RESULT:", result);
+      const res = await fetch(
+        `${API_BASE}/api/answers/upsert?userId=${userId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            questionId: qid,
+            answerContent: content,
+          }),
+        }
+      );
 
-      const normalizedKey = String(result.questionId ?? questionId);
-      const normalized = {
-        ...result,
-        questionId: result.questionId ?? questionId,
-        answerId: result.answerId,
-        answerContent: result.answerContent ?? content,
-        submittedAt: result.submittedAt,
-      };
+      const result = await res.json();
 
       setAnswerMap((prev) => ({
         ...prev,
-        [normalizedKey]: normalized,
+        [String(qid)]: {
+          answerId: result.answerId,
+          questionId: qid,
+          answerContent: result.answerContent,
+        },
       }));
 
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "保存失敗にゃ");
+    } catch (e) {
+      console.error(e);
     }
   };
 
   // =========================
-  // 👥 他の人の回答一覧の取得
+  // 他人回答取得
   // =========================
   useEffect(() => {
     if (!activeQuestion) return;
 
-    const targetQuestionId = activeQuestion.questionId ?? activeQuestion.question_id;
+    const qid = activeQuestion.questionId ?? activeQuestion.question_id;
 
-    // 💡 共通API関数（getOtherAnswers）に置き換えにゃ！
-    userApi.getOtherAnswers(targetQuestionId)
+    fetch(`${API_BASE}/api/questions/${qid}/answers`)
+      .then((res) => res.json())
       .then((data) => {
-        // 自分の回答は除外してセット
         const filtered = data.filter((a) => a.userId !== userId);
         setOtherAnswers(filtered);
       })
-      .catch((err) => {
-        console.error("他人の回答取得エラーにゃ:", err);
-      });
-
+      .catch(console.error);
   }, [activeQuestion, userId]);
 
-  // ★問題切り替え時、アコーディオンを閉じる
+  // =========================
+  // モーダルリセット
+  // =========================
   useEffect(() => {
     setIsModelOpen(false);
     setIsAnswersOpen(false);
-  }, [activeQuestion?.questionId, activeQuestion?.question_id]);
+  }, [activeQuestion]);
 
-  // 未ログイン時は画面描画を一瞬止めるガード
-  if (!userId) {
-    return <div style={{ padding: 20 }}>ログイン画面へ移動中...</div>;
-  }
+  // =========================
+  // 進捗
+  // =========================
+  const getProgress = (theme) => {
+    const qs = theme.questions || [];
+    const total = qs.length;
+
+    const done = qs.filter((q) => {
+      const qid = q.questionId ?? q.question_id;
+      return !!answerMap[String(qid)];
+    }).length;
+
+    return { done, total };
+  };
+
+  if (!userId) return <div>loading...</div>;
 
   return (
     <div style={styles.wrapper}>
+
       {/* ================= SIDEBAR ================= */}
       <div style={styles.sidebar}>
+
+        {/* TOP */}
         <div style={styles.topBar}>
           <input
-            type="text"
-            placeholder="問題をキーワード検索..."
+            style={styles.search}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={styles.searchInput}
+            placeholder="検索"
           />
-          <button onClick={handleLogout} style={styles.logoutButton}>
+
+          <button onClick={handleLogout} style={styles.logout}>
             ログアウト
           </button>
         </div>
 
-        <div style={{ marginTop: "10px", display: "flex", gap: "12px" }}>
-          <label>
-            <input
-              type="radio"
-              name="status"
-              value="all"
-              checked={statusFilter === "all"}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            />
-            すべて
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="status"
-              value="completed"
-              checked={statusFilter === "completed"}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            />
-            完了
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="status"
-              value="uncompleted"
-              checked={statusFilter === "uncompleted"}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            />
-            未完了
-          </label>
+        {/* FILTER（日本語UI＋ボタン化） */}
+        <div style={styles.filterRow}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setStatusFilter(f.key)}
+              style={{
+                ...styles.filterButton,
+                background:
+                  statusFilter === f.key ? "#2563eb" : "#f3f4f6",
+                color: statusFilter === f.key ? "#fff" : "#111",
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
+        {/* ================= THEMES ================= */}
         {themes.map((theme) => {
-          const filteredQuestions = theme.questions?.filter((q) => {
-            if (!searchQuery) return true;
-            return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
-          }) || [];
-
-          if (searchQuery && filteredQuestions.length === 0) return null;
-          const isActive = theme.pdfId === activeThemeId;
+          const themeId = theme.pdfId;
+          const isOpen = openThemes.has(themeId);
+          const { done, total } = getProgress(theme);
 
           return (
-            <div key={theme.pdfId}>
+            <div key={themeId}>
+
               <div
-                onClick={() => {
-                  setActiveThemeId(theme.pdfId);
-                  if (filteredQuestions.length > 0) {
-                    setActiveQuestion(filteredQuestions[0]);
-                  }
-                }}
+                onClick={() => toggleTheme(themeId)}
                 style={{
                   ...styles.theme,
-                  background: isActive ? "#e5f0ff" : "transparent",
+                  background: isOpen ? "#eef6ff" : "",
                 }}
               >
                 📁 {theme.title}
+
+                <div style={styles.progressText}>
+                  {done}/{total}
+                </div>
+
+                <div style={styles.progressBg}>
+                  <div
+                    style={{
+                      ...styles.progressBar,
+                      width: total ? `${(done / total) * 100}%` : "0%",
+                    }}
+                  />
+                </div>
               </div>
 
-              {isActive &&
-                theme.questions?.filter((q) => {
-                  const qid = q.questionId ?? q.question_id;
-                  if (statusFilter === "completed") return !!answerMap[qid];
-                  if (statusFilter === "uncompleted") return !answerMap[qid];
-                  return true;
-                })
+              {/* ================= QUESTIONS ================= */}
+              {isOpen &&
+                theme.questions
+                  ?.filter((q) => {
+                    const qid = q.questionId ?? q.question_id;
+                    const has = !!answerMap[String(qid)];
+
+                    if (statusFilter === "completed") return has;
+                    if (statusFilter === "uncompleted") return !has;
+                    return true;
+                  })
+                  .filter((q) =>
+                    searchQuery
+                      ? q.questionText
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                      : true
+                  )
                   .map((q) => {
                     const qid = q.questionId ?? q.question_id;
-                    const currentActiveId = activeQuestion?.questionId ?? activeQuestion?.question_id;
+                    const done = !!answerMap[String(qid)];
 
                     return (
                       <div
                         key={qid}
                         onClick={() => setActiveQuestion(q)}
-                        style={{
-                          ...styles.question,
-                          background: currentActiveId === qid ? "#dbeafe" : "transparent",
-                          fontWeight: "normal",
-                        }}
+                        style={styles.question}
                       >
                         📝 {q.questionText}
+                        {done && <span style={{ color: "#22c55e" }}>✔</span>}
                       </div>
                     );
                   })}
@@ -301,53 +306,37 @@ export default function MainScreen() {
 
       {/* ================= MAIN ================= */}
       <div style={styles.main}>
+
         {!activeQuestion ? (
-          <div>問題を選択してください</div>
+          <div>問題を選択</div>
         ) : (
           <div style={styles.card}>
+
             <h3>{activeQuestion.questionText}</h3>
 
             <textarea
               ref={textareaRef}
-              value={
-                (() => {
-                  const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-                  return answerMap[String(qid)]?.answerContent || "";
-                })()
-              }
-              onChange={(e) => {
-                const value = e.target.value;
-                const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-
-                setAnswerMap((prev) => ({
-                  ...prev,
-                  [String(qid)]: {
-                    ...prev[String(qid)],
-                    answerContent: value,
-                    questionId: qid,
-                  },
-                }));
-              }}
               style={styles.textarea}
-              placeholder="回答を入力"
+              defaultValue={
+                answerMap[
+                  String(
+                    activeQuestion.questionId ??
+                      activeQuestion.question_id
+                  )
+                ]?.answerContent || ""
+              }
             />
 
-            <div style={{ marginTop: 10, marginBottom: 20 }}>
-              <button onClick={handleSave} style={styles.button}>
-                保存
-              </button>
-              {saved && (
-                <span style={{ color: "green", marginLeft: 10 }}>
-                  保存しました
-                </span>
-              )}
-            </div>
+            <button onClick={handleSave} style={styles.save}>
+              保存 {saved && "✔"}
+            </button>
 
-            {/* 模範解答エリア */}
-            <div style={{ marginBottom: 15 }}>
-              <b style={{ cursor: "pointer" }} onClick={() => setIsModelOpen((prev) => !prev)}>
+            {/* 模範解答 */}
+            <div>
+              <b onClick={() => setIsModelOpen((v) => !v)}>
                 模範解答 {isModelOpen ? "▲" : "▼"}
               </b>
+
               {isModelOpen && (
                 <div style={styles.box}>
                   {activeQuestion.correctAnswer}
@@ -355,34 +344,33 @@ export default function MainScreen() {
               )}
             </div>
 
-            {/* 他の人の回答一覧 */}
-            <div style={{ marginTop: "20px" }}>
-              <b style={{ cursor: "pointer" }} onClick={() => setIsAnswersOpen((prev) => !prev)}>
+            {/* 他人回答 */}
+            <div>
+              <b onClick={() => setIsAnswersOpen((v) => !v)}>
                 他の人の回答 {isAnswersOpen ? "▲" : "▼"}
               </b>
+
               {isAnswersOpen && (
                 <div>
-                  {otherAnswers.length === 0 ? (
-                    <div style={styles.box}>
-                      回答はありません
+                  {otherAnswers.map((a) => (
+                    <div key={a.answerId} style={styles.box}>
+                      {a.userName || "user"}: {a.answerContent}
                     </div>
-                  ) : (
-                    otherAnswers.map((answer) => (
-                      <div
-                        key={answer.answerId}
-                        style={{
-                          ...styles.box,
-                          marginTop: "8px",
-                        }}
-                      >
-                        {answer.userName}さんの回答: <br />
-                        {answer.answerContent}
-                      </div>
-                    ))
-                  )}
+                  ))}
                 </div>
               )}
             </div>
+              {/* 自分の回答に対するレビュー表示 */}
+              {(() => {
+                const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+                const myAnswerId = answerMap[String(qid)]?.answerId;
+
+                return (
+                  <div style={{ marginTop: "40px" }}>
+                    <GeneralReview answerId={myAnswerId} />
+                  </div>
+                );
+              })()}
           </div>
         )}
       </div>
@@ -391,17 +379,84 @@ export default function MainScreen() {
 }
 
 // =========================
+// STYLE
+// =========================
 const styles = {
   wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
-  sidebar: { width: 320, borderRight: "1px solid #ddd", overflowY: "auto", padding: 10 },
-  topBar: { display: "flex", gap: "8px", marginBottom: "15px", paddingBottom: "10px", borderBottom: "1px solid #eee" },
-  searchInput: { flex: 1, padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "13px" },
-  logoutButton: { padding: "6px 10px", borderRadius: "4px", border: "1px solid #dee2e6", background: "#f8f9fa", cursor: "pointer", fontSize: "12px", fontWeight: "bold" },
-  theme: { padding: 8, fontWeight: "bold", cursor: "pointer", borderRadius: 4 },
-  question: { padding: "6px 16px", cursor: "pointer", fontSize: 13, borderRadius: 4 },
+  sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10 },
+
+  topBar: { display: "flex", gap: 8, marginBottom: 10 },
+
+  search: {
+    flex: 1,
+    padding: "6px 10px",
+    borderRadius: 6,
+    border: "1px solid #ccc",
+  },
+
+  logout: {
+    padding: "6px 10px",
+    borderRadius: 6,
+    border: "1px solid #ddd",
+    background: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+
+  filterRow: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 10,
+  },
+
+  filterButton: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
+  theme: {
+    padding: 10,
+    borderRadius: 6,
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+
+  progressBg: { height: 4, background: "#eee", borderRadius: 10 },
+  progressBar: { height: 4, background: "#4ade80", borderRadius: 10 },
+  progressText: { fontSize: 11, marginTop: 3 },
+
+  question: {
+    padding: "6px 10px",
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: 13,
+    cursor: "pointer",
+  },
+
   main: { flex: 1, padding: 20 },
+
   card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
+
   textarea: { width: "100%", height: 120, marginTop: 10 },
-  button: { padding: "6px 12px" },
-  box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6, fontSize: "14px" },
+
+  save: {
+    marginTop: 10,
+    padding: "6px 14px",
+    borderRadius: 6,
+    border: "1px solid #ccc",
+    background: "#f8fafc",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+
+  box: {
+    background: "#f3f4f6",
+    padding: 10,
+    marginTop: 8,
+    borderRadius: 6,
+  },
 };

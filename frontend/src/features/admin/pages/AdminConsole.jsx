@@ -73,6 +73,14 @@ export default function AdminConsole() {
         }
     };
 
+    const updateStatus = async (id, status) => {
+  await fetch(`http://localhost:8080/api/themes/${id}/status?status=${status}`, {
+    method: "PUT",
+  });
+
+  alert("ステータス更新しました");
+};
+
     // handleDeleteQuestion も API を使うように修正するにゃ！
     const handleDeleteQuestion = async (tid, qid) => {
         if (!window.confirm("本当に削除しますか？")) return;

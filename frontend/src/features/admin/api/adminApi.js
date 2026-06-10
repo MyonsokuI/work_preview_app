@@ -4,7 +4,7 @@ const BASE_URL = "http://localhost:8080/api";
 export const adminApi = {
     // --- テーマ (Themes) 関連 ---
     async getThemes() {
-        const response = await fetch(`${BASE_URL}/themes`);
+        const response = await fetch(`${BASE_URL}/themes/admin`);
         if (!response.ok) throw new Error("テーマの一覧取得に失敗しました");
         return response.json();
     },

@@ -67,14 +67,14 @@ export default function QuestionEditor({ currentQuestion, onSave }) {
 
                 <AnswerField value={correctAnswer} onChange={setCorrectAnswer} />
 
-                <ScheduleFields
+                {/* <ScheduleFields
                     status={status}
                     setStatus={setStatus}
                     openAt={openAt}
                     setOpenAt={setOpenAt}
                     closeAt={closeAt}
                     setCloseAt={setCloseAt}
-                />
+                /> */}
 
                 <SubmitButton isNewMode={isNewMode} />
             </form>
