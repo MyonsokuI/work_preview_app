@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../api/loginApi"; // 💡 共通API関数をインポートするにゃ！
+import { jwtDecode } from "jwt-decode"; // 💡 JWTトークンのデコードに使用するライブラリをインポートするにゃ！
 
 export default function Login() {
     const [userId, setUserId] = useState("");
@@ -13,17 +14,27 @@ export default function Login() {
         try {
             // 💡 共通API関数に置き換えて、生のfetchを隠蔽したにゃ！
             // 💡 入力された文字列の userId をここで数値型に変換して渡すにゃ
-            const userData = await authApi.login(Number(userId), password);
+            const { token } = await authApi.login(Number(userId), password);
 
             // 💡 ログイン情報をブラウザのローカルストレージに保存
-            localStorage.setItem("currentUser", JSON.stringify(userData));
+            localStorage.setItem("token", token);
+            const decoded = jwtDecode(token);
+            const currentUserObject = {
+                userId: decoded.sub ? Number(decoded.sub) : null, // 🌟 subから取り出して、数値に変換するにゃ！
+                name: decoded.name,
+                role: decoded.role,
+            };
 
+            localStorage.setItem("currentUser", JSON.stringify(currentUserObject)); // 💡 ユーザー情報をオブジェクトとして保存するにゃ！
+
+            const role = decoded.role; // 💡 デコードした情報からユーザーの役割（role）を取得するに
+            const name = decoded.name; // 💡 デコードした情報からユーザーの名前を取得するに
             // 🌟 運命の権限（status）分岐処理にゃ！
-            if (userData.status === "ADMIN") {
-                alert(`管理者：${userData.name} さんとしてログインしましたにゃ！`);
+            if (role === "ADMIN") {
+                alert(`管理者：${name} さんとしてログインしましたにゃ！`);
                 navigate("/admin/console");
-            } else if (userData.status === "USER") {
-                alert(`受講者：${userData.name} さんとしてログインしましたにゃ！`);
+            } else if (role === "USER") {
+                alert(`受講者：${name} さんとしてログインしましたにゃ！`);
                 navigate("/user/dashboard");
             } else {
                 alert("このアカウントは現在利用できませんにゃ（INACTIVEなど）");
