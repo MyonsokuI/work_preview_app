@@ -20,10 +20,10 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        Integer userId = request.getUserId();
+        Integer employeeId = request.getEmployeeId();
         String password = request.getPassword();
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByEmployeeId(Integer.valueOf(employeeId))
                 .orElseThrow(() -> new BusinessException("ユーザーが見つかりません"));
 
         // パスワード確認
@@ -32,10 +32,10 @@ public class AuthService {
         }
 
         // JWT生成
-        String token = jwtUtil.generateToken(user.getUserId(), user.getRoles(), user.getName());
+        String token = jwtUtil.generateToken(user.getEmployeeId(), user.getRoles(), user.getName());
 
         LoginResponse response = new LoginResponse();
-        response.setUserId(user.getUserId());
+        response.setEmployeeId(user.getEmployeeId());
         response.setName(user.getName());
         response.setRole(user.getRoles());
         response.setToken(token);
