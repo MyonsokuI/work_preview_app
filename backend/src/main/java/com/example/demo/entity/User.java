@@ -24,11 +24,14 @@ public class User {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String password;
 
     @Column(length = 20)
     private String status; // active / inactive / admin など
+
+    @Column(length = 20)
+    private String role; 
 
     @CreatedDate
     private LocalDateTime createdAt;
