@@ -24,7 +24,8 @@ export default function AdminSidebar(props) {
                 <ThemeCreateSection onAddTheme={props.onAddTheme} />
                 <ThemeList {...props} themes={filteredThemes} onSelect={props.onSelectQuestion}
                     onAddQuestion={props.onAddQuestion}
-                    onDeleteQuestion={props.onDeleteQuestion} />
+                    onDeleteQuestion={props.onDeleteQuestion}
+                    onThemeEdit={props.onThemeEdit} />
             </div>
         </div>
     );

@@ -1,22 +1,24 @@
 import styles from '../../styles/AdminSidebar.module.css'; // 💡 ここで styles を定義しています
 import { useState } from "react";
-export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQuestion, onShowProgress }) {
+export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQuestion, onThemeEdit }) {
     return (
         <div className={styles.themeItem}>
             {/* 💡 ヘッダークリック時に「進捗画面を表示」を呼び出す */}
-            <div className={styles.themeHeader} onClick={() => onShowProgress(theme.pdfId)}>
+            <div className={styles.themeHeader} onClick={() => { onThemeEdit(theme.pdfId); }}>
                 <span style={{ fontWeight: '600' }}>{theme.title}</span>
                 <span
                     style={{
-                        marginLeft: "8px",
-                        fontSize: "11px",
-                        padding: "2px 6px",
-                        borderRadius: "6px",
-                        background: theme.status === "published" ? "#dcfce7" : "#f3f4f6",
-                        color: theme.status === "published" ? "#166534" : "#6b7280",
+                        fontSize: "12px",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        fontWeight: "bold",
+                        background:
+                            theme.status === "published" ? "#dcfce7" : "#fef3c7",
+                        color:
+                            theme.status === "published" ? "#166534" : "#92400e",
                     }}
                 >
-                    {theme.status === "published" ? "公開" : "非公開"}
+                    {theme.status === "published" ? "公開中" : "非公開"}
                 </span>
             </div>
 
