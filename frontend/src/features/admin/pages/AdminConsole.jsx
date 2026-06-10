@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
-import QuestionEditor from "../components/QuestionEditor";
-import ProgressChecker from "../components/ProgressChecker";
+import AdminSidebar from "../components/sidebar/AdminSidebar";
+import QuestionEditor from "../components/questioneditor/QuestionEditor";
+import ProgressChecker from "../components/progresschecker/ProgressChecker";
+import ReviewPanel from "../components/reviewPanel/ReviewPanel";
+import ThemeEditor from "../components/ThemeEditor/ThemeEditor";
 import { adminApi } from "../api/adminApi"; // 💡 作成したAPIサービスをインポート
 
 export default function AdminConsole() {
@@ -32,10 +34,17 @@ export default function AdminConsole() {
     const handleStartAddQuestion = (themeId) => {
         setActiveThemeId(themeId);
         setActiveQuestionId(null);
+        setIsEditingTheme(false);   // 💡 編集モードON
         setActiveTab("edit");
         setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
     };
 
+    // 新しいハンドラを作成
+    const handleShowThemeProgress = (themeId) => {
+        setActiveThemeId(themeId);
+        setActiveTab("progress"); // 💡 進捗タブを強制的に選択
+        setCreatingQuestion(null); // 新規作成モードは解除
+    };
     const handleSaveQuestion = async (data) => {
         try {
             const body = {
@@ -66,6 +75,14 @@ export default function AdminConsole() {
         }
     };
 
+    const updateStatus = async (id, status) => {
+        await fetch(`http://localhost:8080/api/themes/${id}/status?status=${status}`, {
+            method: "PUT",
+        });
+
+        alert("ステータス更新しました");
+    };
+
     // handleDeleteQuestion も API を使うように修正するにゃ！
     const handleDeleteQuestion = async (tid, qid) => {
         if (!window.confirm("本当に削除しますか？")) return;
@@ -77,47 +94,149 @@ export default function AdminConsole() {
         }
     };
 
+    // AdminConsole.jsx のState定義に追加
+    const [isEditingTheme, setIsEditingTheme] = useState(false); // 追加！
+
+    // 💡 1. State を追加
+    const [creatingTheme, setCreatingTheme] = useState(null);
+
+    // 💡 2. 新規テーマ作成ボタンのハンドラを作成
+    const handleStartAddTheme = () => {
+        console.log("fuck");
+        setActiveThemeId(null);
+        setCreatingQuestion(null);
+        setIsEditingTheme(true); // 編集モードON
+        setActiveTab(null);
+        // 新規作成用の空データをセット
+        setCreatingTheme({ isNew: true, title: "", status: "draft", questions: [] });
+    };
+
+    // 💡 3. 保存後の処理を修正（既存の handleSaveTheme を上書き）
+    const handleSaveTheme = (savedTheme) => {
+        if (creatingTheme?.isNew) {
+            setThemes([...themes, savedTheme]); // 新規ならリストに追加
+        } else {
+            setThemes(themes.map(t => t.pdfId === savedTheme.pdfId ? savedTheme : t));
+        }
+        setCreatingTheme(null);   // クリア
+        setIsEditingTheme(false); // 編集モード終了
+    };
+    const targetTheme = creatingTheme || currentTheme;
+    // 💡 スクロール用の ref を追加
+    const scrollAreaRef = useRef(null);
+
+    // 💡 選択項目やタブが変わったら一番上にスクロールする
+    useEffect(() => {
+        // コンテナの中身をリセットするのではなく、ウィンドウのスクロール位置をリセットする
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [activeThemeId, activeQuestionId, activeTab]);
+
+    // 💡 新しいハンドラ：テーマ編集モードへ移行する
+    const handleEditTheme = (themeId) => {
+        setActiveThemeId(themeId);
+        setIsEditingTheme(true);   // 💡 編集モードON
+        setCreatingTheme(null);
+        setCreatingQuestion(null); // 問題作成などを解除
+        setActiveTab(null);        // タブ選択解除
+    };
+
+    // 💡 テーマを削除するハンドラ
+    const handleDeleteTheme = async (themeId) => {
+        if (!window.confirm("このテーマを削除すると、紐付いている問題もすべて削除されます。本当に削除しますか？")) {
+            return;
+        }
+
+        try {
+            await adminApi.deleteTheme(themeId); // 💡 adminApi にこのメソッドがある前提です
+            setThemes(themes.filter(t => t.pdfId !== themeId));
+
+            // 削除後に画面をリセット
+            setIsEditingTheme(false);
+            setCreatingTheme(null);
+            setActiveThemeId(null);
+            setActiveQuestionId(null);
+
+            alert("テーマを削除しましたにゃ！");
+        } catch (err) {
+            console.error(err);
+            alert("テーマの削除に失敗しましたにゃ...");
+        }
+    };
     return (
         <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
             <AdminSidebar
                 themes={themes}
                 activeQuestionId={activeQuestionId}
                 activeTab={activeTab}
-                // 💡 修正箇所：第3引数の tab をそのまま反映させることでタブ固定を防ぐ
                 onSelectQuestion={(tid, qid, tab) => {
+                    // 💡 ここが重要：クリックされたら新規作成状態を解除する
+                    setIsEditingTheme(false);
+                    setCreatingTheme(null);
+                    setCreatingQuestion(null);
                     setActiveThemeId(tid);
                     setActiveQuestionId(qid);
                     setActiveTab(tab);
                 }}
                 onAddQuestion={handleStartAddQuestion}
-                onAddTheme={(t) => setThemes([...themes, t])}
+                onAddTheme={handleStartAddTheme}
                 onLogout={() => navigate("/login")}
                 onDeleteQuestion={handleDeleteQuestion}
+                onThemeEdit={handleEditTheme}
             />
 
-            <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto" }}>
+            <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto", minHeight: "100vh" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
-                    <div style={{ fontSize: "14px", color: "#666" }}>選択中：<strong>{currentTheme?.title || "テーマを選択してください"}</strong></div>
-
-                    {(currentTheme?.questions?.length > 0 || creatingQuestion) && (
+                    <div style={{ fontSize: "14px", color: "#666", display: "flex", alignItems: "center", gap: "8px" }}>
+                        選択中：
+                        <strong>{currentTheme?.title || "テーマを選択してください"}</strong>
+                    </div>
+                    {currentTheme && (
                         <div style={{ display: "flex", gap: "8px" }}>
-                            <button onClick={() => { setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "edit" ? "#0066cc" : "#fff", color: activeTab === "edit" ? "#fff" : "#333" }}>📝 問題の編集</button>
-                            <button onClick={() => setActiveTab("progress")} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: activeTab === "progress" ? "#28a745" : "#fff", color: activeTab === "progress" ? "#fff" : "#333" }}>📊 受講者進捗確認</button>
+                            {/* テーマ設定ボタン */}
+                            <button
+                                onClick={() => { setIsEditingTheme(true); setCreatingQuestion(null); setActiveTab(null); }}
+                                style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: isEditingTheme ? "#64748b" : "#fff", color: isEditingTheme ? "#fff" : "#333" }}
+                            >
+                                ⚙️ テーマ編集
+                            </button>
+
+                            {/* 問題がある場合のみ表示されるタブ */}
+                            {(currentTheme.questions?.length > 0 || creatingQuestion) && (
+                                <>
+                                    <button onClick={() => { setIsEditingTheme(false); setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "edit" && !isEditingTheme) ? "#0066cc" : "#fff", color: (activeTab === "edit" && !isEditingTheme) ? "#fff" : "#333" }}>📝 問題の編集</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("review"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "review" && !isEditingTheme) ? "#a7a528" : "#fff", color: (activeTab === "review" && !isEditingTheme) ? "#fff" : "#333" }}>💬 レビュー</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("progress"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "progress" && !isEditingTheme) ? "#28a745" : "#fff", color: (activeTab === "progress" && !isEditingTheme) ? "#fff" : "#333" }}>📊 進捗確認</button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
 
-                {!currentTheme ? (
-                    <div style={{ textAlign: "center", marginTop: "40px", color: "#999" }}>左側のリストからテーマを選択してにゃ。</div>
+                {isEditingTheme ? (
+                    <ThemeEditor
+                        // 既存の編集なら currentTheme を、新規作成なら creatingTheme を渡す
+                        currentTheme={creatingTheme ? creatingTheme : currentTheme}
+                        onSave={handleSaveTheme}
+                        onCancel={() => {
+                            setIsEditingTheme(false);
+                            setCreatingTheme(null);
+                        }}
+                        onDelete={handleDeleteTheme}
+                    />
+                ) : !currentTheme ? (
+                    <div style={{ textAlign: "center", marginTop: "40px", color: "#999" }}>
+                        左側のリストからテーマを選択してにゃ。
+                    </div>
                 ) : (!currentTheme.questions || currentTheme.questions.length === 0) && !creatingQuestion ? (
                     <div style={{ textAlign: "center", marginTop: "40px", color: "#666" }}>
                         このテーマにはまだ問題がありません。<br />
-                        サイドバーの「➕ 新しい問題を追加」から問題を作成してくださいにゃ！
+                        サイドバーから「新しい問題を追加」するか、「テーマ設定」を調整してくださいにゃ！
                     </div>
                 ) : (
                     <>
-                        {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} />}
+                        {activeTab === "edit" && <QuestionEditor currentQuestion={currentQuestion} onSave={handleSaveQuestion} onDelete={handleDeleteQuestion} onCancel={() => setCreatingQuestion(null)} />}
                         {activeTab === "progress" && <ProgressChecker currentTheme={currentTheme} />}
+                        {activeTab === "review" && <ReviewPanel theme={currentTheme} questionId={activeQuestionId} />}
                     </>
                 )}
             </div>
