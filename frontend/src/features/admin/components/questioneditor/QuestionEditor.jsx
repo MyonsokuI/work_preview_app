@@ -4,7 +4,7 @@ import AnswerField from "./AnswerField";
 import ScheduleFields from "./ScheduleFields";
 import SubmitButton from "./SubmitButton";
 
-export default function QuestionEditor({ currentQuestion, onSave }) {
+export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCancel }) {
     const [questionText, setQuestionText] = useState("");
     const [correctAnswer, setCorrectAnswer] = useState("");
     const [status, setStatus] = useState("draft");
@@ -35,6 +35,10 @@ export default function QuestionEditor({ currentQuestion, onSave }) {
         );
     }
 
+    const handleDelete = () => {
+        if (!currentQuestion.questionId) return; // 新規作成中の場合は何もしない
+        onDelete(currentQuestion.pdfId, currentQuestion.questionId);
+    };
     const isNewMode = !!currentQuestion.isNew;
 
     const handleSubmit = (e) => {
@@ -76,7 +80,47 @@ export default function QuestionEditor({ currentQuestion, onSave }) {
                     setCloseAt={setCloseAt}
                 /> */}
 
-                <SubmitButton isNewMode={isNewMode} />
+                <div style={{
+                    display: "flex",
+                    justifyContent: "flex-end", // 💡 これを space-between から変更
+                    gap: "10px",                // 💡 ボタンの間に隙間を作る
+                    marginTop: "20px"
+                }}>
+                    {isNewMode && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                // 新規作成をキャンセルして、フォームを閉じるために setCreatingQuestion(null) を呼ぶ想定です
+                                // 現在の onSave を使わずに親で処理しても良いですが、簡単には here を調整します
+                                // 親から onCancel を渡すのがベストです！
+                                onCancel();
+                            }}
+                            style={{ padding: "10px 20px", borderRadius: 6, border: "1px solid #cbd5e1", backgroundColor: "#fff", cursor: "pointer" }}
+                        >
+                            キャンセル
+                        </button>
+                    )}
+                    {/* 削除ボタン */}
+                    {!isNewMode && (
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            style={{
+                                padding: "10px 20px",
+                                borderRadius: 6,
+                                border: "1px solid #ef4444",
+                                color: "#ef4444",
+                                backgroundColor: "#fff",
+                                cursor: "pointer"
+                            }}
+                        >
+                            削除する
+                        </button>
+                    )}
+
+                    {/* 保存ボタン */}
+                    <SubmitButton isNewMode={isNewMode} />
+                </div>
             </form>
         </div>
     );

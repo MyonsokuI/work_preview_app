@@ -8,7 +8,7 @@ export default function ThemeList({
     onSelect, // 追加
     onAddQuestion,
     onDeleteQuestion,
-    onShowProgress
+    onThemeEdit
 }) {
     const [openThemeId, setOpenThemeId] = useState(null);
 
@@ -28,7 +28,7 @@ export default function ThemeList({
                     onSelect={onSelect} // ここを修正
                     onAddQuestion={onAddQuestion}
                     onDeleteQuestion={onDeleteQuestion}
-                    onShowProgress={onShowProgress}
+                    onThemeEdit={onThemeEdit}
                 />
             ))}
         </div>
