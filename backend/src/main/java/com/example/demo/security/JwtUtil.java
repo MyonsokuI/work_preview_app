@@ -23,10 +23,11 @@ public class JwtUtil {
   }
 
   // トークン生成
-  public String generateToken(Integer userId, String role) {
+  public String generateToken(Integer userId, String role, String name) {
     return Jwts.builder()
         .setSubject(String.valueOf(userId))
-        .claim("role", role)
+        .claim("role", role.toUpperCase())
+        .claim("name", name)
         .setIssuedAt(new Date())
         .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
         .signWith(getKey(), SignatureAlgorithm.HS256)
