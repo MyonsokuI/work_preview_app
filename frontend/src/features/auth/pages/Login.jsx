@@ -19,22 +19,23 @@ export default function Login() {
             // 💡 ログイン情報をブラウザのローカルストレージに保存
             localStorage.setItem("token", token);
             const decoded = jwtDecode(token);
+            console.log("🌟 トークンの解読データ全体にゃ！:", decoded); 
             const currentUserObject = {
                 userId: decoded.sub ? Number(decoded.sub) : null, // 🌟 subから取り出して、数値に変換するにゃ！
                 name: decoded.name,
-                role: decoded.role,
+                roles: decoded.roles,
             };
 
             localStorage.setItem("currentUser", JSON.stringify(currentUserObject)); // 💡 ユーザー情報をオブジェクトとして保存するにゃ！
 
-            const role = decoded.role; // 💡 デコードした情報からユーザーの役割（role）を取得するに
+            const role = decoded.roles; // 💡 デコードした情報からユーザーの役割（role）を取得するに
             const name = decoded.name; // 💡 デコードした情報からユーザーの名前を取得するに
             // 🌟 運命の権限（status）分岐処理にゃ！
             if (role === "ADMIN") {
-                alert(`管理者：${name} さんとしてログインしましたにゃ！`);
+                // alert(`管理者：${name} さんとしてログインしましたにゃ！`);
                 navigate("/admin/console");
             } else if (role === "USER") {
-                alert(`受講者：${name} さんとしてログインしましたにゃ！`);
+                // alert(`受講者：${name} さんとしてログインしましたにゃ！`);
                 navigate("/user/dashboard");
             } else {
                 alert("このアカウントは現在利用できませんにゃ（INACTIVEなど）");

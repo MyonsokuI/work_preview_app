@@ -1,3 +1,4 @@
+import { userApi } from "../api/userApi"; // 💡 パス（../の位置）は実際のフォルダに合わせて調整してにゃ
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import GeneralReview from "../components/general_review";
@@ -27,7 +28,7 @@ export default function MainScreen() {
         const obj = JSON.parse(saved);
         return obj.userId ? Number(obj.userId) : null;
       }
-    } catch {}
+    } catch { }
     return null;
   });
 
@@ -75,29 +76,37 @@ export default function MainScreen() {
     });
   };
 
-  // =========================
-  // テーマ取得
-  // =========================
-  useEffect(() => {
-    if (!userId) return;
+// =======================================================
+// MainScreen クラスの中にある、3つの useEffect をこれに置き換えるにゃ！
+// =======================================================
 
-    fetch(`${API_BASE}/api/themes`)
-      .then((res) => res.json())
-      .then(setThemes)
-      .catch(console.error);
-  }, [userId]);
+// 1. テーマ取得
+useEffect(() => {
+  if (!userId) return;
 
-  // =========================
-  // 自分の回答取得
-  // =========================
-  useEffect(() => {
-    if (!userId) return;
+  const loadThemes = async () => {
+    try {
+      // userApi を使って安全にデータを取得するにゃ
+      const data = await userApi.getThemes();
+      setThemes(data);
+    } catch (error) {
+      console.error("テーマ取得エラーにゃ:", error);
+    }
+  };
 
-    fetch(`${API_BASE}/api/answers/my?userId=${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const map = {};
+  loadThemes();
+}, [userId]);
 
+// 2. 自分の回答取得
+useEffect(() => {
+  if (!userId) return;
+
+  const loadMyAnswers = async () => {
+    try {
+      const data = await userApi.getMyAnswers(userId);
+      const map = {};
+
+      if (Array.isArray(data)) {
         data.forEach((a) => {
           const qid = a.questionId ?? a.question_id;
           if (!qid) return;
@@ -108,11 +117,37 @@ export default function MainScreen() {
             answerContent: a.answerContent ?? "",
           };
         });
+      }
+      setAnswerMap(map);
+    } catch (error) {
+      console.error("回答取得エラーにゃ:", error);
+    }
+  };
 
-        setAnswerMap(map);
-      })
-      .catch(console.error);
-  }, [userId]);
+  loadMyAnswers();
+}, [userId]);
+
+// 3. 他人の回答取得（activeQuestionが変わった時）
+useEffect(() => {
+  if (!activeQuestion) return;
+
+  const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+
+  const loadOtherAnswers = async () => {
+    try {
+      const data = await userApi.getOtherAnswers(qid);
+      if (Array.isArray(data)) {
+        const filtered = data.filter((a) => a.userId !== userId);
+        setOtherAnswers(filtered);
+      }
+    } catch (error) {
+      console.error("他人の回答取得エラーにゃ:", error);
+    }
+  };
+
+  loadOtherAnswers();
+}, [activeQuestion, userId]);
+
 
   // =========================
   // 保存
@@ -124,19 +159,8 @@ export default function MainScreen() {
     const content = textareaRef.current?.value || "";
 
     try {
-      const res = await fetch(
-        `${API_BASE}/api/answers/upsert?userId=${userId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questionId: qid,
-            answerContent: content,
-          }),
-        }
-      );
-
-      const result = await res.json();
+      // 🌟 生のfetchをやめて、userApi.upsertAnswer に丸投げするにゃ！自動でトークンが付きます
+      const result = await userApi.upsertAnswer(userId, qid, content);
 
       setAnswerMap((prev) => ({
         ...prev,
@@ -150,26 +174,10 @@ export default function MainScreen() {
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
     } catch (e) {
-      console.error(e);
+      console.error("回答の保存に失敗したにゃ:", e);
     }
   };
 
-  // =========================
-  // 他人回答取得
-  // =========================
-  useEffect(() => {
-    if (!activeQuestion) return;
-
-    const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-
-    fetch(`${API_BASE}/api/questions/${qid}/answers`)
-      .then((res) => res.json())
-      .then((data) => {
-        const filtered = data.filter((a) => a.userId !== userId);
-        setOtherAnswers(filtered);
-      })
-      .catch(console.error);
-  }, [activeQuestion, userId]);
 
   // =========================
   // モーダルリセット
@@ -280,8 +288,8 @@ export default function MainScreen() {
                   .filter((q) =>
                     searchQuery
                       ? q.questionText
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
                       : true
                   )
                   .map((q) => {
@@ -321,7 +329,7 @@ export default function MainScreen() {
                 answerMap[
                   String(
                     activeQuestion.questionId ??
-                      activeQuestion.question_id
+                    activeQuestion.question_id
                   )
                 ]?.answerContent || ""
               }
@@ -360,17 +368,17 @@ export default function MainScreen() {
                 </div>
               )}
             </div>
-              {/* 自分の回答に対するレビュー表示 */}
-              {(() => {
-                const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-                const myAnswerId = answerMap[String(qid)]?.answerId;
+            {/* 自分の回答に対するレビュー表示 */}
+            {(() => {
+              const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+              const myAnswerId = answerMap[String(qid)]?.answerId;
 
-                return (
-                  <div style={{ marginTop: "40px" }}>
-                    <GeneralReview answerId={myAnswerId} />
-                  </div>
-                );
-              })()}
+              return (
+                <div style={{ marginTop: "40px" }}>
+                  <GeneralReview answerId={myAnswerId} />
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

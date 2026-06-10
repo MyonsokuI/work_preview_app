@@ -19,23 +19,27 @@ public class User {
 
     @Id
     // @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Integer userId;
+
+    @Column(name = "employee_id")
+    private Integer employeeId;
 
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
 
     @Column(length = 20)
     private String status; // active / inactive / admin など
 
     @Column(length = 20)
-    private String role; 
+    private String roles;
 
-    @CreatedDate
+    @Column(name = "created_at") // ★追加：ER図の新しい列にゃ
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @Column(name = "updated_at") // ★追加：ER図の新しい列にゃ
     private LocalDateTime updatedAt;
 }

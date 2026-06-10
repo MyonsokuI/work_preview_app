@@ -38,10 +38,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/themes/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/answers/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/questuions/**").hasAnyRole("USER","ADMIN")
-                .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+
+                .requestMatchers("/api/themes/**").authenticated()
+                .requestMatchers("/api/answers/**").authenticated()
+                .requestMatchers("/api/questions/**").authenticated()
+                .requestMatchers("/api/user/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter,
