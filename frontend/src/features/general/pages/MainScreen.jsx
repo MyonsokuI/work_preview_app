@@ -76,77 +76,77 @@ export default function MainScreen() {
     });
   };
 
-// =======================================================
-// MainScreen クラスの中にある、3つの useEffect をこれに置き換えるにゃ！
-// =======================================================
+  // =======================================================
+  // MainScreen クラスの中にある、3つの useEffect をこれに置き換えるにゃ！
+  // =======================================================
 
-// 1. テーマ取得
-useEffect(() => {
-  if (!userId) return;
+  // 1. テーマ取得
+  useEffect(() => {
+    if (!userId) return;
 
-  const loadThemes = async () => {
-    try {
-      // userApi を使って安全にデータを取得するにゃ
-      const data = await userApi.getThemes();
-      setThemes(data);
-    } catch (error) {
-      console.error("テーマ取得エラーにゃ:", error);
-    }
-  };
-
-  loadThemes();
-}, [userId]);
-
-// 2. 自分の回答取得
-useEffect(() => {
-  if (!userId) return;
-
-  const loadMyAnswers = async () => {
-    try {
-      const data = await userApi.getMyAnswers(userId);
-      const map = {};
-
-      if (Array.isArray(data)) {
-        data.forEach((a) => {
-          const qid = a.questionId ?? a.question_id;
-          if (!qid) return;
-
-          map[String(qid)] = {
-            answerId: a.answerId,
-            questionId: qid,
-            answerContent: a.answerContent ?? "",
-          };
-        });
+    const loadThemes = async () => {
+      try {
+        // userApi を使って安全にデータを取得するにゃ
+        const data = await userApi.getThemes();
+        setThemes(data);
+      } catch (error) {
+        console.error("テーマ取得エラーにゃ:", error);
       }
-      setAnswerMap(map);
-    } catch (error) {
-      console.error("回答取得エラーにゃ:", error);
-    }
-  };
+    };
 
-  loadMyAnswers();
-}, [userId]);
+    loadThemes();
+  }, [userId]);
 
-// 3. 他人の回答取得（activeQuestionが変わった時）
-useEffect(() => {
-  if (!activeQuestion) return;
+  // 2. 自分の回答取得
+  useEffect(() => {
+    if (!userId) return;
 
-  const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+    const loadMyAnswers = async () => {
+      try {
+        const data = await userApi.getMyAnswers(userId);
+        const map = {};
 
-  const loadOtherAnswers = async () => {
-    try {
-      const data = await userApi.getOtherAnswers(qid);
-      if (Array.isArray(data)) {
-        const filtered = data.filter((a) => a.userId !== userId);
-        setOtherAnswers(filtered);
+        if (Array.isArray(data)) {
+          data.forEach((a) => {
+            const qid = a.questionId ?? a.question_id;
+            if (!qid) return;
+
+            map[String(qid)] = {
+              answerId: a.answerId,
+              questionId: qid,
+              answerContent: a.answerContent ?? "",
+            };
+          });
+        }
+        setAnswerMap(map);
+      } catch (error) {
+        console.error("回答取得エラーにゃ:", error);
       }
-    } catch (error) {
-      console.error("他人の回答取得エラーにゃ:", error);
-    }
-  };
+    };
 
-  loadOtherAnswers();
-}, [activeQuestion, userId]);
+    loadMyAnswers();
+  }, [userId]);
+
+  // 3. 他人の回答取得（activeQuestionが変わった時）
+  useEffect(() => {
+    if (!activeQuestion) return;
+
+    const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+
+    const loadOtherAnswers = async () => {
+      try {
+        const data = await userApi.getOtherAnswers(qid);
+        if (Array.isArray(data)) {
+          const filtered = data.filter((a) => a.userId !== userId);
+          setOtherAnswers(filtered);
+        }
+      } catch (error) {
+        console.error("他人の回答取得エラーにゃ:", error);
+      }
+    };
+
+    loadOtherAnswers();
+  }, [activeQuestion, userId]);
 
 
   // =========================
