@@ -6,7 +6,10 @@ export default function GeneralReview({ answerId }) {
     useEffect(() => {
         const token = localStorage.getItem("token");
 
-        if (!answerId) return;
+        if (!answerId) { // answerIdがない場合はレビューを取得せず、空の配列をセットして終了
+            setReviews([]);
+            return;
+        }
         fetch(
             `http://localhost:8080/api/answers/${answerId}/reviews`,
             {
