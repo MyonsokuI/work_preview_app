@@ -4,10 +4,11 @@
 -- =====================================
 
 -- テーブル削除（依存関係の下から順番に削除します）
-DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS answers;
-DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS pdf;
 DROP TABLE IF EXISTS pdfs;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS users;
 
 -- =====================================
