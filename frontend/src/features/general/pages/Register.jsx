@@ -58,7 +58,7 @@ export default function Register() {
             <h2>ユーザー登録</h2>
 
             <form onSubmit={handleSubmit}>
-                {/* ユーザーID */}
+                {/* 社員ID */}
                 <div>
                     <label>社員ID</label>
                     <input
