@@ -47,12 +47,6 @@ export default function MainScreen() {
 
   const [otherAnswers, setOtherAnswers] = useState([]);
 
-  // =====================================
-  // 現在編集中の回答内容
-  // textareaの表示値を管理する
-  // =====================================
-  const [answerContent, setAnswerContent] = useState("");
-
   // =========================
   // ログインガード
   // =========================
@@ -207,21 +201,6 @@ export default function MainScreen() {
 
     return { done, total };
   };
-
-  // =====================================
-  // 問題選択時
-  // 既存回答があれば表示
-  // なければ空文字を表示
-  // =====================================
-  useEffect(() => {
-    if (!activeQuestion) return;
-
-    const questionId = String(activeQuestion.questionId);
-
-    setAnswerContent(
-      answerMap[questionId]?.answerContent || ""
-    );
-  }, [activeQuestion, answerMap]);
 
   if (!userId) return <div>loading...</div>;
 
