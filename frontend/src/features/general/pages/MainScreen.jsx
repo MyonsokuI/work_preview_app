@@ -343,7 +343,7 @@ export default function MainScreen() {
 
             <h3>{activeQuestion.questionText}</h3>
 
-            {/* <textarea
+            <textarea
               ref={textareaRef}
               style={styles.textarea}
               defaultValue={
@@ -354,12 +354,6 @@ export default function MainScreen() {
                   )
                 ]?.answerContent || ""
               }
-            /> */}
-            <textarea
-              ref={textareaRef}
-              style={styles.textarea}
-              value={answerContent}
-              onChange={(e) => setAnswerContent(e.target.value)}
             />
 
             <button onClick={handleSave} style={styles.save}>
