@@ -32,7 +32,7 @@ public class AuthService {
         }
 
         // JWT生成
-        String token = jwtUtil.generateToken(user.getEmployeeId(), user.getRoles(), user.getName());
+        String token = jwtUtil.generateToken(user.getUserId(), user.getRoles(), user.getName());
 
         LoginResponse response = new LoginResponse();
         response.setEmployeeId(user.getEmployeeId());
