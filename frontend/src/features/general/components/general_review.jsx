@@ -4,10 +4,16 @@ export default function GeneralReview({ answerId }) {
     const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
-        if (!answerId) return;
+        const token = localStorage.getItem("token");
 
+        if (!answerId) return;
         fetch(
-            `http://localhost:8080/api/answers/${answerId}/reviews`
+            `http://localhost:8080/api/answers/${answerId}/reviews`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         )
             .then((res) => {
                 if (!res.ok) {

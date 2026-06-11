@@ -99,7 +99,9 @@ export const adminApi = {
     async getReviewsByAnswer(answerId) {
         const response = await fetch(
             `${BASE_URL}/answers/${answerId}/reviews`
-        );
+            , {
+                headers: getAuthHeaders()
+            });
 
         if (!response.ok) {
             throw new Error("レビュー一覧の取得に失敗しました");
@@ -114,9 +116,7 @@ export const adminApi = {
             `${BASE_URL}/reviews?reviewerId=${reviewerId}`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     answerId,
                     comment,
@@ -137,6 +137,7 @@ export const adminApi = {
             `${BASE_URL}/reviews/${reviewId}`,
             {
                 method: "DELETE",
+                headers: getAuthHeaders()
             }
         );
 
@@ -149,7 +150,10 @@ export const adminApi = {
     // 回答取得
     async getAnswersByQuestion(questionId) {
         const response = await fetch(
-            `${BASE_URL}/questions/${questionId}/answers`
+            `${BASE_URL}/questions/${questionId}/answers`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         if (!response.ok) {
