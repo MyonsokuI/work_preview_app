@@ -1,65 +1,29 @@
-import { useEffect,useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-import Header from "./components/Header"
-import MainContent from "./components/MainContent"
-import Footer from "./components/Footer"
-function App() {
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [count, setCount] = useState(0)
-  const [input,setInput] = useState('')
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./features/auth/pages/Login";
+import AdminConsole from "./features/admin/pages/AdminConsole"; // さっき直した管理者画面にゃ！
+import MainScreen from "./features/general/pages/MainScreen"; // さっき直したユーザーダッシュボードにゃ！
+import Register from "./features/general/pages/Register"; // さっき直した登録画面にゃ！
+import ProtectedRoute from "./routes/ProtectedRoute"; // さっき作った認証保護ルートにゃ！
 
-  const handleChange = (event) => {
-    setInput(event.target.value)
-  }
-
-  useEffect(() => {
-    fetch('http://localhost:8080/api/hello')
-    .then((response) => {
-    if  (!response.ok) {
-      throw new Error('API request failed')
-    }
-    return response.text()
-    })
-    .then((data) => {
-      setMessage(data)
-    })
-    .catch((error) => {
-      setError('Spring Boot API に接続できません。backend が起動しているか確認してください。')
-      console.error(error)
-    })
-  }, [])
-
+export default function App() {
   return (
-    <main style={{ padding: '32px', fontFamily: 'sans-serif' }}>
-    <Header/>
-    <MainContent/>
-    <section style={{ marginTop: '24px' }}>
-      <h2>API Response</h2>
-      {message && <p>{message}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </section>
-    <button
-      type = "button"
-      className = "counter"
-      onClick = {() => setCount((count) => count + 1)}
-    >
-      カウント：{count}
-    </button>
-    <br/>
-    <div>
-    <label>入力：
-      <input type = "text" value = {input} onChange = {handleChange} placeholder="メッセージを入力"
-      />
-    </label>
-    <p>入力内容：{input}</p>
-    </div>
-    <Footer/>
-    </main>
-    )
-}
+    <Router>
+      <Routes>
+        {/* 💡 初期URL (/) にアクセスされたら自動的にログイン画面に変えるにゃ */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-export default App
+        {/* 各画面のパス設定 */}
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/admin/console"
+          element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminConsole /></ProtectedRoute>}
+        />
+        <Route
+          path="/user/dashboard"
+          element={<ProtectedRoute allowedRoles={["USER"]}><MainScreen /></ProtectedRoute>}
+        />
+        <Route path="/user/register" element={<Register />} />
+      </Routes>
+    </Router>
+  );
+}
