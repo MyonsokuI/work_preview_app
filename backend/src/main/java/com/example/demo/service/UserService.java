@@ -4,6 +4,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
+import com.example.demo.entity.enums.Role;
 import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class UserService {
                     UserResponse res = new UserResponse();
                     res.setUserId(user.getUserId());
                     res.setName(user.getName());
-                    res.setStatus(user.getStatus());
+                    res.setRole(user.getRoles());
                     return res;
                 })
                 .toList();
@@ -40,7 +41,7 @@ public class UserService {
         UserResponse res = new UserResponse();
         res.setUserId(user.getUserId());
         res.setName(user.getName());
-        res.setStatus(user.getStatus());
+        res.setRole(user.getRoles());
 
         return res;
     }
@@ -56,7 +57,7 @@ public class UserService {
         user.setUserId(req.getUserId());
         user.setName(req.getName());
         user.setPassword(req.getPassword());
-        user.setStatus("USER");
+        user.setRoles(Role.USER);
 
         User saved = userRepository.save(user);
 
@@ -64,7 +65,7 @@ public class UserService {
         UserResponse res = new UserResponse();
         res.setUserId(saved.getUserId());
         res.setName(saved.getName());
-        res.setStatus(saved.getStatus());
+        res.setRole(saved.getRoles());
 
         return res;
     }
