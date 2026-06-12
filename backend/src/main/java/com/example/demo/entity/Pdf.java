@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "pdf")
+@Table(name = "pdfs")
 @EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 @Getter
 @Setter
