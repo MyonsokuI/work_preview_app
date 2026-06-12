@@ -4,10 +4,19 @@ export default function GeneralReview({ answerId }) {
     const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
-        if (!answerId) return;
+        const token = localStorage.getItem("token");
 
+        if (!answerId) { // answerIdがない場合はレビューを取得せず、空の配列をセットして終了
+            setReviews([]);
+            return;
+        }
         fetch(
-            `http://localhost:8080/api/answers/${answerId}/reviews`
+            `http://localhost:8080/api/answers/${answerId}/reviews`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         )
             .then((res) => {
                 if (!res.ok) {

@@ -5,6 +5,7 @@ import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
 import com.example.demo.entity.enums.Role;
+import com.example.demo.entity.enums.UserStatus;
 import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
@@ -49,14 +50,15 @@ public class UserService {
     // ユーザー登録
     public UserResponse createUser(UserRequest req) {
 
-        if (userRepository.existsById(req.getUserId())) {
+        if (userRepository.existsById(req.getEmployeeId())) {
             throw new BusinessException("ID重複");
         }
 
         User user = new User();
-        user.setUserId(req.getUserId());
+        user.setEmployeeId(req.getEmployeeId());
         user.setName(req.getName());
         user.setPassword(req.getPassword());
+        user.setStatus(UserStatus.ACTIVE);
         user.setRoles(Role.USER);
 
         User saved = userRepository.save(user);

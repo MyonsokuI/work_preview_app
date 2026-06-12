@@ -34,7 +34,7 @@ public class ProgressController {
 
             // 💡 2. 未完了の受講生リストをSQLで取得（大文字・小文字のブレもUPPERで防衛にゃ！）
             String uncompletedSql = "SELECT u.name FROM users u " +
-                    "WHERE UPPER(u.status) = 'USER' " +
+                    "WHERE UPPER(u.roles) = 'USER' " +
                     "AND u.user_id NOT IN (" +
                     " SELECT a.user_id FROM answers a " +
                     " WHERE a.question_id = ? AND a.user_id IS NOT NULL" +
@@ -45,13 +45,13 @@ public class ProgressController {
             // 💡 3. 完了した人数をSQLで綺麗に数えるにゃ！
             String answeredSql = "SELECT COUNT(DISTINCT a.user_id) FROM answers a " +
                     "JOIN users u ON a.user_id = u.user_id " +
-                    "WHERE a.question_id = ? AND UPPER(u.status) = 'USER'";
+                    "WHERE a.question_id = ? AND UPPER(u.roles) = 'USER'";
             Integer answeredCount = jdbcTemplate.queryForObject(answeredSql, Integer.class, q.getQuestionId());
             dto.setAnsweredUserCount(answeredCount != null ? answeredCount : 0);
 
             // 🚀 【ここが分母の決定打！】
             // 「一般ユーザーの総数」を確実に割り出してDTOに入れるにゃ！
-            String totalUserSql = "SELECT COUNT(*) FROM users WHERE UPPER(status) = 'USER'";
+            String totalUserSql = "SELECT COUNT(*) FROM users WHERE UPPER(roles) = 'USER'";
             Integer totalCount = jdbcTemplate.queryForObject(totalUserSql, Integer.class);
             dto.setTotalUserCount(totalCount != null ? totalCount : 0);
 

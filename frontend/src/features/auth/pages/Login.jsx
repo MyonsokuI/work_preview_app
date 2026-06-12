@@ -19,7 +19,7 @@ export default function Login() {
             // 💡 ログイン情報をブラウザのローカルストレージに保存
             localStorage.setItem("token", token);
             const decoded = jwtDecode(token);
-            console.log("🌟 トークンの解読データ全体にゃ！:", decoded); 
+            console.log("🌟 トークンの解読データ全体にゃ！:", decoded);
             const currentUserObject = {
                 userId: decoded.sub ? Number(decoded.sub) : null, // 🌟 subから取り出して、数値に変換するにゃ！
                 name: decoded.name,
@@ -43,7 +43,7 @@ export default function Login() {
 
         } catch (error) {
             console.error("ログインエラーにゃ:", error);
-            alert(error.message); // API側から投げられた「ユーザーIDまたはパスワードが〜」のエラーメッセージが表示されるにゃ
+            alert(error.message); // API側から投げられた「社員IDまたはパスワードが〜」のエラーメッセージが表示されるにゃ
         }
     };
 
@@ -53,13 +53,13 @@ export default function Login() {
 
             <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div>
-                    <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px", color: "#555" }}>ユーザーID（半角数字）</label>
+                    <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px", color: "#555" }}>社員ID（半角数字）</label>
                     <input
                         type="number"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
                         required
-                        placeholder="例: 1"
+                        placeholder="例: 000000000"
                         style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "6px", border: "1px solid #ccc", fontSize: "16px" }}
                     />
                 </div>
