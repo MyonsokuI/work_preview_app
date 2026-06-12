@@ -2,25 +2,25 @@ const BASE_URL = "http://localhost:8080/api/auth";
 
 export const authApi = {
     /**
-     * ユーザーIDとパスワードを送信してログイン認証を行いますにゃ
-     * @param {number} userId 
+     * 社員IDとパスワードを送信してログイン認証を行いますにゃ
+     * @param {number} EmployeeId
      * @param {string} password 
-     * @returns {Promise<Object>} ログインに成功したユーザーデータ (userId, name, status)
+     * @returns {Promise<Object>} ログインに成功したユーザーデータ (employeeId, name, status)
      */
-    login: async (userId, password) => {
+    login: async (EmployeeId, password) => {
         const response = await fetch(`${BASE_URL}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userId: userId,
+                employeeId: EmployeeId,
                 password: password
             }),
         });
 
         if (!response.ok) {
-            throw new Error("ユーザーIDまたはパスワードが違いますにゃ");
+            throw new Error("社員IDまたはパスワードが違いますにゃ");
         }
 
         return await response.json();

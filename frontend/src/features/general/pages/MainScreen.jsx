@@ -38,46 +38,84 @@ export default function MainScreen() {
   const [otherAnswers, setOtherAnswers] = useState([]);
 
   // =========================
-  // login guard
+  // 1. login guard
   // =========================
   useEffect(() => {
     if (!userId) navigate("/login", { replace: true });
   }, [userId, navigate]);
 
   // =========================
-  // load data
+  // 2. テーマ取得
   // =========================
   useEffect(() => {
     if (!userId) return;
 
-    const load = async () => {
+    const loadThemes = async () => {
       try {
-        const [themesData, myAnswers] = await Promise.all([
-          userApi.getThemes(),
-          userApi.getMyAnswers(userId),
-        ]);
-
-        setThemes(themesData || []);
-
-        const map = {};
-        (myAnswers || []).forEach((a) => {
-          const qid = a.questionId ?? a.question_id;
-          if (!qid) return;
-
-          map[String(qid)] = {
-            answerId: a.answerId,
-            answerContent: a.answerContent || "",
-          };
-        });
-
-        setAnswerMap(map);
-      } catch (e) {
-        console.error(e);
+        const data = await userApi.getThemes();
+        setThemes(data || []);
+      } catch (error) {
+        console.error("テーマ取得エラー:", error);
       }
     };
 
-    load();
+    loadThemes();
   }, [userId]);
+
+  // =========================
+  // 3. 自分の回答取得
+  // =========================
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadMyAnswers = async () => {
+      try {
+        const data = await userApi.getMyAnswers(userId);
+        const map = {};
+
+        if (Array.isArray(data)) {
+          data.forEach((a) => {
+            const qid = a.questionId ?? a.question_id;
+            if (!qid) return;
+
+            map[String(qid)] = {
+              answerId: a.answerId,
+              questionId: qid,
+              answerContent: a.answerContent ?? "",
+            };
+          });
+        }
+        setAnswerMap(map);
+      } catch (error) {
+        console.error("回答取得エラー:", error);
+      }
+    };
+
+    loadMyAnswers();
+  }, [userId]);
+
+  // =========================
+  // 4. 他人の回答取得（activeQuestionが変わった時）
+  // =========================
+  useEffect(() => {
+    if (!activeQuestion || !userId) return;
+
+    const qid = activeQuestion.questionId ?? activeQuestion.question_id;
+
+    const loadOtherAnswers = async () => {
+      try {
+        const data = await userApi.getOtherAnswers(qid);
+        if (Array.isArray(data)) {
+          const filtered = data.filter((a) => a.userId !== userId);
+          setOtherAnswers(filtered);
+        }
+      } catch (error) {
+        console.error("他人の回答取得エラー:", error);
+      }
+    };
+
+    loadOtherAnswers();
+  }, [activeQuestion, userId]);
 
   // =========================
   // restore draft
@@ -127,26 +165,6 @@ export default function MainScreen() {
       console.error(e);
     }
   };
-
-  // =========================
-  // other answers
-  // =========================
-  useEffect(() => {
-    if (!activeQuestion) return;
-
-    const qid = getQid();
-
-    const load = async () => {
-      try {
-        const data = await userApi.getOtherAnswers(qid);
-        setOtherAnswers((data || []).filter((a) => a.userId !== userId));
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    load();
-  }, [activeQuestion]);
 
   // =========================
   // progress

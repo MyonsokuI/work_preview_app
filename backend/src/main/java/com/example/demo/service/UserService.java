@@ -48,15 +48,16 @@ public class UserService {
     // ユーザー登録
     public UserResponse createUser(UserRequest req) {
 
-        if (userRepository.existsById(req.getUserId())) {
+        if (userRepository.existsById(req.getEmployeeId())) {
             throw new BusinessException("ID重複");
         }
 
         User user = new User();
-        user.setUserId(req.getUserId());
+        user.setEmployeeId(req.getEmployeeId());
         user.setName(req.getName());
         user.setPassword(req.getPassword());
-        user.setStatus("USER");
+        user.setStatus("active");
+        user.setRoles("USER");
 
         User saved = userRepository.save(user);
 

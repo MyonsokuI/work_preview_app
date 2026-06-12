@@ -5,7 +5,7 @@ import { authApi } from "../api/registerApi"; // 💡 共通のauthApiをイン�
 export default function Register() {
     const navigate = useNavigate();
     const [form, setForm] = useState({
-        userId: "",
+        employeeId: "",
         name: "",
         password: "",
         confirmPassword: "",
@@ -34,7 +34,7 @@ export default function Register() {
 
         try {
             // 💡 生のfetchを廃止し、共通API関数（registerUser）を呼び出すように変更したにゃ！
-            const data = await authApi.registerUser(form.userId, form.name, form.password);
+            const data = await authApi.registerUser(form.employeeId, form.name, form.password);
             console.log("登録成功:", data);
 
             // 👉 ログイン画面へ戻る
@@ -42,7 +42,7 @@ export default function Register() {
 
             // フォームのクリア
             setForm({
-                userId: "",
+                employeeId: "",
                 name: "",
                 password: "",
                 confirmPassword: "",
@@ -58,13 +58,13 @@ export default function Register() {
             <h2>ユーザー登録</h2>
 
             <form onSubmit={handleSubmit}>
-                {/* ユーザーID */}
+                {/* 社員ID */}
                 <div>
-                    <label>ユーザーID</label>
+                    <label>社員ID</label>
                     <input
                         type="number"
-                        name="userId"
-                        value={form.userId}
+                        name="employeeId"
+                        value={form.employeeId}
                         onChange={handleChange}
                         required
                     />
