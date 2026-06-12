@@ -2,6 +2,7 @@
 .sidebar {
     width: 300px;
     height: 100vh;
+    overflow-x: hidden;
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
     display: flex;
@@ -28,12 +29,15 @@
     background-color: #f1f5f9;
 }
 
-/* 問題リスト */
+/* --- リスト部分を親の幅に縛る --- */
 .questionList {
     padding-left: 24px;
     padding-bottom: 8px;
+    overflow: hidden;
+    /* ここでもはみ出しガード */
 }
 
+/* --- 問題項目を強制的に省略する --- */
 .questionItem {
     padding: 8px 12px;
     font-size: 13px;
@@ -41,6 +45,18 @@
     cursor: pointer;
     border-radius: 4px;
     margin: 2px 8px;
+
+    /* ★ここが解決の肝です★ */
+    display: block;
+    /* ブロック要素にする */
+    white-space: nowrap;
+    /* 改行を禁止する */
+    overflow: hidden;
+    /* はみ出た分を隠す */
+    text-overflow: ellipsis;
+    /* ... で省略する */
+    max-width: calc(300px - 40px);
+    /* サイドバー幅 - 余白分を最大幅にする */
 }
 
 .questionItem:hover {

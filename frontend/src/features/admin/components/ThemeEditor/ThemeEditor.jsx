@@ -85,7 +85,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                         onChange={(e) => setStatus(e.target.value)}
                     >
                         <option value="draft">未公開 (draft)</option>
-                        <option value="published">公開 (published)</option>
+                        <option value="published">公開 (published/scheduled)</option>
                     </select>
                 </div>
 
