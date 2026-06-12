@@ -1,5 +1,5 @@
 import React from "react";
-import GeneralReview from "../general_review";
+// 👈 GeneralReview のインポート文を削除しました
 
 export default function MainContent({
   activeQuestion,
@@ -17,12 +17,6 @@ export default function MainContent({
   getQid,
   styles,
 }) {
-  // 現在選択されている質問のIDを安全に取得
-  const currentQuestionId = getQid();
-  
-  // 現在の質問に紐づく回答のIDを取得（無い場合はnull）
-  const currentAnswerId = answerMap[String(currentQuestionId)]?.answerId ?? null;
-
   return (
     <div style={styles.main || {}}>
       {!activeQuestion ? (
@@ -71,14 +65,7 @@ export default function MainContent({
               ))}
           </div>
 
-          {/* AI総合レビュー：ここを一番確実に連動する形に修正 */}
-          <div style={{ marginTop: 40 }}>
-            <GeneralReview
-              key={currentQuestionId} // 👈 質問が変わったらコンポーネントを強制リフレッシュする魔法の引数
-              questionId={currentQuestionId} // 👈 質問IDを渡す
-              answerId={currentAnswerId}     // 👈 回答IDも一緒に安全に渡す
-            />
-          </div>
+         
         </div>
       )}
     </div>
