@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import com.example.demo.entity.enums.ContentsStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +36,8 @@ public class Question {
 
     // 💡 ここから3つのフィールドを追記にゃ！
     @Column(length = 50)
-    private String status; // "draft", "published", "scheduled", "closed"
+    @Enumerated(EnumType.STRING)
+    private ContentsStatus status; // DRAFT, SCHEDULED, PUBLISHED, CLOSED
 
     private LocalDateTime openAt;
 
