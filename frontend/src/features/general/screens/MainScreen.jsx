@@ -31,6 +31,7 @@ export default function MainScreen() {
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
   const [otherAnswers, setOtherAnswers] = useState([]);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // =========================
   // Effects & Logic
@@ -202,10 +203,13 @@ export default function MainScreen() {
         setIsModelOpen={setIsModelOpen}
         isAnswersOpen={isAnswersOpen}
         setIsAnswersOpen={setIsAnswersOpen}
+        isReviewOpen={isReviewOpen}
+        setIsReviewOpen={setIsReviewOpen}
         otherAnswers={otherAnswers}
         answerMap={answerMap}
         getQid={getQid}
         styles={styles}
+
       />
     </div>
   );

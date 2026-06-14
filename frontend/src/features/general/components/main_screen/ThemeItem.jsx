@@ -4,9 +4,9 @@ export default function ThemeItem(props) {
   // すべてのPropsを安全にフォールバック付きで展開
   const theme = props?.theme;
   const openThemes = props?.openThemes ?? new Set();
-  const setOpenThemes = props?.setOpenThemes ?? (() => {});
+  const setOpenThemes = props?.setOpenThemes ?? (() => { });
   const answerMap = props?.answerMap ?? {};
-  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => {});
+  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => { });
   const getProgress = props?.getProgress ?? (() => ({ done: 0, total: 0 }));
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
   const styles = props?.styles ?? {};
@@ -35,7 +35,7 @@ export default function ThemeItem(props) {
         }
         style={styles.theme || {}}
       >
-        {isOpen ? "▼" : "▶"} 📁 {theme.title ?? "無題のテーマ"}
+        {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
 
         <div style={styles.progressText || {}} >
           {done}/{total}

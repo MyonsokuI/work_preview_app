@@ -35,7 +35,6 @@ export default function GeneralReview({ answerId }) {
 
     return (
         <div>
-            <h3>レビュー</h3>
 
             {reviews.length === 0 ? (
                 <p>レビューはまだありません。</p>

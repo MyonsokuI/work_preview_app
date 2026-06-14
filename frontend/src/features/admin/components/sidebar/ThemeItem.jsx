@@ -8,21 +8,30 @@ export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQues
     return (
         <div className={styles.themeItem}>
             {/* 💡 ヘッダークリック時に「進捗画面を表示」を呼び出す */}
-            <div className={styles.themeHeader} onClick={() => { onThemeEdit(theme.pdfId); }}>
+            <div className={`${styles.themeHeader} ${isOpen ? styles.active : ""
+                }`} onClick={() => onToggle(theme.pdfId)}>
                 <span
                     style={{
-                        display: "block",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                        width: "100%",          // 親要素の幅に合わせて縮む
-                        minWidth: 0             // ★これ重要：Flexboxの限界突破を防ぐ
+                        marginRight: "8px",
+                        fontSize: "12px"
                     }}
+                >
+                    {isOpen ? "▼" : "▶"}
+                </span>
+                <span
                     className={styles.themeTitle}
                     title={theme.title}
                 >
                     {truncateText(theme.title, 15)}
                 </span>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onThemeEdit(theme.pdfId);
+                    }}
+                >
+                    ⚙️
+                </button>
                 <span
                     style={{
                         fontSize: "12px",
@@ -39,17 +48,19 @@ export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQues
             </div>
 
             {/* 開閉アイコンや展開動作は必要に応じてここを調整 */}
-            <div className={styles.questionList}>
-                {theme.questions?.map(q => (
-                    <div key={q.questionId} className={styles.questionItem} onClick={() => onSelect(theme.pdfId, q.questionId, "edit")}>
-                        ❓ {q.questionText}
-                    </div>
+            {isOpen && (
+                <div className={styles.questionList}>
+                    {theme.questions?.map(q => (
+                        <div key={q.questionId} className={styles.questionItem} onClick={() => onSelect(theme.pdfId, q.questionId, "edit")}>
+                            ❓ {q.questionText}
+                        </div>
 
-                ))}
-                <button className={styles.addButton} onClick={() => onAddQuestion(theme.pdfId)}>
-                    ＋ 問題を追加
-                </button>
-            </div>
+                    ))}
+                    <button className={styles.addButton} onClick={() => onAddQuestion(theme.pdfId)}>
+                        ＋ 問題を追加
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

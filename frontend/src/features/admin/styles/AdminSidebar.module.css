@@ -1,7 +1,7 @@
 /* Sidebar全体 */
 .sidebar {
-    width: 300px;
-    height: 100vh;
+    width: 320px;
+    flex-shrink: 0;
     overflow-x: hidden;
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
@@ -10,19 +10,34 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 }
 
+.sidebarContainer {
+    width: 320px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.themeTitle {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* 各テーマ項目 */
 .themeItem {
     border-bottom: 1px solid #f8fafc;
     transition: all 0.2s;
+    min-width: 0;
 }
 
 .themeHeader {
     padding: 12px 16px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     cursor: pointer;
     background-color: #fff;
+    gap: 8px;
 }
 
 .themeHeader:hover {
@@ -34,29 +49,19 @@
     padding-left: 24px;
     padding-bottom: 8px;
     overflow: hidden;
+    min-width: 0;
     /* ここでもはみ出しガード */
 }
 
 /* --- 問題項目を強制的に省略する --- */
 .questionItem {
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #475569;
-    cursor: pointer;
-    border-radius: 4px;
-    margin: 2px 8px;
-
-    /* ★ここが解決の肝です★ */
     display: block;
-    /* ブロック要素にする */
-    white-space: nowrap;
-    /* 改行を禁止する */
+    width: 100%;
+    box-sizing: border-box;
+
     overflow: hidden;
-    /* はみ出た分を隠す */
     text-overflow: ellipsis;
-    /* ... で省略する */
-    max-width: calc(300px - 40px);
-    /* サイドバー幅 - 余白分を最大幅にする */
+    white-space: nowrap;
 }
 
 .questionItem:hover {
