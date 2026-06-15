@@ -8,6 +8,8 @@ import MainScreen from "./features/general/screens/MainScreen";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+import Register from "./features/general/screens/Register";
+
 export default function App() {
   return (
     <Router>
@@ -17,6 +19,9 @@ export default function App() {
 
         {/* ログイン */}
         <Route path="/login" element={<Login />} />
+
+        {/* 新規登録画面 */}
+        <Route path="/user/register" element={<Register />} />
 
         {/* 管理者画面 */}
         <Route
