@@ -39,11 +39,11 @@ export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQues
                         borderRadius: "999px",
                         fontWeight: "bold",
                         flexShrink: 0,
-                        background: theme.status === "published" ? "#dcfce7" : "#fef3c7",
-                        color: theme.status === "published" ? "#166534" : "#92400e",
+                        background: theme.status === "PUBLISHED" ? "#dcfce7" : "#fef3c7",
+                        color: theme.status === "PUBLISHED" ? "#166534" : "#92400e",
                     }}
                 >
-                    {theme.status === "published" ? "公開中" : "非公開"}
+                    {theme.status === "PUBLISHED" ? "公開中" : "非公開"}
                 </span>
             </div>
 

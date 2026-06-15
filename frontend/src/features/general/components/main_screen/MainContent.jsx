@@ -45,7 +45,7 @@ export default function MainContent({
           {/* 模範解答アコーディオン */}
           <div style={{ marginTop: 15 }}>
             <b onClick={() => setIsModelOpen((v) => !v)} style={{ cursor: "pointer" }}>
-              模範解答 {isModelOpen ? "▲" : "▼"}
+              {isModelOpen ? "▼" : "▶"}模範解答
             </b>
             {isModelOpen && (
               <div className={general.box}>
@@ -57,7 +57,7 @@ export default function MainContent({
           {/* 他の人の回答アコーディオン */}
           <div style={{ marginTop: 15 }}>
             <b onClick={() => setIsAnswersOpen((v) => !v)} style={{ cursor: "pointer" }}>
-              他の人の回答 {isAnswersOpen ? "▲" : "▼"}
+              {isAnswersOpen ? "▼" : "▶"} 他の人の回答
             </b>
             {isAnswersOpen &&
               (otherAnswers.length === 0 ? (
@@ -76,7 +76,7 @@ export default function MainContent({
               onClick={() => setIsReviewOpen((v) => !v)}
               style={{ cursor: "pointer" }}
             >
-              レビュー {isReviewOpen ? "▲" : "▼"}
+              {isReviewOpen ? "▼" : "▶"} レビュー
             </b>
 
             {isReviewOpen && (
