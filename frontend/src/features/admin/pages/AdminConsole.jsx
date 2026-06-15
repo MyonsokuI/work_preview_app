@@ -39,6 +39,11 @@ export default function AdminConsole() {
         setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
     };
 
+    // 共通の再取得用関数
+    const refreshThemes = async () => {
+        const data = await adminApi.getThemes();
+        setThemes(data);
+    };
     // 新しいハンドラを作成
     const handleShowThemeProgress = (themeId) => {
         setActiveThemeId(themeId);
@@ -68,6 +73,7 @@ export default function AdminConsole() {
 
             setCreatingQuestion(null);
             setActiveQuestionId(saved.questionId);
+            await refreshThemes();
             alert("保存完了しましたにゃ！");
         } catch (err) {
             console.error(err);
@@ -89,6 +95,7 @@ export default function AdminConsole() {
         try {
             await adminApi.deleteQuestion(qid);
             setThemes(themes.map(t => t.pdfId === tid ? { ...t, questions: t.questions.filter(q => q.questionId !== qid) } : t));
+            await refreshThemes();
         } catch (err) {
             alert("削除失敗しましたにゃ");
         }
@@ -112,12 +119,13 @@ export default function AdminConsole() {
     };
 
     // 💡 3. 保存後の処理を修正（既存の handleSaveTheme を上書き）
-    const handleSaveTheme = (savedTheme) => {
+    const handleSaveTheme = async (savedTheme) => {
         if (creatingTheme?.isNew) {
             setThemes([...themes, savedTheme]); // 新規ならリストに追加
         } else {
             setThemes(themes.map(t => t.pdfId === savedTheme.pdfId ? savedTheme : t));
         }
+        await refreshThemes();
         setCreatingTheme(null);   // クリア
         setIsEditingTheme(false); // 編集モード終了
     };
@@ -161,9 +169,10 @@ export default function AdminConsole() {
             console.error(err);
             alert("テーマの削除に失敗しましたにゃ...");
         }
+        await refreshThemes();
     };
     return (
-        <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
+        <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif", wordBreak: "break-all" }}>
             <AdminSidebar
                 themes={themes}
                 activeQuestionId={activeQuestionId}

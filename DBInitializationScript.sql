@@ -24,9 +24,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP
 );
 
--- =====================================
--- 2. pdfs（ここだけ重要修正）
--- =====================================
 CREATE TABLE pdfs (
     pdf_id SERIAL PRIMARY KEY,
     title VARCHAR(255),
@@ -48,9 +45,6 @@ CREATE TABLE pdfs (
         ON DELETE SET NULL
 );
 
--- =====================================
--- 3. questions
--- =====================================
 CREATE TABLE questions (
     question_id SERIAL PRIMARY KEY,
     pdf_id INTEGER,
@@ -71,9 +65,6 @@ CREATE TABLE questions (
 
 CREATE INDEX idx_questions_pdf_id ON questions(pdf_id);
 
--- =====================================
--- 4. answers
--- =====================================
 CREATE TABLE answers (
     answer_id SERIAL PRIMARY KEY,
     user_id INTEGER,
@@ -100,9 +91,6 @@ CREATE UNIQUE INDEX idx_answers_user_question
 CREATE INDEX idx_answers_submitted_at
     ON answers(submitted_at);
 
--- =====================================
--- 5. reviews
--- =====================================
 CREATE TABLE reviews (
     review_id SERIAL PRIMARY KEY,
     answer_id INTEGER,
@@ -123,9 +111,6 @@ CREATE TABLE reviews (
 
 CREATE INDEX idx_reviews_answer_id ON reviews(answer_id);
 
--- =========================
--- users
--- =========================
 INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 (1, 10000001, 'admin', 'password', 'active', 'admin'),
 (2, 10000002, 'user1', 'hashed_user', 'active', 'user'),
@@ -140,9 +125,6 @@ INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 
 SELECT setval('users_user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 1));
 
--- =========================
--- pdfs
--- =========================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
 (1, 'Java基礎', '/files/java_basic.pdf', 1, 'published'),
 (2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'published'),
@@ -152,9 +134,6 @@ INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
 
 SELECT setval('pdfs_pdf_id_seq', COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1));
 
--- =========================
--- questions
--- =========================
 INSERT INTO questions (pdf_id, question_text, correct_answer, status, open_at, close_at) VALUES
 (1, 'Javaとは何か？', 'プログラミング言語', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
 (1, 'クラスとは何か？', 'オブジェクトの設計図', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
@@ -179,9 +158,6 @@ INSERT INTO questions (pdf_id, question_text, correct_answer, status, open_at, c
 
 SELECT setval('questions_question_id_seq', COALESCE((SELECT MAX(question_id) FROM questions), 1));
 
--- =========================
--- answers（自動生成）
--- =========================
 INSERT INTO answers (user_id, question_id, answer_content, submitted_at)
 SELECT
     ((q.question_id + s.n) % 8) + 2,
@@ -195,9 +171,6 @@ CROSS JOIN (
 
 SELECT setval('answers_answer_id_seq', COALESCE((SELECT MAX(answer_id) FROM answers), 1));
 
--- =========================
--- reviews
--- =========================
 INSERT INTO reviews (answer_id, reviewer_id, comment)
 SELECT
     answer_id,

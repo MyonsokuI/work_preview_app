@@ -1,4 +1,6 @@
 import React from "react";
+import GeneralReview from "../general_review"
+import general from "../../styles/General.module.css";
 // 👈 GeneralReview のインポート文を削除しました
 
 export default function MainContent({
@@ -12,27 +14,31 @@ export default function MainContent({
   setIsModelOpen,
   isAnswersOpen,
   setIsAnswersOpen,
+  isReviewOpen,
+  setIsReviewOpen,
   otherAnswers,
   answerMap,
   getQid,
   styles,
 }) {
+  const answerId =
+    answerMap[String(getQid())]?.answerId;
   return (
     <div style={styles.main || {}}>
       {!activeQuestion ? (
         <div>問題を選択してください</div>
       ) : (
-        <div style={styles.card || {}}>
+        <div className={general.card}>
           <h3>{activeQuestion.questionText ?? "無題の質問"}</h3>
 
           <textarea
             ref={textareaRef}
             value={draftAnswer}
             onChange={(e) => setDraftAnswer(e.target.value)}
-            style={styles.textarea || {}}
+            className={general.textarea}
           />
 
-          <button onClick={handleSave} style={styles.save || {}}>
+          <button onClick={handleSave} className={general.primaryButton}>
             保存 {saved && "✔"}
           </button>
 
@@ -42,7 +48,7 @@ export default function MainContent({
               模範解答 {isModelOpen ? "▲" : "▼"}
             </b>
             {isModelOpen && (
-              <div style={styles.box || {}}>
+              <div className={general.box}>
                 {activeQuestion.correctAnswer ?? "模範解答は登録されていません。"}
               </div>
             )}
@@ -64,8 +70,25 @@ export default function MainContent({
                 ))
               ))}
           </div>
+          {/* レビュー */}
+          <div style={{ marginTop: 15 }}>
+            <b
+              onClick={() => setIsReviewOpen((v) => !v)}
+              style={{ cursor: "pointer" }}
+            >
+              レビュー {isReviewOpen ? "▲" : "▼"}
+            </b>
 
-         
+            {isReviewOpen && (
+              <GeneralReview
+                answerId={
+                  answerMap[String(getQid())]?.answerId
+                }
+              />
+            )}
+          </div>
+
+
         </div>
       )}
     </div>
