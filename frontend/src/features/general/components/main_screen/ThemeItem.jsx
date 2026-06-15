@@ -37,6 +37,23 @@ export default function ThemeItem(props) {
       >
         {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
 
+        {/* ★PDFリンクの追加エリア★ */}
+        {theme.fileUrl && (
+          <a
+            href={theme.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              marginRight: "8px",
+              textDecoration: "none",
+              color: "#0ea5e9",
+              fontSize: "16px"
+            }}
+            title="PDFを開く"
+          >
+            🔗
+          </a>
+        )}
         <div style={styles.progressText || {}} >
           {done}/{total}
         </div>

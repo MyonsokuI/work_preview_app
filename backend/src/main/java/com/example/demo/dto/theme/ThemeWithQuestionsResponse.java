@@ -12,6 +12,7 @@ public class ThemeWithQuestionsResponse {
   private Integer pdfId;
   private String title;
   // 💡 こちらにもステータスと日時情報を追加にゃ！
+  private String fileUrl;
   private ContentsStatus status;
   private LocalDateTime openAt;
   private LocalDateTime closeAt;

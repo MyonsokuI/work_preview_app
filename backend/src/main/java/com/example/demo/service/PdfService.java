@@ -57,8 +57,7 @@ public class PdfService {
             ContentsStatus correct = StatusCalculator.calculateStatus(
                     pdf.getStatus(),
                     pdf.getOpenAt(),
-                    pdf.getCloseAt()
-            );
+                    pdf.getCloseAt());
 
             if (correct != pdf.getStatus()) {
                 pdf.setStatus(correct);
@@ -81,6 +80,7 @@ public class PdfService {
 
         Pdf pdf = new Pdf();
         pdf.setTitle(request.getTitle());
+        pdf.setFilePath(request.getFileUrl());
         pdf.setOpenAt(request.getOpenAt());
         pdf.setCloseAt(request.getCloseAt());
 
@@ -88,9 +88,7 @@ public class PdfService {
                 StatusCalculator.calculateStatus(
                         ContentsStatus.valueOf(request.getStatus().toUpperCase()),
                         request.getOpenAt(),
-                        request.getCloseAt()
-                )
-        );
+                        request.getCloseAt()));
 
         return toResponse(pdfRepository.save(pdf));
     }
@@ -105,6 +103,7 @@ public class PdfService {
                 .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
 
         pdf.setTitle(updated.getTitle());
+        pdf.setFilePath(updated.getFileUrl());
         pdf.setOpenAt(updated.getOpenAt());
         pdf.setCloseAt(updated.getCloseAt());
 
@@ -112,9 +111,7 @@ public class PdfService {
                 StatusCalculator.calculateStatus(
                         ContentsStatus.valueOf(updated.getStatus().toUpperCase()),
                         updated.getOpenAt(),
-                        updated.getCloseAt()
-                )
-        );
+                        updated.getCloseAt()));
 
         return toResponse(pdfRepository.save(pdf));
     }
@@ -138,14 +135,19 @@ public class PdfService {
     // =========================================
     private boolean isPublic(Pdf pdf, LocalDateTime now) {
 
-        if (pdf.getStatus() == null) return false;
+        if (pdf.getStatus() == null)
+            return false;
 
-        if (pdf.getStatus() == ContentsStatus.DRAFT) return false;
-        if (pdf.getStatus() == ContentsStatus.CLOSED) return false;
+        if (pdf.getStatus() == ContentsStatus.DRAFT)
+            return false;
+        if (pdf.getStatus() == ContentsStatus.CLOSED)
+            return false;
 
-        if (pdf.getOpenAt() != null && pdf.getOpenAt().isAfter(now)) return false;
+        if (pdf.getOpenAt() != null && pdf.getOpenAt().isAfter(now))
+            return false;
 
-        if (pdf.getCloseAt() != null && pdf.getCloseAt().isBefore(now)) return false;
+        if (pdf.getCloseAt() != null && pdf.getCloseAt().isBefore(now))
+            return false;
 
         return true;
     }
@@ -158,6 +160,7 @@ public class PdfService {
         ThemeResponse res = new ThemeResponse();
         res.setPdfId(pdf.getPdfId());
         res.setTitle(pdf.getTitle());
+        res.setFileUrl(pdf.getFilePath());
         res.setStatus(pdf.getStatus());
         res.setOpenAt(pdf.getOpenAt());
         res.setCloseAt(pdf.getCloseAt());
