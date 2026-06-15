@@ -179,7 +179,11 @@ export default function AdminConsole() {
                 }}
                 onAddQuestion={handleStartAddQuestion}
                 onAddTheme={handleStartAddTheme}
-                onLogout={() => navigate("/login")}
+                onLogout={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("currentUser");
+                    navigate("/login");
+                }}
                 onDeleteQuestion={handleDeleteQuestion}
                 onThemeEdit={handleEditTheme}
             />
