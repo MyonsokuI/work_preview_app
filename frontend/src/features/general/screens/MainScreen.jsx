@@ -280,10 +280,14 @@ const styles = {
   logout: { padding: "6px 10px", border: "1px solid #ddd", background: "#fff" },
   filterRow: { display: "flex", gap: 8 },
   filterButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" },
-  theme: { padding: 10, borderRadius: 6, cursor: "pointer", fontWeight: "bold" },
+  theme: {
+    padding: 10, borderRadius: 6, cursor: "pointer", fontWeight: "bold",
+    justifyContent: "flex-start", // 👈 これで左寄せになる
+    textAlign: "left"         // テキスト自体も左寄せにする（念のため）},
+  },
   progressBg: { height: 4, background: "#eee", borderRadius: 10 },
   progressBar: { height: 4, borderRadius: 10 },
-  progressText: { fontSize: 11, marginTop: 3 },
+  progressText: { fontSize: 11, marginTop: 3, textAlign: "center" },
   question: { padding: "6px 10px", fontSize: 13, cursor: "pointer" },
   main: { flex: 1, padding: 20 },
   card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },

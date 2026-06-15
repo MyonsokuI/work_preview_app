@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import org.springframework.web.bind.annotation.PathVariable;
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.dto.theme.ThemeWithQuestionsResponse;
@@ -52,6 +51,7 @@ public class PdfController {
             ThemeWithQuestionsResponse response = new ThemeWithQuestionsResponse();
             response.setPdfId(pdf.getPdfId());
             response.setTitle(pdf.getTitle());
+            response.setFileUrl(pdf.getFileUrl());
 
             // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替えるにゃ！
             response.setStatus(pdf.getStatus());
@@ -93,5 +93,4 @@ public class PdfController {
         pdfService.deleteTheme(id);
     }
 
-    
 }

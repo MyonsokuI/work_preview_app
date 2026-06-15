@@ -1,5 +1,5 @@
 import React from "react";
-
+import pdfImage from "../../../../assets/pdf.jpeg";
 export default function ThemeItem(props) {
   // すべてのPropsを安全にフォールバック付きで展開
   const theme = props?.theme;
@@ -43,26 +43,24 @@ export default function ThemeItem(props) {
             return next;
           })
         }
-        style={styles.theme || {}}
+        style={{ ...styles.theme, flexDirection: "column", alignItems: "stretch" }}
       >
-        {isOpen ? "▼" : "▶"}{" "}
-        {/* 💡 テキスト部分だけを安全にspanで囲んで省略 */}
-        <span style={textEllipsisStyle} title={theme.title}>
-          {theme.title ?? "無題のテーマ"}
-        </span>
+        {/* 1段目：タイトルとアイコン */}
+        <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+          {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
 
-        <div style={styles.progressText || {}} >
-          {done}/{total}
+          {theme.fileUrl && (
+            <a href={theme.fileUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", display: "flex" }}>
+              <img src={pdfImage} alt="PDF" style={{ width: "28px", height: "25px" }} />
+            </a>
+          )}
         </div>
-
-        <div style={styles.progressBg || {}}>
-          <div
-            style={{
-              ...(styles.progressBar || {}),
-              width: `${ratio * 100}%`,
-              backgroundColor: getProgressColor(ratio),
-            }}
-          />
+        {/* 2段目：進捗テキストとバー */}
+        <div style={{ width: "100%", marginTop: "8px" }}>
+          <div style={styles.progressText}>{done}/{total}</div>
+          <div style={styles.progressBg}>
+            <div style={{ ...styles.progressBar, width: `${ratio * 100}%`, backgroundColor: getProgressColor(ratio) }} />
+          </div>
         </div>
       </div>
 
