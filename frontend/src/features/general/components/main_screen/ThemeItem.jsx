@@ -1,5 +1,5 @@
 import React from "react";
-
+import pdfImage from "../../../../assets/pdf.jpeg";
 export default function ThemeItem(props) {
   // すべてのPropsを安全にフォールバック付きで展開
   const theme = props?.theme;
@@ -22,9 +22,19 @@ export default function ThemeItem(props) {
   // theme.questions が undefined や null の場合に備えて安全に配列化する
   const questions = theme.questions ?? [];
 
+  // 💡 既存のレイアウトと絶対に干渉しない、プレーンなインライン省略スタイル
+  const textEllipsisStyle = {
+    display: "inline-block",
+    verticalAlign: "middle",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "140px", // 💡 サイドバー（最大340px）の中で進捗バーが消えない絶妙な幅に制限
+  };
+
   return (
     <div>
-      {/* アコーディオンヘッダー */}
+      {/* アコーディオンヘッダー：【元通り】styleは一切弄りません */}
       <div
         onClick={() =>
           setOpenThemes((prev) => {
@@ -33,43 +43,28 @@ export default function ThemeItem(props) {
             return next;
           })
         }
-        style={styles.theme || {}}
+        style={{ ...styles.theme, flexDirection: "column", alignItems: "stretch" }}
       >
-        {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
+        {/* 1段目：タイトルとアイコン */}
+        <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+          {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
 
-        {/* ★PDFリンクの追加エリア★ */}
-        {theme.fileUrl && (
-          <a
-            href={theme.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              marginRight: "8px",
-              textDecoration: "none",
-              color: "#0ea5e9",
-              fontSize: "16px"
-            }}
-            title="PDFを開く"
-          >
-            🔗
-          </a>
-        )}
-        <div style={styles.progressText || {}} >
-          {done}/{total}
+          {theme.fileUrl && (
+            <a href={theme.fileUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", display: "flex" }}>
+              <img src={pdfImage} alt="PDF" style={{ width: "28px", height: "25px" }} />
+            </a>
+          )}
         </div>
-
-        <div style={styles.progressBg || {}}>
-          <div
-            style={{
-              ...(styles.progressBar || {}),
-              width: `${ratio * 100}%`,
-              backgroundColor: getProgressColor(ratio),
-            }}
-          />
+        {/* 2段目：進捗テキストとバー */}
+        <div style={{ width: "100%", marginTop: "8px" }}>
+          <div style={styles.progressText}>{done}/{total}</div>
+          <div style={styles.progressBg}>
+            <div style={{ ...styles.progressBar, width: `${ratio * 100}%`, backgroundColor: getProgressColor(ratio) }} />
+          </div>
         </div>
       </div>
 
-      {/* 開閉する質問リスト（?.map にし、さらに空配列を保証しているので絶対に落ちない） */}
+      {/* 開閉する質問リスト：【元通り】styleは一切弄りません */}
       {isOpen &&
         questions.map((q) => {
           if (!q) return null;
@@ -82,7 +77,11 @@ export default function ThemeItem(props) {
               onClick={() => handleSelectQuestion(q)}
               style={styles.question || {}}
             >
-              📝 {q.questionText ?? "無題の質問"}
+              📝{" "}
+              {/* 💡 問題文もテキスト部分だけを安全に省略。問題文は長めなので幅を少し広めに確保 */}
+              <span style={{ ...textEllipsisStyle, maxWidth: "220px" }} title={q.questionText}>
+                {q.questionText ?? "無題の質問"}
+              </span>
               {done && <span style={{ color: "#22c55e", marginLeft: 4 }}>✔</span>}
             </div>
           );

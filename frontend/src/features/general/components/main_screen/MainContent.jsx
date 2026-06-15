@@ -1,7 +1,6 @@
 import React from "react";
-import GeneralReview from "../general_review"
+import GeneralReview from "../general_review";
 import general from "../../styles/General.module.css";
-// 👈 GeneralReview のインポート文を削除しました
 
 export default function MainContent({
   activeQuestion,
@@ -21,8 +20,6 @@ export default function MainContent({
   getQid,
   styles,
 }) {
-  const answerId =
-    answerMap[String(getQid())]?.answerId;
   return (
     <div style={styles.main || {}}>
       {!activeQuestion ? (
@@ -42,11 +39,15 @@ export default function MainContent({
             保存 {saved && "✔"}
           </button>
 
-          {/* 模範解答アコーディオン */}
+          {/* 模範解答 */}
           <div style={{ marginTop: 15 }}>
-            <b onClick={() => setIsModelOpen((v) => !v)} style={{ cursor: "pointer" }}>
-              {isModelOpen ? "▼" : "▶"}模範解答
+            <b
+              onClick={() => setIsModelOpen(v => !v)}
+              style={{ cursor: "pointer" }}
+            >
+              {isModelOpen ? "▼" : "▶"} 模範解答
             </b>
+
             {isModelOpen && (
               <div className={general.box}>
                 {activeQuestion.correctAnswer ?? "模範解答は登録されていません。"}
@@ -54,14 +55,20 @@ export default function MainContent({
             )}
           </div>
 
-          {/* 他の人の回答アコーディオン */}
+          {/* 他の人の回答 */}
           <div style={{ marginTop: 15 }}>
-            <b onClick={() => setIsAnswersOpen((v) => !v)} style={{ cursor: "pointer" }}>
+            <b
+              onClick={() => setIsAnswersOpen(v => !v)}
+              style={{ cursor: "pointer" }}
+            >
               {isAnswersOpen ? "▼" : "▶"} 他の人の回答
             </b>
+
             {isAnswersOpen &&
               (otherAnswers.length === 0 ? (
-                <div style={styles.box || {}}>他人の回答はまだありません。</div>
+                <div style={styles.box || {}}>
+                  他人の回答はまだありません。
+                </div>
               ) : (
                 otherAnswers.map((a) => (
                   <div key={a.answerId} style={styles.box || {}}>
@@ -70,10 +77,11 @@ export default function MainContent({
                 ))
               ))}
           </div>
+
           {/* レビュー */}
           <div style={{ marginTop: 15 }}>
             <b
-              onClick={() => setIsReviewOpen((v) => !v)}
+              onClick={() => setIsReviewOpen(v => !v)}
               style={{ cursor: "pointer" }}
             >
               {isReviewOpen ? "▼" : "▶"} レビュー
@@ -81,14 +89,10 @@ export default function MainContent({
 
             {isReviewOpen && (
               <GeneralReview
-                answerId={
-                  answerMap[String(getQid())]?.answerId
-                }
+                answerId={answerMap[String(getQid())]?.answerId}
               />
             )}
           </div>
-
-
         </div>
       )}
     </div>

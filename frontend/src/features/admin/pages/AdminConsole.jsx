@@ -16,6 +16,20 @@ export default function AdminConsole() {
     const [activeTab, setActiveTab] = useState("edit");
     const [creatingQuestion, setCreatingQuestion] = useState(null);
 
+    const styles = {
+        sidebar: {
+            width: 340,
+            borderRight: "1px solid #ddd",
+            flexShrink: 0 // サイドバーが縮まないようにする
+        },
+        main: {
+            flex: 1,
+            padding: "24px",
+            backgroundColor: "#fff",
+            overflowY: "auto",
+            minHeight: "100vh"
+        }
+    };
     // --- データ取得 ---
     useEffect(() => {
         const loadThemes = async () => {
@@ -171,6 +185,22 @@ export default function AdminConsole() {
         }
         await refreshThemes();
     };
+
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // サイドバーとメインエリアのスタイルを動的に生成
+    const dynamicSidebarStyle = {
+        ...styles.sidebar,
+        width: isSidebarOpen ? 340 : 0,
+        overflow: "hidden",
+        transition: "width 0.25s ease-in-out",
+    };
+
+    const dynamicMainStyle = {
+        ...styles.main,
+        paddingLeft: isSidebarOpen ? 20 : 60,
+        transition: "padding-left 0.25s ease-in-out",
+    };
     return (
         <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif", wordBreak: "break-all" }}>
             <AdminSidebar
@@ -195,11 +225,20 @@ export default function AdminConsole() {
                 }}
                 onDeleteQuestion={handleDeleteQuestion}
                 onThemeEdit={handleEditTheme}
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                styles={{ ...styles, sidebar: dynamicSidebarStyle }}
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto", minHeight: "100vh" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
-                    <div style={{ fontSize: "14px", color: "#666", display: "flex", alignItems: "center", gap: "8px" }}>
+                    {/* 💡 ここに開くボタンを配置 */}
+                    {!isSidebarOpen && (
+                        <button onClick={() => setIsSidebarOpen(true)} style={{ cursor: "pointer" }}>
+                            ☰
+                        </button>
+                    )}
+                    <div style={{ fontSize: "14px", color: "#666", display: "flex", alignItems: "left", gap: "8px" }}>
                         選択中：
                         <strong>{currentTheme?.title || "テーマを選択してください"}</strong>
                     </div>

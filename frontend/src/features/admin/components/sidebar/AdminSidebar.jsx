@@ -9,6 +9,7 @@ export default function AdminSidebar(props) {
     const [searchQuery, setSearchQuery] = useState("");
 
     // AdminSidebar.jsx 内
+    const sidebarStyle = props.styles?.sidebar || {};
 
     const filteredThemes = (props.themes || []).map((theme) => {
         // 1. まず、そのテーマ内の質問を検索ワードで絞り込む
@@ -36,9 +37,21 @@ export default function AdminSidebar(props) {
     });
 
     return (
-        <div className={styles.sidebarContainer}>
+        <div className={styles.sidebarContainer} style={sidebarStyle}>
             <div className={styles.scrollArea}>
-                <LogoutSection onLogout={props.onLogout} />
+                {/* ログアウトと閉じるボタンを横並びにするラッパー */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px" }}>
+                    <div style={{ flex: 1 }}>
+                        <LogoutSection onLogout={props.onLogout} />
+                    </div>
+                    <button
+                        onClick={() => props.setIsSidebarOpen(false)}
+                        style={{ cursor: "pointer", padding: "4px 8px" }}
+                        title="サイドバーをたたむ"
+                    >
+                        ☰
+                    </button>
+                </div>
                 <SearchBox value={searchQuery} onChange={setSearchQuery} />
                 <ThemeCreateSection onAddTheme={props.onAddTheme} />
                 <ThemeList {...props} themes={filteredThemes} onSelect={props.onSelectQuestion}
