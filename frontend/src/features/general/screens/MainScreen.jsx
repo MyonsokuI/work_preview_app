@@ -33,7 +33,7 @@ export default function MainScreen() {
   const [otherAnswers, setOtherAnswers] = useState([]);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // 💡 【追加】サイドバーの開閉状態（元から存在していた想定で安全に配置）
+  // サイドバーの開閉状態
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // =========================
@@ -96,7 +96,7 @@ export default function MainScreen() {
       }
     };
     loadOtherAnswers();
-  }, [activeQuestion, userId]);
+  }, [userId, activeQuestion]);
 
   useEffect(() => {
     if (!activeQuestion) return;
@@ -177,7 +177,7 @@ export default function MainScreen() {
 
   if (!userId) return <div>loading...</div>;
 
-  // 💡 開閉状態に合わせて動的にオーバーライドするスタイル
+  // 開閉状態に合わせて動的にオーバーライドするスタイル
   const dynamicWrapperStyle = {
     ...styles.wrapper,
     position: "relative", // ☰ ボタンを浮かせる基準にする
@@ -185,17 +185,19 @@ export default function MainScreen() {
 
   const dynamicSidebarStyle = {
     ...styles.sidebar,
-    width: isSidebarOpen ? 340 : 0,         // 💻 幅の動的制御
-    padding: isSidebarOpen ? 10 : "10px 0px", // 💻 閉じている時に余白を消す
-    overflow: "hidden",                       // 💻 鉄則：中身を隠す
-    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out", // スムーズな開閉
+    width: isSidebarOpen ? 340 : 0,         
+    padding: isSidebarOpen ? 10 : "10px 0px", 
+    // 💡 【修正】縦スクロール（Y軸）を有効化し、横（X軸）の溢れだけを綺麗に隠す
+    overflowY: isSidebarOpen ? "auto" : "hidden", 
+    overflowX: "hidden",                       
+    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out", 
     borderRight: isSidebarOpen ? styles.sidebar.borderRight : "none",
   };
 
   return (
     <div style={dynamicWrapperStyle}>
       
-      {/* 💡 サイドバーが閉じているときだけ、画面左上に現れる「開く」三本線ボタン */}
+      {/* サイドバーが閉じているときだけ、画面左上に現れる「開く」三本線ボタン */}
       {!isSidebarOpen && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
@@ -232,15 +234,15 @@ export default function MainScreen() {
         handleSelectQuestion={handleSelectQuestion}
         getProgress={getProgress}
         getProgressColor={getProgressColor}
-        isSidebarOpen={isSidebarOpen}    // 💡 念のため引き渡す（内部の閉じるボタン用）
+        isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         styles={{
           ...styles,
-          sidebar: dynamicSidebarStyle // 💡 動的なスタイルで上書き
+          sidebar: dynamicSidebarStyle // 動的なスタイルで上書き
         }}
       />
 
-      {/* 👉 右側：MainContent（レイアウト崩壊を防ぐため、ラップせずにそのまま渡す） */}
+      {/* 👉 右側：MainContent */}
       <MainContent
         activeQuestion={activeQuestion}
         textareaRef={textareaRef}
@@ -261,7 +263,7 @@ export default function MainScreen() {
           ...styles,
           main: {
             ...styles.main,
-            // 💡 ボタンと文字が被らないように、閉じている時だけ左余白を広げる
+            // ボタンと文字が被らないように、閉じている時だけ左余白を広げる
             paddingLeft: isSidebarOpen ? 20 : 60,
             transition: "padding-left 0.25s ease-in-out",
           }
