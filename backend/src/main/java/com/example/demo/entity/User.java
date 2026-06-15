@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import com.example.demo.entity.enums.Role;
+import com.example.demo.entity.enums.UserStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,10 +35,12 @@ public class User {
     private String password;
 
     @Column(length = 20)
-    private String status; // active / inactive / admin など
+    @Enumerated(EnumType.STRING)
+    private UserStatus status; // ACTIVE, INACTIVE, SUSPENDED
 
     @Column(length = 20)
-    private String roles;
+    @Enumerated(EnumType.STRING)
+    private Role roles;
 
     @CreatedDate
     @Column(name = "created_at") // ★追加：ER図の新しい列にゃ

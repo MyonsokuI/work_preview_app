@@ -1,5 +1,8 @@
 package com.example.demo.dto.user;
 
+import com.example.demo.entity.enums.UserStatus;
+import com.example.demo.entity.enums.Role;
+
 import lombok.Data;
 
 @Data
@@ -7,5 +10,6 @@ public class UserResponse {
     private Integer userId;
     private Integer employeeId;
     private String name;
-    private String status;
+    private UserStatus status;
+    private Role role;
 }

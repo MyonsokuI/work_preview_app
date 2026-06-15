@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.question.QuestionRequest;
 import com.example.demo.dto.question.QuestionResponse;
 import com.example.demo.entity.Question;
+import com.example.demo.entity.enums.ContentsStatus;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.QuestionRepository;
 import com.example.demo.util.StatusCalculator;
@@ -37,10 +38,12 @@ public class QuestionService {
         boolean needsUpdate = false;
 
         for (Question q : questions) {
-            String correctStatus = StatusCalculator.calculateStatus(q.getStatus(), q.getOpenAt(), q.getCloseAt());
-            if (!correctStatus.equals(q.getStatus())) {
+            ContentsStatus correctStatus = StatusCalculator.calculateStatus(
+                    q.getStatus(),
+                    q.getOpenAt(),
+                    q.getCloseAt());
+            if (correctStatus != q.getStatus()) {
                 q.setStatus(correctStatus);
-                needsUpdate = true;
             }
         }
 
@@ -75,13 +78,13 @@ public class QuestionService {
 
         // 💡 登録時のステータス決定ロジック（Themeと同じにゃ！）
         if ("draft".equalsIgnoreCase(request.getStatus())) {
-            q.setStatus("draft");
+            q.setStatus(ContentsStatus.DRAFT);
         } else {
             LocalDateTime now = LocalDateTime.now();
             if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
-                q.setStatus("scheduled");
+                q.setStatus(ContentsStatus.SCHEDULED);
             } else {
-                q.setStatus("published");
+                q.setStatus(ContentsStatus.SCHEDULED);
             }
         }
 
@@ -104,15 +107,15 @@ public class QuestionService {
 
         // 💡 更新時のステータス決定ロジック
         if ("draft".equalsIgnoreCase(request.getStatus())) {
-            existing.setStatus("draft");
+            existing.setStatus(ContentsStatus.DRAFT);
         } else {
             LocalDateTime now = LocalDateTime.now();
             if (request.getCloseAt() != null && request.getCloseAt().isBefore(now)) {
-                existing.setStatus("closed");
+                existing.setStatus(ContentsStatus.CLOSED);
             } else if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
-                existing.setStatus("scheduled");
+                existing.setStatus(ContentsStatus.SCHEDULED);
             } else {
-                existing.setStatus("published");
+                existing.setStatus(ContentsStatus.PUBLISHED);
             }
         }
 

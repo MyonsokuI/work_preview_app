@@ -1,13 +1,13 @@
 -- =====================================
--- DB Initialization Script (ENUMなし版)
+-- DB Initialization Script (大文字版)
 -- PostgreSQL
 -- =====================================
 
-DROP TABLE IF EXISTS answers;
-DROP TABLE IF EXISTS pdf;
-DROP TABLE IF EXISTS pdfs;
-DROP TABLE IF EXISTS questions;
 DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS answers;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS pdfs;
+DROP TABLE IF EXISTS pdf;
 DROP TABLE IF EXISTS users;
 
 -- =====================================
@@ -18,12 +18,15 @@ CREATE TABLE users (
     employee_id INTEGER UNIQUE,
     name VARCHAR(100),
     password VARCHAR(255),
-    status VARCHAR(20),   -- active / inactive / suspended
-    roles VARCHAR(20),    -- admin / user
+    status VARCHAR(20),   -- ACTIVE / INACTIVE / SUSPENDED
+    roles VARCHAR(20),    -- ADMIN / USER
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 
+-- =====================================
+-- 2. pdfs
+-- =====================================
 CREATE TABLE pdfs (
     pdf_id SERIAL PRIMARY KEY,
     title VARCHAR(255),
@@ -32,9 +35,9 @@ CREATE TABLE pdfs (
     open_at TIMESTAMP,
     close_at TIMESTAMP,
 
-    -- ENUM → VARCHARに変更
-    status VARCHAR(20) DEFAULT 'draft', 
-    -- draft / scheduled / published / closed
+    -- デフォルト値を大文字に変更
+    status VARCHAR(20) DEFAULT 'DRAFT', 
+    -- DRAFT / SCHEDULED / PUBLISHED / CLOSED
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
@@ -52,7 +55,7 @@ CREATE TABLE questions (
     correct_answer TEXT,
     open_at TIMESTAMP,
     close_at TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'draft',
+    status VARCHAR(20) DEFAULT 'DRAFT', -- 大文字に変更
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
@@ -111,53 +114,65 @@ CREATE TABLE reviews (
 
 CREATE INDEX idx_reviews_answer_id ON reviews(answer_id);
 
+-- =========================
+-- users (データを大文字に修正)
+-- =========================
 INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
-(1, 10000001, 'admin', 'password', 'active', 'admin'),
-(2, 10000002, 'user1', 'hashed_user', 'active', 'user'),
-(3, 10000003, 'user2', 'pass123', 'active', 'user'),
-(4, 10000004, 'user3', 'pass123', 'active', 'user'),
-(5, 10000005, 'user4', 'pass123', 'active', 'user'),
-(6, 10000006, 'user5', 'pass123', 'active', 'user'),
-(7, 10000007, 'user6', 'pass123', 'active', 'user'),
-(8, 10000008, 'user7', 'pass123', 'active', 'user'),
-(9, 10000009, 'user8', 'pass123', 'inactive', 'user'),
-(10, 10000010, 'user9', 'pass123', 'active', 'user');
+(1, 10000001, 'admin', 'password', 'ACTIVE', 'ADMIN'),
+(2, 10000002, 'user1', 'hashed_user', 'ACTIVE', 'USER'),
+(3, 10000003, 'user2', 'pass123', 'ACTIVE', 'USER'),
+(4, 10000004, 'user3', 'pass123', 'ACTIVE', 'USER'),
+(5, 10000005, 'user4', 'pass123', 'ACTIVE', 'USER'),
+(6, 10000006, 'user5', 'pass123', 'ACTIVE', 'USER'),
+(7, 10000007, 'user6', 'pass123', 'ACTIVE', 'USER'),
+(8, 10000008, 'user7', 'pass123', 'ACTIVE', 'USER'),
+(9, 10000009, 'user8', 'pass123', 'INACTIVE', 'USER'),
+(10, 10000010, 'user9', 'pass123', 'ACTIVE', 'USER');
 
 SELECT setval('users_user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 1));
 
+-- =========================
+-- pdfs (データを大文字に修正)
+-- =========================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
-(1, 'Java基礎', '/files/java_basic.pdf', 1, 'published'),
-(2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'published'),
-(3, 'データベース設計', '/files/db_design.pdf', 1, 'published'),
-(4, 'Spring Boot基礎', '/files/springboot_basic.pdf', 1, 'published'),
-(5, 'React基礎', '/files/react_basic.pdf', 1, 'published');
+(1, 'Java基礎', '/files/java_basic.pdf', 1, 'PUBLISHED'),
+(2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'PUBLISHED'),
+(3, 'データベース設計', '/files/db_design.pdf', 1, 'PUBLISHED'),
+(4, 'Spring Boot基礎', '/files/springboot_basic.pdf', 1, 'PUBLISHED'),
+(5, 'React基礎', '/files/react_basic.pdf', 1, 'PUBLISHED');
 
 SELECT setval('pdfs_pdf_id_seq', COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1));
 
+-- =========================
+-- questions (データを大文字に修正)
+-- =========================
 INSERT INTO questions (pdf_id, question_text, correct_answer, status, open_at, close_at) VALUES
-(1, 'Javaとは何か？', 'プログラミング言語', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'クラスとは何か？', 'オブジェクトの設計図', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, '継承とは何か？', '既存クラスを引き継ぐ仕組み', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'ポリモーフィズムとは何か？', '同じ操作で異なる振る舞い', 'published', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'Javaとは何か？', 'プログラミング言語', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'クラスとは何か？', 'オブジェクトの設計図', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, '継承とは何か？', '既存クラスを引き継ぐ仕組み', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'ポリモーフィズムとは何か？', '同じ操作で異なる振る舞い', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
 
-(2, 'SELECT文の役割は？', 'データ取得', 'published', NULL, NULL),
-(2, 'WHERE句の役割は？', '条件指定', 'published', NULL, NULL),
-(2, 'ORDER BY句の役割は？', '並び替え', 'published', NULL, NULL),
+(2, 'SELECT文の役割は？', 'データ取得', 'PUBLISHED', NULL, NULL),
+(2, 'WHERE句の役割は？', '条件指定', 'PUBLISHED', NULL, NULL),
+(2, 'ORDER BY句の役割は？', '並び替え', 'PUBLISHED', NULL, NULL),
 
-(3, '主キーとは？', '行を一意に識別するキー', 'published', NULL, NULL),
-(3, '外部キーとは？', '他テーブルを参照するキー', 'published', NULL, NULL),
-(3, '正規化とは？', 'データ重複を減らすこと', 'published', NULL, NULL),
+(3, '主キーとは？', '行を一意に識別するキー', 'PUBLISHED', NULL, NULL),
+(3, '外部キーとは？', '他テーブルを参照するキー', 'PUBLISHED', NULL, NULL),
+(3, '正規化とは？', 'データ重複を減らすこと', 'PUBLISHED', NULL, NULL),
 
-(4, 'Controllerの役割は？', 'リクエスト処理', 'published', NULL, NULL),
-(4, 'Serviceの役割は？', '業務ロジック', 'published', NULL, NULL),
-(4, 'Repositoryの役割は？', 'DBアクセス', 'published', NULL, NULL),
+(4, 'Controllerの役割は？', 'リクエスト処理', 'PUBLISHED', NULL, NULL),
+(4, 'Serviceの役割は？', '業務ロジック', 'PUBLISHED', NULL, NULL),
+(4, 'Repositoryの役割は？', 'DBアクセス', 'PUBLISHED', NULL, NULL),
 
-(5, 'Componentとは？', 'UI部品', 'published', NULL, NULL),
-(5, 'Stateとは？', '状態管理', 'published', NULL, NULL),
-(5, 'Propsとは？', '親から渡される値', 'published', NULL, NULL);
+(5, 'Componentとは？', 'UI部品', 'PUBLISHED', NULL, NULL),
+(5, 'Stateとは？', '状態管理', 'PUBLISHED', NULL, NULL),
+(5, 'Propsとは？', '親から渡される値', 'PUBLISHED', NULL, NULL);
 
 SELECT setval('questions_question_id_seq', COALESCE((SELECT MAX(question_id) FROM questions), 1));
 
+-- =========================
+-- answers
+-- =========================
 INSERT INTO answers (user_id, question_id, answer_content, submitted_at)
 SELECT
     ((q.question_id + s.n) % 8) + 2,
