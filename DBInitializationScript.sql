@@ -48,9 +48,6 @@ CREATE TABLE pdfs (
         ON DELETE SET NULL
 );
 
--- =====================================
--- 3. questions
--- =====================================
 CREATE TABLE questions (
     question_id SERIAL PRIMARY KEY,
     pdf_id INTEGER,
@@ -71,9 +68,6 @@ CREATE TABLE questions (
 
 CREATE INDEX idx_questions_pdf_id ON questions(pdf_id);
 
--- =====================================
--- 4. answers
--- =====================================
 CREATE TABLE answers (
     answer_id SERIAL PRIMARY KEY,
     user_id INTEGER,
@@ -100,9 +94,6 @@ CREATE UNIQUE INDEX idx_answers_user_question
 CREATE INDEX idx_answers_submitted_at
     ON answers(submitted_at);
 
--- =====================================
--- 5. reviews
--- =====================================
 CREATE TABLE reviews (
     review_id SERIAL PRIMARY KEY,
     answer_id INTEGER,
@@ -195,9 +186,6 @@ CROSS JOIN (
 
 SELECT setval('answers_answer_id_seq', COALESCE((SELECT MAX(answer_id) FROM answers), 1));
 
--- =========================
--- reviews
--- =========================
 INSERT INTO reviews (answer_id, reviewer_id, comment)
 SELECT
     answer_id,
