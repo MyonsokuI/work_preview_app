@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authApi } from "../api/registerApi"; // 💡 共通のauthApiをインポートにゃ！
+import { authApi } from "../api/registerApi";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -10,113 +10,130 @@ export default function Register() {
         password: "",
         confirmPassword: "",
     });
-
     const [message, setMessage] = useState("");
 
-    // 入力変更
     const handleChange = (e) => {
-        setForm({
-            ...form,
-            [e.target.name]: e.target.value,
-        });
+        setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    // 登録処理
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage("");
 
-        // パスワード一致チェック
         if (form.password !== form.confirmPassword) {
             setMessage("パスワードが一致しません");
             return;
         }
 
         try {
-            // 💡 生のfetchを廃止し、共通API関数（registerUser）を呼び出すように変更したにゃ！
-            const data = await authApi.registerUser(form.employeeId, form.name, form.password);
-            console.log("登録成功:", data);
-
-            // 👉 ログイン画面へ戻る
+            await authApi.registerUser(form.employeeId, form.name, form.password);
             navigate("/login");
-
-            // フォームのクリア
-            setForm({
-                employeeId: "",
-                name: "",
-                password: "",
-                confirmPassword: "",
-            });
         } catch (err) {
             console.error(err);
-            setMessage(err.message || "エラーが発生しましたにゃ");
+            setMessage(err.message || "登録に失敗しましたにゃ");
         }
     };
 
+    // 入力項目の定義（UIを一括管理）
+    const formFields = [
+        { label: "社員ID", name: "employeeId", type: "number" },
+        { label: "名前", name: "name", type: "text" },
+        { label: "パスワード", name: "password", type: "password" },
+        { label: "パスワード（確認）", name: "confirmPassword", type: "password" },
+    ];
+
     return (
-        <div style={{ maxWidth: "400px", margin: "0 auto" }}>
-            <h2>ユーザー登録</h2>
+        <div style={styles.container}>
+            <div style={styles.card}>
+                <h2 style={styles.title}>ユーザー登録</h2>
+                <form onSubmit={handleSubmit} style={styles.form}>
+                    {formFields.map((field) => (
+                        <div key={field.name} style={styles.fieldWrapper}>
+                            <label style={styles.label}>{field.label}</label>
+                            <input
+                                style={styles.input}
+                                type={field.type}
+                                name={field.name}
+                                value={form[field.name]}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    ))}
+                    <button type="submit" style={styles.button}>
+                        登録する
+                    </button>
+                </form>
 
-            <form onSubmit={handleSubmit}>
-                {/* 社員ID */}
-                <div>
-                    <label>社員ID</label>
-                    <input
-                        type="number"
-                        name="employeeId"
-                        value={form.employeeId}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                {/* 名前 */}
-                <div>
-                    <label>名前</label>
-                    <input
-                        type="text"
-                        name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                {/* パスワード */}
-                <div>
-                    <label>パスワード</label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                {/* パスワード確認 */}
-                <div>
-                    <label>パスワード（確認）</label>
-                    <input
-                        type="password"
-                        name="confirmPassword"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                <button type="submit" style={{ marginTop: "10px" }}>
-                    登録
-                </button>
-            </form>
-
-            {/* メッセージ */}
-            {message && (
-                <p style={{ marginTop: "10px", color: "red" }}>
-                    {message}
-                </p>
-            )}
+                {message && <p style={styles.message}>{message}</p>}
+            </div>
         </div>
     );
 }
+
+// モダンなUIのためのスタイル定義
+const styles = {
+    container: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundColor: "#f1f5f9",
+        padding: "20px",
+    },
+    card: {
+        width: "100%",
+        maxWidth: "400px",
+        backgroundColor: "#fff",
+        padding: "32px",
+        borderRadius: "16px",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+    },
+    title: {
+        textAlign: "center",
+        color: "#1e293b",
+        marginBottom: "24px",
+        fontSize: "24px",
+    },
+    form: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+    },
+    fieldWrapper: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+    },
+    label: {
+        fontSize: "14px",
+        fontWeight: "600",
+        color: "#64748b",
+    },
+    input: {
+        padding: "12px",
+        borderRadius: "8px",
+        border: "1px solid #e2e8f0",
+        fontSize: "16px",
+        outline: "none",
+    },
+    button: {
+        marginTop: "8px",
+        padding: "14px",
+        backgroundColor: "#2563eb",
+        color: "#fff",
+        border: "none",
+        borderRadius: "8px",
+        fontSize: "16px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        transition: "background 0.2s",
+    },
+    message: {
+        marginTop: "16px",
+        color: "#ef4444",
+        textAlign: "center",
+        fontSize: "14px",
+        fontWeight: "500",
+    },
+};
