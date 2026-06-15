@@ -8,9 +8,14 @@ import ThemeList from "./ThemeList";
 export default function AdminSidebar(props) {
     const [searchQuery, setSearchQuery] = useState("");
 
-    // AdminSidebar.jsx 内
-    const sidebarStyle = props.styles?.sidebar || {};
-
+    // サイドバー全体のスタイル
+    const sidebarStyle = {
+        ...props.styles?.sidebar,
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden", // コンテナからはみ出さないようにする
+    };
     const filteredThemes = (props.themes || []).map((theme) => {
         // 1. まず、そのテーマ内の質問を検索ワードで絞り込む
         const filteredQuestions = (theme.questions || []).filter((q) => {
@@ -38,26 +43,33 @@ export default function AdminSidebar(props) {
 
     return (
         <div className={styles.sidebarContainer} style={sidebarStyle}>
-            <div className={styles.scrollArea}>
-                {/* ログアウトと閉じるボタンを横並びにするラッパー */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px" }}>
+            {/* ヘッダー領域：ここを固定する */}
+            <div style={{ flexShrink: 0, padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <div style={{ flex: 1 }}>
                         <LogoutSection onLogout={props.onLogout} />
                     </div>
                     <button
                         onClick={() => props.setIsSidebarOpen(false)}
-                        style={{ cursor: "pointer", padding: "4px 8px" }}
-                        title="サイドバーをたたむ"
+                        style={{ cursor: "pointer", background: "none", border: "1px solid #ddd", borderRadius: "4px" }}
                     >
                         ☰
                     </button>
                 </div>
                 <SearchBox value={searchQuery} onChange={setSearchQuery} />
                 <ThemeCreateSection onAddTheme={props.onAddTheme} />
-                <ThemeList {...props} themes={filteredThemes} onSelect={props.onSelectQuestion}
+            </div>
+
+            {/* スクロール可能領域：ここだけがスクロールする */}
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+                <ThemeList
+                    {...props}
+                    themes={filteredThemes}
+                    onSelect={props.onSelectQuestion}
                     onAddQuestion={props.onAddQuestion}
                     onDeleteQuestion={props.onDeleteQuestion}
-                    onThemeEdit={props.onThemeEdit} />
+                    onThemeEdit={props.onThemeEdit}
+                />
             </div>
         </div>
     );
