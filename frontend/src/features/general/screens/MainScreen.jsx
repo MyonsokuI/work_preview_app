@@ -33,6 +33,9 @@ export default function MainScreen() {
   const [otherAnswers, setOtherAnswers] = useState([]);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
+  // 💡 【追加】サイドバーの開閉状態（元から存在していた想定で安全に配置）
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // =========================
   // Effects & Logic
   // =========================
@@ -174,8 +177,48 @@ export default function MainScreen() {
 
   if (!userId) return <div>loading...</div>;
 
+  // 💡 開閉状態に合わせて動的にオーバーライドするスタイル
+  const dynamicWrapperStyle = {
+    ...styles.wrapper,
+    position: "relative", // ☰ ボタンを浮かせる基準にする
+  };
+
+  const dynamicSidebarStyle = {
+    ...styles.sidebar,
+    width: isSidebarOpen ? 340 : 0,         // 💻 幅の動的制御
+    padding: isSidebarOpen ? 10 : "10px 0px", // 💻 閉じている時に余白を消す
+    overflow: "hidden",                       // 💻 鉄則：中身を隠す
+    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out", // スムーズな開閉
+    borderRight: isSidebarOpen ? styles.sidebar.borderRight : "none",
+  };
+
   return (
-    <div style={styles.wrapper}>
+    <div style={dynamicWrapperStyle}>
+      
+      {/* 💡 サイドバーが閉じているときだけ、画面左上に現れる「開く」三本線ボタン */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          style={{
+            position: "absolute",
+            left: "16px",
+            top: "16px",
+            zIndex: 50,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "20px",
+            padding: "4px 10px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+          }}
+          title="サイドバーを開く"
+        >
+          ☰
+        </button>
+      )}
+
+      {/* 👈 左側：Sidebar（条件レンダリングせず、スタイルのみ介入） */}
       <Sidebar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -189,9 +232,15 @@ export default function MainScreen() {
         handleSelectQuestion={handleSelectQuestion}
         getProgress={getProgress}
         getProgressColor={getProgressColor}
-        styles={styles}
+        isSidebarOpen={isSidebarOpen}    // 💡 念のため引き渡す（内部の閉じるボタン用）
+        setIsSidebarOpen={setIsSidebarOpen}
+        styles={{
+          ...styles,
+          sidebar: dynamicSidebarStyle // 💡 動的なスタイルで上書き
+        }}
       />
 
+      {/* 👉 右側：MainContent（レイアウト崩壊を防ぐため、ラップせずにそのまま渡す） */}
       <MainContent
         activeQuestion={activeQuestion}
         textareaRef={textareaRef}
@@ -208,14 +257,21 @@ export default function MainScreen() {
         otherAnswers={otherAnswers}
         answerMap={answerMap}
         getQid={getQid}
-        styles={styles}
-
+        styles={{
+          ...styles,
+          main: {
+            ...styles.main,
+            // 💡 ボタンと文字が被らないように、閉じている時だけ左余白を広げる
+            paddingLeft: isSidebarOpen ? 20 : 60,
+            transition: "padding-left 0.25s ease-in-out",
+          }
+        }}
       />
     </div>
   );
 }
 
-/* styles - 全く同じスタイルを維持 */
+/* styles - 元のコードと100%全く同じものを完全維持 */
 const styles = {
   wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
   sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10 },

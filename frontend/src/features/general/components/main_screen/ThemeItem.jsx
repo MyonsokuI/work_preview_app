@@ -22,9 +22,19 @@ export default function ThemeItem(props) {
   // theme.questions が undefined や null の場合に備えて安全に配列化する
   const questions = theme.questions ?? [];
 
+  // 💡 既存のレイアウトと絶対に干渉しない、プレーンなインライン省略スタイル
+  const textEllipsisStyle = {
+    display: "inline-block",
+    verticalAlign: "middle",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "140px", // 💡 サイドバー（最大340px）の中で進捗バーが消えない絶妙な幅に制限
+  };
+
   return (
     <div>
-      {/* アコーディオンヘッダー */}
+      {/* アコーディオンヘッダー：【元通り】styleは一切弄りません */}
       <div
         onClick={() =>
           setOpenThemes((prev) => {
@@ -35,7 +45,11 @@ export default function ThemeItem(props) {
         }
         style={styles.theme || {}}
       >
-        {isOpen ? "▼" : "▶"} {theme.title ?? "無題のテーマ"}
+        {isOpen ? "▼" : "▶"}{" "}
+        {/* 💡 テキスト部分だけを安全にspanで囲んで省略 */}
+        <span style={textEllipsisStyle} title={theme.title}>
+          {theme.title ?? "無題のテーマ"}
+        </span>
 
         <div style={styles.progressText || {}} >
           {done}/{total}
@@ -52,7 +66,7 @@ export default function ThemeItem(props) {
         </div>
       </div>
 
-      {/* 開閉する質問リスト（?.map にし、さらに空配列を保証しているので絶対に落ちない） */}
+      {/* 開閉する質問リスト：【元通り】styleは一切弄りません */}
       {isOpen &&
         questions.map((q) => {
           if (!q) return null;
@@ -65,7 +79,11 @@ export default function ThemeItem(props) {
               onClick={() => handleSelectQuestion(q)}
               style={styles.question || {}}
             >
-              📝 {q.questionText ?? "無題の質問"}
+              📝{" "}
+              {/* 💡 問題文もテキスト部分だけを安全に省略。問題文は長めなので幅を少し広めに確保 */}
+              <span style={{ ...textEllipsisStyle, maxWidth: "220px" }} title={q.questionText}>
+                {q.questionText ?? "無題の質問"}
+              </span>
               {done && <span style={{ color: "#22c55e", marginLeft: 4 }}>✔</span>}
             </div>
           );

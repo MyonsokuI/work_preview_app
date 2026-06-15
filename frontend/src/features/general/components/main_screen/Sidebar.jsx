@@ -8,13 +8,12 @@ const FILTERS = [
 ];
 
 export default function Sidebar(props) {
-  // すべてのPropsを安全にフォールバック付きで展開
   const searchQuery = props?.searchQuery ?? "";
   const setSearchQuery = props?.setSearchQuery ?? (() => {});
   const setUserId = props?.setUserId ?? (() => {});
   const statusFilter = props?.statusFilter ?? "all";
   const setStatusFilter = props?.setStatusFilter ?? (() => {});
-  const filteredThemes = props?.filteredThemes ?? []; // 👈 ここで絶対に配列にする
+  const filteredThemes = props?.filteredThemes ?? [];
   const openThemes = props?.openThemes ?? new Set();
   const setOpenThemes = props?.setOpenThemes ?? (() => {});
   const answerMap = props?.answerMap ?? {};
@@ -23,10 +22,44 @@ export default function Sidebar(props) {
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
   const styles = props?.styles ?? {};
 
+  // サイドバー開閉の状態
+  const isSidebarOpen = props?.isSidebarOpen ?? true;
+  const setIsSidebarOpen = props?.setIsSidebarOpen ?? (() => {});
+
+  // 鉄則の幅制御スタイル（絶対崩さない）
+  const dynamicSidebarStyle = {
+    ...(styles.sidebar || {}),
+    width: isSidebarOpen ? "340px" : "0px",
+    overflow: "hidden",
+    transition: "width 0.25s ease-in-out", // 少しキビキビ動くように調整
+    flexShrink: 0,
+    position: "relative", // 内部の三本線ボタンの基準点にする
+  };
+
   return (
-    <div style={styles.sidebar || {}}>
-      {/* 検索 & ログアウト */}
-      <div style={styles.topBar || {}}>
+    <div style={dynamicSidebarStyle}>
+      {/* 💡 【変更】サイドバー内部の右上につける「閉じる」三本線ボタン */}
+      <button 
+        onClick={() => setIsSidebarOpen(false)}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          zIndex: 5,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "20px",
+          color: "#6b7280", // 馴染むグレー
+          padding: "4px 8px",
+        }}
+        title="サイドバーを閉じる"
+      >
+        ☰
+      </button>
+
+      {/* 検索 & ログアウト（※三本線と被らないように、元のtopBarのスタイルに少し右マージンがあると綺麗です） */}
+      <div style={{ ...(styles.topBar || {}), paddingRight: "40px" }}>
         <input
           style={styles.search || {}}
           value={searchQuery}
@@ -61,7 +94,7 @@ export default function Sidebar(props) {
         ))}
       </div>
 
-      {/* テーマリスト（必ず配列なので絶対にmapで落ちない） */}
+      {/* テーマリスト */}
       {filteredThemes.map((theme) => (
         <ThemeItem
           key={theme.pdfId}
