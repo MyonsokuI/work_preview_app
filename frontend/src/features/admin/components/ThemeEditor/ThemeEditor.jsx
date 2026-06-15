@@ -6,6 +6,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     const [openAt, setOpenAt] = useState("");
     const [closeAt, setCloseAt] = useState("");
     const [status, setStatus] = useState("draft");
+    const [fileUrl, setFileUrl] = useState("");
 
     // モード判定: currentTheme があれば編集、なければ新規作成
     const isNewMode = !!(currentTheme && currentTheme.isNew);
@@ -13,11 +14,13 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     useEffect(() => {
         if (currentTheme && !currentTheme.isNew) {
             setTitle(currentTheme.title || "");
+            setFileUrl(currentTheme.fileUrl || "");
             setStatus(currentTheme.status || "draft");
             setOpenAt(currentTheme.openAt ? currentTheme.openAt.substring(0, 16) : "");
             setCloseAt(currentTheme.closeAt ? currentTheme.closeAt.substring(0, 16) : "");
         } else {
             setTitle("");
+            setFileUrl("");
             setOpenAt("");
             setCloseAt("");
             setStatus("draft");
@@ -34,6 +37,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
         try {
             const themeParams = {
                 title: title.trim(),
+                fileUrl,
                 status,
                 openAt: openAt ? openAt + ":00" : null,
                 closeAt: closeAt ? closeAt + ":00" : null
@@ -78,6 +82,17 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                 </div>
 
                 <div>
+                    <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>PDF URL</label>
+                    <input
+                        type="url" // URL形式で入力させる
+                        placeholder="https://example.com/file.pdf"
+                        style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #cbd5e1" }}
+                        value={fileUrl}
+                        onChange={(e) => setFileUrl(e.target.value)}
+                    />
+                </div>
+
+                <div>
                     <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>公開ステータス</label>
                     <select
                         style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #cbd5e1" }}
@@ -99,6 +114,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                             onChange={(e) => setOpenAt(e.target.value)}
                         />
                     </div>
+
                     <div>
                         <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>終了日時</label>
                         <input
