@@ -13,7 +13,7 @@ export default function Sidebar(props) {
   const setUserId = props?.setUserId ?? (() => {});
   const statusFilter = props?.statusFilter ?? "all";
   const setStatusFilter = props?.setStatusFilter ?? (() => {});
-  const filteredThemes = props?.filteredThemes ?? [];
+  const themes = props?.filteredThemes ?? []; // ← ここは「未フィルタ元 or フィルタ済み」どっちでもOK
   const openThemes = props?.openThemes ?? new Set();
   const setOpenThemes = props?.setOpenThemes ?? (() => {});
   const answerMap = props?.answerMap ?? {};
@@ -22,50 +22,49 @@ export default function Sidebar(props) {
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
   const styles = props?.styles ?? {};
 
-  // サイドバー開閉の状態
-  const isSidebarOpen = props?.isSidebarOpen ?? true;
-  const setIsSidebarOpen = props?.setIsSidebarOpen ?? (() => {});
+  // =========================
+  // ⭐ 検索（フォルダ名＋問題文）
+  // =========================
+  const query = searchQuery.trim().toLowerCase();
 
-  // 鉄則の幅制御スタイル（絶対崩さない）
-  const dynamicSidebarStyle = {
-    ...(styles.sidebar || {}),
-    width: isSidebarOpen ? "340px" : "0px",
-    overflow: "hidden",
-    transition: "width 0.25s ease-in-out", // 少しキビキビ動くように調整
-    flexShrink: 0,
-    position: "relative", // 内部の三本線ボタンの基準点にする
-  };
+  const filtered = (themes || []).filter((theme) => {
+    if (!query) return true;
+
+    // -------------------------
+    // フォルダ名（複数キー対応）
+    // -------------------------
+    const folderName =
+      (
+        theme.title ??
+        theme.themeTitle ??
+        theme.pdfTitle ??
+        theme.name ??
+        ""
+      ).toLowerCase();
+
+    const matchFolder = folderName.includes(query);
+
+    // -------------------------
+    // 問題文
+    // -------------------------
+    const matchQuestion = (theme.questions || []).some((q) =>
+      (q.questionText ?? "").toLowerCase().includes(query)
+    );
+
+    return matchFolder || matchQuestion;
+  });
 
   return (
-    <div style={dynamicSidebarStyle}>
-      {/* 💡 【変更】サイドバー内部の右上につける「閉じる」三本線ボタン */}
-      <button 
-        onClick={() => setIsSidebarOpen(false)}
-        style={{
-          position: "absolute",
-          top: "12px",
-          right: "12px",
-          zIndex: 5,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "20px",
-          color: "#6b7280", // 馴染むグレー
-          padding: "4px 8px",
-        }}
-        title="サイドバーを閉じる"
-      >
-        ☰
-      </button>
-
-      {/* 検索 & ログアウト（※三本線と被らないように、元のtopBarのスタイルに少し右マージンがあると綺麗です） */}
-      <div style={{ ...(styles.topBar || {}), paddingRight: "40px" }}>
+    <div style={styles.sidebar || {}}>
+      {/* 検索 */}
+      <div style={styles.topBar || {}}>
         <input
           style={styles.search || {}}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="検索"
+          placeholder="フォルダ名・問題文で検索"
         />
+
         <button
           onClick={() => {
             localStorage.clear();
@@ -77,7 +76,7 @@ export default function Sidebar(props) {
         </button>
       </div>
 
-      {/* フィルター行 */}
+      {/* フィルター */}
       <div style={styles.filterRow || {}}>
         {FILTERS.map((f) => (
           <button
@@ -94,8 +93,8 @@ export default function Sidebar(props) {
         ))}
       </div>
 
-      {/* テーマリスト */}
-      {filteredThemes.map((theme) => (
+      {/* リスト */}
+      {filtered.map((theme) => (
         <ThemeItem
           key={theme.pdfId}
           theme={theme}
