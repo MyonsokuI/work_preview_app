@@ -188,6 +188,9 @@ export default function MainScreen() {
     });
   if (!userId) return <div>loading...</div>;
 
+  const sortedThemes = [...filteredThemes].sort(
+    (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+  );
   // 開閉状態に合わせて動的にオーバーライドするスタイル
   const dynamicWrapperStyle = {
     ...styles.wrapper,
@@ -238,7 +241,7 @@ export default function MainScreen() {
         setUserId={setUserId}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        filteredThemes={filteredThemes}
+        filteredThemes={sortedThemes}
         openThemes={openThemes}
         setOpenThemes={setOpenThemes}
         answerMap={answerMap}
