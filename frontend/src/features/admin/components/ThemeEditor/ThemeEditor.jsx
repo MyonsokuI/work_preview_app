@@ -11,11 +11,15 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     // モード判定: currentTheme があれば編集、なければ新規作成
     const isNewMode = !!(currentTheme && currentTheme.isNew);
 
+    console.log(currentTheme.status)
     useEffect(() => {
         if (currentTheme && !currentTheme.isNew) {
             setTitle(currentTheme.title || "");
             setFileUrl(currentTheme.fileUrl || "");
-            setStatus(currentTheme.status || "draft");
+            setStatus(currentTheme.status
+                ? currentTheme.status.toLowerCase()
+                : "draft"
+            );
             setOpenAt(currentTheme.openAt ? currentTheme.openAt.substring(0, 16) : "");
             setCloseAt(currentTheme.closeAt ? currentTheme.closeAt.substring(0, 16) : "");
         } else {
@@ -57,6 +61,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
             alert("サーバーとの通信に失敗しました。");
         }
     };
+
 
     return (
         <div style={{

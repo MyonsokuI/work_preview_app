@@ -58,6 +58,8 @@ public class PdfController {
             response.setStatus(pdf.getStatus());
             response.setOpenAt(pdf.getOpenAt());
             response.setCloseAt(pdf.getCloseAt());
+            response.setUpdatedAt(pdf.getUpdatedAt());
+            response.setCreatedAt(pdf.getCreatedAt());
 
             // 🚀 現在のテーマID（Integer）に紐づく問題一覧をServiceから取得
             List<QuestionResponse> questionList = questionService.getQuestionsByTheme(pdf.getPdfId());

@@ -16,5 +16,7 @@ public class ThemeWithQuestionsResponse {
   private ContentsStatus status;
   private LocalDateTime openAt;
   private LocalDateTime closeAt;
+  private LocalDateTime updatedAt;
+  private LocalDateTime createdAt;
   private List<QuestionResponse> questions;
 }

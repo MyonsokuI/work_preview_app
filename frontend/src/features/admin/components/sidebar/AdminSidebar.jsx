@@ -41,6 +41,10 @@ export default function AdminSidebar(props) {
         return isThemeMatch || theme.questions.length > 0;
     });
 
+    const sortedThemes = [...filteredThemes].sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
     return (
         <div className={styles.sidebarContainer} style={sidebarStyle}>
             {/* ヘッダー領域：ここを固定する */}
@@ -64,7 +68,7 @@ export default function AdminSidebar(props) {
             <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
                 <ThemeList
                     {...props}
-                    themes={filteredThemes}
+                    themes={sortedThemes}
                     onSelect={props.onSelectQuestion}
                     onAddQuestion={props.onAddQuestion}
                     onDeleteQuestion={props.onDeleteQuestion}
