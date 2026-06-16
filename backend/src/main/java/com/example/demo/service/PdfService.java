@@ -3,9 +3,11 @@ package com.example.demo.service;
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.entity.Pdf;
+import com.example.demo.entity.User;
 import com.example.demo.entity.enums.ContentsStatus;
 import com.example.demo.exception.BusinessException;
 import com.example.demo.repository.PdfRepository;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.util.StatusCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +19,11 @@ import java.util.List;
 public class PdfService {
 
     private final PdfRepository pdfRepository;
+    private final UserRepository userRepository;
 
-    public PdfService(PdfRepository pdfRepository) {
+    public PdfService(PdfRepository pdfRepository, UserRepository userRepository) {
         this.pdfRepository = pdfRepository;
+        this.userRepository = userRepository;
     }
 
     // =========================================
@@ -76,19 +80,23 @@ public class PdfService {
     // 作成
     // =========================================
     @Transactional
-    public ThemeResponse createTheme(ThemeRequest request) {
-
+    public ThemeResponse createTheme(ThemeRequest request, Integer uploaderId) {
         Pdf pdf = new Pdf();
         pdf.setTitle(request.getTitle());
         pdf.setFilePath(request.getFileUrl());
         pdf.setOpenAt(request.getOpenAt());
         pdf.setCloseAt(request.getCloseAt());
 
-        pdf.setStatus(
-                StatusCalculator.calculateStatus(
-                        ContentsStatus.valueOf(request.getStatus().toUpperCase()),
-                        request.getOpenAt(),
-                        request.getCloseAt()));
+        // 💡 Userエンティティを取得してセット
+        User user = userRepository.findById(uploaderId)
+                .orElseThrow(() -> new BusinessException("アップロードユーザーが見つかりません"));
+        pdf.setUploader(user);
+
+        // 💡 引数を正確に渡す
+        pdf.setStatus(StatusCalculator.calculateStatus(
+                ContentsStatus.valueOf(request.getStatus().toUpperCase()),
+                request.getOpenAt(),
+                request.getCloseAt()));
 
         return toResponse(pdfRepository.save(pdf));
     }
@@ -97,8 +105,7 @@ public class PdfService {
     // 更新
     // =========================================
     @Transactional
-    public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
-
+    public ThemeResponse updateTheme(Integer id, ThemeRequest updated, Integer uploaderId) {
         Pdf pdf = pdfRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
 
@@ -107,11 +114,15 @@ public class PdfService {
         pdf.setOpenAt(updated.getOpenAt());
         pdf.setCloseAt(updated.getCloseAt());
 
-        pdf.setStatus(
-                StatusCalculator.calculateStatus(
-                        ContentsStatus.valueOf(updated.getStatus().toUpperCase()),
-                        updated.getOpenAt(),
-                        updated.getCloseAt()));
+        // 💡 更新時もUserエンティティを取得してセット
+        User user = userRepository.findById(uploaderId)
+                .orElseThrow(() -> new BusinessException("アップロードユーザーが見つかりません"));
+        pdf.setUploader(user);
+
+        pdf.setStatus(StatusCalculator.calculateStatus(
+                ContentsStatus.valueOf(updated.getStatus().toUpperCase()),
+                updated.getOpenAt(),
+                updated.getCloseAt()));
 
         return toResponse(pdfRepository.save(pdf));
     }
@@ -156,7 +167,6 @@ public class PdfService {
     // DTO変換
     // =========================================
     private ThemeResponse toResponse(Pdf pdf) {
-
         ThemeResponse res = new ThemeResponse();
         res.setPdfId(pdf.getPdfId());
         res.setTitle(pdf.getTitle());

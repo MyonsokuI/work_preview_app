@@ -8,6 +8,7 @@ import com.example.demo.service.PdfService;
 import com.example.demo.service.QuestionService;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -70,8 +71,12 @@ public class PdfController {
      * テーマ作成
      */
     @PostMapping
-    public ThemeResponse createTheme(@RequestBody ThemeRequest request) {
-        return pdfService.createTheme(request);
+    public ThemeResponse createTheme(
+            @RequestBody ThemeRequest request,
+            Principal principal) {
+        // Principalからログイン中のユーザーID(名前/メールアドレス)を取得
+        String userId = principal.getName();
+        return pdfService.createTheme(request, Integer.parseInt(userId));
     }
 
     /**
@@ -80,9 +85,10 @@ public class PdfController {
     @PutMapping("/{id}")
     public ThemeResponse updateTheme(
             @PathVariable Integer id,
-            @RequestBody ThemeRequest request) {
-
-        return pdfService.updateTheme(id, request);
+            @RequestBody ThemeRequest request,
+            Principal principal) {
+        String userId = principal.getName();
+        return pdfService.updateTheme(id, request, Integer.parseInt(userId));
     }
 
     /**
