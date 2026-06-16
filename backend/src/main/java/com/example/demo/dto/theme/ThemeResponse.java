@@ -16,4 +16,5 @@ public class ThemeResponse {
     private String fileUrl;
     private LocalDateTime updatedAt;
     private LocalDateTime createdAt;
+    private Integer uploader;
 }
