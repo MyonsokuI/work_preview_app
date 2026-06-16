@@ -174,6 +174,8 @@ public class PdfService {
         res.setStatus(pdf.getStatus());
         res.setOpenAt(pdf.getOpenAt());
         res.setCloseAt(pdf.getCloseAt());
+        res.setUpdatedAt(pdf.getUpdatedAt());
+        res.setCreatedAt(pdf.getCreatedAt());
 
         return res;
     }
