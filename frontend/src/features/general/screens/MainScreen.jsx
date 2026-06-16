@@ -155,26 +155,37 @@ export default function MainScreen() {
   const hideEmpty = searchQuery.trim().length > 0;
   const filteredThemes = themes
     .map((theme) => {
-      const questions = (theme.questions || [])
-        .filter((q) => {
-          const qid = q.questionId ?? q.question_id;
-          const has = !!answerMap[String(qid)];
-          if (statusFilter === "completed") return has;
-          if (statusFilter === "uncompleted") return !has;
-          return true;
-        })
-        .filter((q) =>
-          searchQuery
-            ? q.questionText.toLowerCase().includes(searchQuery.toLowerCase())
-            : true
-        );
-      return { ...theme, questions, _count: questions.length };
+      // 1. 質問を検索ワードで絞り込む
+      const filteredQuestions = (theme.questions || []).filter((q) => {
+        const qid = q.questionId ?? q.question_id;
+        const has = !!answerMap[String(qid)];
+
+        // ステータスフィルターの判定
+        if (statusFilter === "completed" && !has) return false;
+        if (statusFilter === "uncompleted" && has) return false;
+
+        // 検索ワードの判定
+        if (searchQuery) {
+          return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
+        }
+        return true;
+      });
+
+      // 2. テーマ自体を表示するかどうかの判定
+      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return {
+        ...theme,
+        // 💡 修正：テーマタイトルがマッチしていれば全問題を表示、そうでなければ絞り込んだ質問を表示
+        questions: isThemeMatch ? (theme.questions || []) : filteredQuestions,
+        _count: isThemeMatch ? (theme.questions || []).length : filteredQuestions.length
+      };
     })
     .filter((theme) => {
-      if (!hideEmpty) return true;
-      return (theme._count ?? 0) > 0;
+      // 最終的に、テーマ名にマッチするか、または質問が残っているテーマだけを残す
+      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return isThemeMatch || (theme._count ?? 0) > 0;
     });
-
   if (!userId) return <div>loading...</div>;
 
   // 開閉状態に合わせて動的にオーバーライドするスタイル
@@ -185,21 +196,21 @@ export default function MainScreen() {
 
   const dynamicSidebarStyle = {
     ...styles.sidebar,
-    width: isSidebarOpen ? 340 : 0,         
-    padding: isSidebarOpen ? 10 : "10px 0px", 
+    width: isSidebarOpen ? 340 : 0,
+    padding: isSidebarOpen ? 10 : "10px 0px",
     // 💡 【修正】縦スクロール（Y軸）を有効化し、横（X軸）の溢れだけを綺麗に隠す
-    overflowY: isSidebarOpen ? "auto" : "hidden", 
-    overflowX: "hidden",                       
-    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out", 
+    overflowY: isSidebarOpen ? "auto" : "hidden",
+    overflowX: "hidden",
+    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out",
     borderRight: isSidebarOpen ? styles.sidebar.borderRight : "none",
   };
 
   return (
     <div style={dynamicWrapperStyle}>
-      
+
       {/* サイドバーが閉じているときだけ、画面左上に現れる「開く」三本線ボタン */}
       {!isSidebarOpen && (
-        <button 
+        <button
           onClick={() => setIsSidebarOpen(true)}
           style={{
             position: "absolute",
