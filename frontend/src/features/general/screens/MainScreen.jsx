@@ -9,6 +9,38 @@ export default function MainScreen() {
   const textareaRef = useRef(null);
 
   // =========================
+  // Safe styles
+  // =========================
+  const baseStyles = {
+    wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif", overflow: "hidden" },
+    sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10, backgroundColor: "#fff" },
+    topBar: { display: "flex", gap: 8, marginBottom: 10 },
+    search: { flex: 1, padding: "6px 10px", border: "1px solid #ccc", borderRadius: 6 },
+    logout: { padding: "6px 10px", border: "1px solid #ddd", background: "#fff" },
+    filterRow: { display: "flex", gap: 8 },
+    filterButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" },
+    theme: {
+      padding: 10,
+      borderRadius: 6,
+      cursor: "pointer",
+      fontWeight: "bold",
+      justifyContent: "flex-start",
+      textAlign: "left",
+    },
+    progressBg: { height: 4, background: "#eee", borderRadius: 10 },
+    progressBar: { height: 4, borderRadius: 10 },
+    progressText: { fontSize: 11, marginTop: 3, textAlign: "center" },
+    question: { padding: "6px 10px", fontSize: 13, cursor: "pointer" },
+    main: { flex: 1, padding: 20, overflowY: "auto" },
+    card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
+    textarea: { width: "100%", height: 120 },
+    save: { marginTop: 10, padding: "6px 14px", border: "1px solid #ccc" },
+    box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6 },
+  };
+
+  const styles = baseStyles;
+
+  // =========================
   // States
   // =========================
   const [userId, setUserId] = useState(() => {
@@ -33,86 +65,100 @@ export default function MainScreen() {
   const [otherAnswers, setOtherAnswers] = useState([]);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // サイドバーの開閉状態
+  // サイドバー開閉ステート
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // =========================
-  // Effects & Logic
+  // Effects
   // =========================
   useEffect(() => {
     if (!userId) navigate("/login", { replace: true });
   }, [userId, navigate]);
 
+  // ブラウザの「戻る」「閉じる」対策
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "未保存の内容がありますが、破棄して移動しますか？";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [draftAnswer, answerMap, activeQuestion]);
+
   useEffect(() => {
     if (!userId) return;
-    const loadThemes = async () => {
+    (async () => {
       try {
         const data = await userApi.getThemes();
         setThemes(data || []);
-      } catch (error) {
-        console.error("テーマ取得エラー:", error);
+      } catch (e) {
+        console.error(e);
       }
-    };
-    loadThemes();
+    })();
   }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
-    const loadMyAnswers = async () => {
+    (async () => {
       try {
         const data = await userApi.getMyAnswers(userId);
         const map = {};
-        if (Array.isArray(data)) {
-          data.forEach((a) => {
-            const qid = a.questionId ?? a.question_id;
-            if (!qid) return;
-            map[String(qid)] = {
-              answerId: a.answerId,
-              questionId: qid,
-              answerContent: a.answerContent ?? "",
-            };
-          });
-        }
+        (data || []).forEach((a) => {
+          const qid = a.questionId ?? a.question_id;
+          if (!qid) return;
+          map[String(qid)] = a;
+        });
         setAnswerMap(map);
-      } catch (error) {
-        console.error("回答取得エラー:", error);
+      } catch (e) {
+        console.error(e);
       }
-    };
-    loadMyAnswers();
+    })();
   }, [userId]);
 
   useEffect(() => {
     if (!activeQuestion || !userId) return;
+
     const qid = activeQuestion.questionId ?? activeQuestion.question_id;
-    const loadOtherAnswers = async () => {
+
+    (async () => {
       try {
         const data = await userApi.getOtherAnswers(qid);
-        if (Array.isArray(data)) {
-          const filtered = data.filter((a) => a.userId !== userId);
-          setOtherAnswers(filtered);
-        }
-      } catch (error) {
-        console.error("他人の回答取得エラー:", error);
+        setOtherAnswers((data || []).filter((a) => a.userId !== userId));
+      } catch (e) {
+        console.error(e);
       }
-    };
-    loadOtherAnswers();
-  }, [userId, activeQuestion]);
+    })();
+  }, [activeQuestion, userId]);
 
+  // ★質問が変わった時に各種サブコンテンツのフラグをリセットする処理
   useEffect(() => {
     if (!activeQuestion) return;
+
+    // 1. 下書き回答の同期
     const qid = activeQuestion.questionId ?? activeQuestion.question_id;
     setDraftAnswer(answerMap[String(qid)]?.answerContent || "");
+
+    // 2. 開いていた「他の人の回答」「お手本」「レビュー」を自動で閉じる
+    setIsAnswersOpen(false);
+    setIsModelOpen(false);
+    setIsReviewOpen(false);
   }, [activeQuestion, answerMap]);
 
-  const getQid = () => activeQuestion?.questionId ?? activeQuestion?.question_id;
+  // =========================
+  // Helpers
+  // =========================
+  const getQid = () =>
+    activeQuestion?.questionId ?? activeQuestion?.question_id;
 
   const isDirty =
     activeQuestion &&
     draftAnswer !== (answerMap[String(getQid())]?.answerContent || "");
 
   const handleSelectQuestion = (q) => {
-    if (isDirty) {
-      if (!window.confirm("未保存の内容があります。移動しますか？")) return;
+    if (isDirty && !window.confirm("未保存の内容があります。移動しますか？")) {
+      return;
     }
     setActiveQuestion(q);
   };
@@ -120,8 +166,10 @@ export default function MainScreen() {
   const handleSave = async () => {
     const qid = getQid();
     if (!qid) return;
+
     try {
       const res = await userApi.upsertAnswer(userId, qid, draftAnswer);
+
       setAnswerMap((prev) => ({
         ...prev,
         [String(qid)]: {
@@ -129,6 +177,7 @@ export default function MainScreen() {
           answerContent: res.answerContent,
         },
       }));
+
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
     } catch (e) {
@@ -142,6 +191,7 @@ export default function MainScreen() {
       const qid = q.questionId ?? q.question_id;
       return (answerMap[String(qid)]?.answerContent || "").trim().length > 0;
     }).length;
+
     return { done, total: qs.length };
   };
 
@@ -151,76 +201,88 @@ export default function MainScreen() {
     return "#22c55e";
   };
 
-  // FILTER + SEARCH + EMPTY FOLDER FIX
+  // =========================
+  // Filtering
+  // =========================
   const hideEmpty = searchQuery.trim().length > 0;
+
   const filteredThemes = themes
     .map((theme) => {
       const questions = (theme.questions || [])
         .filter((q) => {
           const qid = q.questionId ?? q.question_id;
           const has = !!answerMap[String(qid)];
+
           if (statusFilter === "completed") return has;
           if (statusFilter === "uncompleted") return !has;
           return true;
         })
         .filter((q) =>
           searchQuery
-            ? q.questionText.toLowerCase().includes(searchQuery.toLowerCase())
+            ? q.questionText?.toLowerCase().includes(searchQuery.toLowerCase())
             : true
         );
+
       return { ...theme, questions, _count: questions.length };
     })
-    .filter((theme) => {
-      if (!hideEmpty) return true;
-      return (theme._count ?? 0) > 0;
-    });
+    .filter((t) => (!hideEmpty ? true : (t._count ?? 0) > 0));
 
   if (!userId) return <div>loading...</div>;
 
-  // 開閉状態に合わせて動的にオーバーライドするスタイル
+  // =========================
+  // Layout styles
+  // =========================
   const dynamicWrapperStyle = {
     ...styles.wrapper,
-    position: "relative", // ☰ ボタンを浮かせる基準にする
+    position: "relative",
   };
 
   const dynamicSidebarStyle = {
     ...styles.sidebar,
-    width: isSidebarOpen ? 340 : 0,         
-    padding: isSidebarOpen ? 10 : "10px 0px", 
-    // 💡 【修正】縦スクロール（Y軸）を有効化し、横（X軸）の溢れだけを綺麗に隠す
-    overflowY: isSidebarOpen ? "auto" : "hidden", 
-    overflowX: "hidden",                       
-    transition: "width 0.25s ease-in-out, padding 0.25s ease-in-out", 
-    borderRight: isSidebarOpen ? styles.sidebar.borderRight : "none",
+    width: isSidebarOpen ? 340 : 0,
+    minWidth: isSidebarOpen ? 340 : 0,
+    padding: isSidebarOpen ? 10 : 0, 
+    borderRight: isSidebarOpen ? "1px solid #ddd" : "none",
+    overflowX: "hidden", 
+    overflowY: isSidebarOpen ? "auto" : "hidden",
+    visibility: isSidebarOpen ? "visible" : "hidden", 
+    transition: "width 0.25s ease, padding 0.25s ease, visibility 0.25s",
+    position: "relative",
+  };
+
+  // 三本線（☰）ボタン：常にサイドバーの右エッジの「外側」に配置
+  const toggleButtonStyle = {
+    position: "absolute",
+    left: isSidebarOpen ? 348 : 12, 
+    top: 12,
+    zIndex: 1010, 
+    width: 32,
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid #ddd",
+    background: "#fff",
+    borderRadius: 6,
+    cursor: "pointer",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+    fontSize: "18px",
+    lineHeight: 1,
+    transition: "left 0.25s ease, background-color 0.2s",
   };
 
   return (
     <div style={dynamicWrapperStyle}>
-      
-      {/* サイドバーが閉じているときだけ、画面左上に現れる「開く」三本線ボタン */}
-      {!isSidebarOpen && (
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          style={{
-            position: "absolute",
-            left: "16px",
-            top: "16px",
-            zIndex: 50,
-            background: "#fff",
-            border: "1px solid #ddd",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "20px",
-            padding: "4px 10px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-          }}
-          title="サイドバーを開く"
-        >
-          ☰
-        </button>
-      )}
+      {/* 1. 三本線ボタン */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        style={toggleButtonStyle}
+        title={isSidebarOpen ? "メニューを閉じる" : "メニューを開く"}
+      >
+        ☰
+      </button>
 
-      {/* 👈 左側：Sidebar（条件レンダリングせず、スタイルのみ介入） */}
+      {/* 2. サイドバー */}
       <Sidebar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -238,11 +300,11 @@ export default function MainScreen() {
         setIsSidebarOpen={setIsSidebarOpen}
         styles={{
           ...styles,
-          sidebar: dynamicSidebarStyle // 動的なスタイルで上書き
+          sidebar: dynamicSidebarStyle,
         }}
       />
 
-      {/* 👉 右側：MainContent */}
+      {/* 3. メインコンテンツ */}
       <MainContent
         activeQuestion={activeQuestion}
         textareaRef={textareaRef}
@@ -262,38 +324,13 @@ export default function MainScreen() {
         styles={{
           ...styles,
           main: {
-            ...styles.main,
-            // ボタンと文字が被らないように、閉じている時だけ左余白を広げる
-            paddingLeft: isSidebarOpen ? 20 : 60,
-            transition: "padding-left 0.25s ease-in-out",
-          }
+            ...(styles.main || {}),
+            paddingLeft: isSidebarOpen ? 20 : 56, 
+            paddingTop: 20,
+            transition: "padding-left 0.25s ease",
+          },
         }}
       />
     </div>
   );
 }
-
-/* styles - 元のコードと100%全く同じものを完全維持 */
-const styles = {
-  wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif" },
-  sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10 },
-  topBar: { display: "flex", gap: 8, marginBottom: 10 },
-  search: { flex: 1, padding: "6px 10px", border: "1px solid #ccc", borderRadius: 6 },
-  logout: { padding: "6px 10px", border: "1px solid #ddd", background: "#fff" },
-  filterRow: { display: "flex", gap: 8 },
-  filterButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" },
-  theme: {
-    padding: 10, borderRadius: 6, cursor: "pointer", fontWeight: "bold",
-    justifyContent: "flex-start", // 👈 これで左寄せになる
-    textAlign: "left"         // テキスト自体も左寄せにする（念のため）},
-  },
-  progressBg: { height: 4, background: "#eee", borderRadius: 10 },
-  progressBar: { height: 4, borderRadius: 10 },
-  progressText: { fontSize: 11, marginTop: 3, textAlign: "center" },
-  question: { padding: "6px 10px", fontSize: 13, cursor: "pointer" },
-  main: { flex: 1, padding: 20 },
-  card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
-  textarea: { width: "100%", height: 120 },
-  save: { marginTop: 10, padding: "6px 14px", border: "1px solid #ccc" },
-  box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6 },
-};
