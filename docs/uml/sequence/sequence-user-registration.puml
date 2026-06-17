@@ -1,0 +1,64 @@
+autonumber
+@startuml ユーザー登録フロー
+
+title ユーザー登録シーケンス（番号付け・色分け）
+
+actor User as user
+participant "Frontend\n(React/Vite)" as frontend
+participant "UserController" as userController
+participant "UserService" as userService
+participant "UserRepository" as userRepo
+participant "Database" as db
+
+' 色ルール: 赤 = データを受け取る（ビュー入力、DBのSELECT/INSERT結果など）、青 = データを渡す（POST/INSERT/UPDATE等）
+
+user -> frontend: <color:red>① 入力: 社員ID/名前/パスワード</color>
+frontend -> userController: <color:blue>② POST /api/users\n{employeeId, name, password}</color>
+
+userController -> userService: <color:blue>③ createUser(UserRequest)</color>
+userService -> userRepo: <color:blue>④ existsByEmployeeId(employeeId)</color>
+userRepo -> db: <color:blue>⑤ SELECT COUNT(*) FROM users WHERE employee_id = ?</color>
+db --> userRepo: <color:red>⑥ 存在フラグ</color>
+
+alt 社員IDが既に存在する
+    userService --> userController: <color:red>⑦ BusinessException("社員IDは既に登録されています")</color>
+    userController --> frontend: <color:red>⑧ 400 Bad Request {message}</color>
+    frontend --> user: <color:red>⑨ エラーメッセージ表示</color>
+else 社員IDが未登録
+    userService -> userService: <color:blue>⑦ 入力検証: 名前/パスワード整形・チェック</color>
+    userService -> userRepo: <color:blue>⑧ save(User)</color>
+    userRepo -> db: <color:blue>⑨ INSERT INTO users (...) VALUES (...) </color>
+    db --> userRepo: <color:red>⑩ 保存済み User entity</color>
+    userService --> userController: <color:red>⑪ UserResponse {userId, name, role}</color>
+    userController --> frontend: <color:red>⑫ 201 Created {userId, name, role}</color>
+    frontend --> user: <color:blue>⑬ 登録成功メッセージ表示\n/ ログイン画面へ遷移</color>
+end
+
+'② エンドポイント　設計する機能内で使用するページのエンドポイントを指定する。
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|登録画面|Register.jsx|POST /api/users|
+
+'③ インプット・アウトプット:ユーザーに提供する機能単位で記述する。
+|= input/output |= 変数名 |=型|=説明|
+|input|employeeId|Integer|社員ID (NotNull, 1以上)|
+|input|name|String|ユーザー名 (NotBlank, max 20)|
+|input|password|String|パスワード (NotBlank, 8-20文字)|
+|output|userId|Integer|内部ユーザーID|
+|output|name|String|ユーザー名|
+|output|role|Role|登録ユーザー権限|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+　（メソッドが呼び出される条件、メソッド内での条件分岐、変数にはどのような値が入っているか）
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|UserController|createUser(UserRequest request)|UserResponse|POST /api/users のリクエストを受け取り、UserService.createUser に委譲する|API エンドポイント処理|
+|2|UserService|createUser(UserRequest req)|UserResponse|社員ID重複チェック、名前/パスワード検証、User エンティティ生成・保存、UserResponse 変換|ビジネスバリデーション / Entity 保存|
+endlegend
+
+@enduml
