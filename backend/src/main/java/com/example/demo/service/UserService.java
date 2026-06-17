@@ -50,8 +50,8 @@ public class UserService {
     // ユーザー登録
     public UserResponse createUser(UserRequest req) {
 
-        if (userRepository.existsById(req.getEmployeeId())) {
-            throw new BusinessException("ID重複");
+        if (userRepository.existsByEmployeeId(req.getEmployeeId())) {
+            throw new BusinessException("社員IDは既に登録されています");
         }
 
         User user = new User();

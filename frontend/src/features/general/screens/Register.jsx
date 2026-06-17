@@ -36,10 +36,30 @@ export default function Register() {
 
     // 入力項目の定義（UIを一括管理）
     const formFields = [
-        { label: "社員ID", name: "employeeId", type: "number" },
-        { label: "名前", name: "name", type: "text" },
-        { label: "パスワード", name: "password", type: "password" },
-        { label: "パスワード（確認）", name: "confirmPassword", type: "password" },
+        {
+            label: "社員ID",
+            name: "employeeId",
+            type: "number",
+            placeholder: "例：12345678",
+        },
+        {
+            label: "名前",
+            name: "name",
+            type: "text",
+            placeholder: "氏名を入力",
+        },
+        {
+            label: "パスワード",
+            name: "password",
+            type: "password",
+            placeholder: "8～20文字で入力",
+        },
+        {
+            label: "パスワード（確認）",
+            name: "confirmPassword",
+            type: "password",
+            placeholder: "もう一度入力",
+        },
     ];
 
     return (
@@ -50,12 +70,14 @@ export default function Register() {
                     {formFields.map((field) => (
                         <div key={field.name} style={styles.fieldWrapper}>
                             <label style={styles.label}>{field.label}</label>
+
                             <input
                                 style={styles.input}
                                 type={field.type}
                                 name={field.name}
                                 value={form[field.name]}
                                 onChange={handleChange}
+                                placeholder={field.placeholder}
                                 required
                             />
                         </div>
@@ -65,7 +87,11 @@ export default function Register() {
                     </button>
                 </form>
 
-                {message && <p style={styles.message}>{message}</p>}
+                {message && (
+                    <div style={styles.errorBox}>
+                        {message}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -120,6 +146,7 @@ const styles = {
     button: {
         marginTop: "8px",
         padding: "14px",
+        width: "100%",
         backgroundColor: "#2563eb",
         color: "#fff",
         border: "none",
@@ -132,6 +159,23 @@ const styles = {
     message: {
         marginTop: "16px",
         color: "#ef4444",
+        textAlign: "center",
+        fontSize: "14px",
+        fontWeight: "500",
+    },
+    passwordHint: {
+        fontSize: "12px",
+        color: "#64748b",
+        marginTop: "4px",
+    },
+
+    errorBox: {
+        marginTop: "16px",
+        padding: "12px",
+        backgroundColor: "#fef2f2",
+        color: "#dc2626",
+        border: "1px solid #fecaca",
+        borderRadius: "8px",
         textAlign: "center",
         fontSize: "14px",
         fontWeight: "500",
