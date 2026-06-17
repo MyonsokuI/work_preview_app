@@ -51,13 +51,17 @@ end
 '② エンドポイント　設計する機能内で使用するページのエンドポイントを指定する。
 legend right
 |= 画面名 |= ファイル名 |=エンドポイント|
-|ログイン画面|xxx.jsx|/api/auth/login[POST]|
+|ログイン画面|Login.jsx|/api/auth/login [POST]|
 
 
 '③ インプット・アウトプット:ユーザーに提供する機能単位で記述する。
 |= input/output |= 変数名 |=型|=説明|
-|input|employeeId|Integer|社員ID(NotNull)|
-|input|password|String|パスワード(NotBlank)|
+|input|employeeId|Integer|社員ID (NotNull)|
+|input|password|String|パスワード (NotBlank)|
+|output|token|String|JWTトークン|
+|output|userId|Integer|内部ユーザーID|
+|output|name|String|ユーザー名|
+|output|role|String|ユーザー権限|
 
 /'
 ④ ①の図の詳細説明表
@@ -68,7 +72,8 @@ legend right
 - 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
 
 |= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
-|1|LoginController|LoginDto|String|xxx|xxx|
+|1|AuthController|login(LoginRequest request)|LoginResponse|POST /api/auth/login のリクエストを受け取り、AuthService.login に委譲して LoginResponse を返す。|API エンドポイント処理|
+|2|AuthService|login(LoginRequest request)|LoginResponse|employeeId で User を検索し、パスワード照合後に JwtUtil でトークンを生成し、LoginResponse に userId/employeeId/name/role/token を設定して返す。|JWT 生成 / BusinessException でエラー処理|
 endlegend
 
 @enduml
