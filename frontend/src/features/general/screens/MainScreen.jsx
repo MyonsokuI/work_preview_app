@@ -208,30 +208,43 @@ export default function MainScreen() {
 
   const filteredThemes = themes
     .map((theme) => {
-      const questions = (theme.questions || [])
-        .filter((q) => {
-          const qid = q.questionId ?? q.question_id;
-          const has = !!answerMap[String(qid)];
+      // 1. 質問を検索ワードで絞り込む
+      const filteredQuestions = (theme.questions || []).filter((q) => {
+        const qid = q.questionId ?? q.question_id;
+        const has = !!answerMap[String(qid)];
 
-          if (statusFilter === "completed") return has;
-          if (statusFilter === "uncompleted") return !has;
-          return true;
-        })
-        .filter((q) =>
-          searchQuery
-            ? q.questionText?.toLowerCase().includes(searchQuery.toLowerCase())
-            : true
-        );
+        // ステータスフィルターの判定
+        if (statusFilter === "completed" && !has) return false;
+        if (statusFilter === "uncompleted" && has) return false;
 
-      return { ...theme, questions, _count: questions.length };
+        // 検索ワードの判定
+        if (searchQuery) {
+          return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
+        }
+        return true;
+      });
+
+      // 2. テーマ自体を表示するかどうかの判定
+      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return {
+        ...theme,
+        // 💡 修正：テーマタイトルがマッチしていれば全問題を表示、そうでなければ絞り込んだ質問を表示
+        questions: isThemeMatch ? (theme.questions || []) : filteredQuestions,
+        _count: isThemeMatch ? (theme.questions || []).length : filteredQuestions.length
+      };
     })
-    .filter((t) => (!hideEmpty ? true : (t._count ?? 0) > 0));
-
+    .filter((theme) => {
+      // 最終的に、テーマ名にマッチするか、または質問が残っているテーマだけを残す
+      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return isThemeMatch || (theme._count ?? 0) > 0;
+    });
   if (!userId) return <div>loading...</div>;
 
-  // =========================
-  // Layout styles
-  // =========================
+  const sortedThemes = [...filteredThemes].sort(
+    (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+  );
+  // 開閉状態に合わせて動的にオーバーライドするスタイル
   const dynamicWrapperStyle = {
     ...styles.wrapper,
     position: "relative",
@@ -289,7 +302,7 @@ export default function MainScreen() {
         setUserId={setUserId}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        filteredThemes={filteredThemes}
+        filteredThemes={sortedThemes}
         openThemes={openThemes}
         setOpenThemes={setOpenThemes}
         answerMap={answerMap}
