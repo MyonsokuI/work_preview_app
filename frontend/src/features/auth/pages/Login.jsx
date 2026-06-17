@@ -59,7 +59,7 @@ export default function Login() {
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
                         required
-                        placeholder="例: 000000000"
+                        placeholder="例: 12345678"
                         style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "6px", border: "1px solid #ccc", fontSize: "16px" }}
                     />
                 </div>

@@ -53,6 +53,14 @@ public class UserService {
         if (userRepository.existsByEmployeeId(req.getEmployeeId())) {
             throw new BusinessException("社員IDは既に登録されています");
         }
+        String name = req.getName();
+        if (name == null || name.strip().isEmpty()) {
+            throw new BusinessException("ユーザー名を入力してください");
+        }
+
+        if (!name.equals(name.strip())) {
+            throw new BusinessException("名前の先頭・末尾にスペースは使用できません");
+        }
 
         User user = new User();
         user.setEmployeeId(req.getEmployeeId());
