@@ -93,4 +93,47 @@ note over newUser, admin
     管理者は進捗を確認
 end note
 
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|登録画面|Register.jsx|POST /api/users|
+|ログイン画面|Login.jsx|POST /api/auth/login|
+|メイン画面|MainScreen.jsx|GET /api/themes, GET /api/themes/{id}/questions, POST /api/answers|
+|管理画面|AdminConsole.jsx|GET /api/admin/progress|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|employeeId|Integer|ユーザー登録/ログインで使用される社員ID|
+|input|password|String|ユーザー登録/ログインで入力されるパスワード|
+|input|token|String|ログイン後に API へ付与される JWT トークン|
+|input|questionId|Integer|回答登録に使用される問題 ID|
+|output|LoginResponse|LoginResponse|ログイン成功時に返されるトークンとユーザー情報|
+|output|themes|List<ThemeResponse>|テーマ一覧のレスポンス|
+|output|questions|List<QuestionResponse>|問題一覧のレスポンス|
+|output|progressList|List<QuestionProgressDto>|管理者画面で表示する進捗データ|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|UserController|createUser(UserRequest)|UserResponse|POST /api/users を受け取り、UserService.createUser を呼び出してユーザー登録を行う。|ユーザー登録|
+|2|UserService|createUser(UserRequest)|UserResponse|パスワードをハッシュ化し、User エンティティを DB に保存する。|登録処理|
+|3|AuthController|login(LoginRequest)|LoginResponse|POST /api/auth/login を受け取り、AuthService.login を呼び出す。|ログイン処理|
+|4|AuthService|login(LoginRequest)|LoginResponse|社員IDでユーザー検索し、パスワード検証、JWT 生成を行う。|認証処理|
+|5|QuestionController|getAllThemes()|List<ThemeResponse>|GET /api/themes でテーマ一覧を取得し、画面へ返す。|テーマ取得|
+|6|QuestionService|getAllThemes()|List<ThemeResponse>|DB からテーマを読み込み、レスポンス DTO に変換する。|テーマ処理|
+|7|QuestionController|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|GET /api/themes/{id}/questions で問題一覧を取得する。|問題取得|
+|8|QuestionService|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|指定テーマの問題を DB から取得し、QuestionResponse に変換する。|問題処理|
+|9|AnswerController|submitAnswer(AnswerRequest)|AnswerResponse|POST /api/answers で回答情報を受け取り、回答を保存する。|回答登録|
+|10|AnswerService|saveAnswer(AnswerRequest)|Answer|回答を DB に挿入し、保存した回答を返す。|DB 保存|
+|11|ProgressController|getProgress()|List<QuestionProgressDto>|GET /api/admin/progress を受け取り、進捗集計を開始する。|進捗取得|
+|12|ProgressService|getProgress()|List<QuestionProgressDto>|全問題と未完了/完了状況を集計し、DTO リストを生成する。|進捗集計|
+|13|Frontend|redirect dashboard|void|ログイン成功後にユーザーをダッシュボードへ遷移させる。|画面遷移|
+|14|Frontend|render progress|void|管理者画面で進捗リストをテーブル/グラフで表示する。|画面表示|
+endlegend
+
 @enduml

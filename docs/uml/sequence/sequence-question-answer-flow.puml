@@ -79,4 +79,47 @@ qController --> frontend: 200 OK\nanswers list
 frontend -> frontend: 回答状況を表示
 frontend -> user: 完了状況を表示
 
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|メイン画面|MainScreen.jsx|GET /api/themes, GET /api/themes/{themeId}/questions, POST /api/answers, GET /api/answers/my|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|userId|Integer|ログインユーザーID|
+|input|questionId|Integer|問題ID|
+|input|answer|String|回答内容|
+|output|themes|List<ThemeResponse>|テーマ一覧|
+|output|questions|List<QuestionResponse>|問題一覧|
+|output|answers|List<AnswerResponse>|回答一覧|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|render main screen|void|メイン画面を表示し、テーマ一覧の取得を開始する。|画面初期化|
+|2|QuestionController|getAllThemes()|List<ThemeResponse>|GET /api/themes を呼び出して全テーマを取得する。|テーマ取得 API|
+|3|QuestionService|getAllThemes()|List<ThemeResponse>|テーマ一覧を DB から取得して ThemeResponse に変換する。|テーマ取得処理|
+|4|Repository層|select themes|List<Theme>|DB からテーマを取得する。|DB 取得|
+|5|QuestionController|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|GET /api/themes/{themeId}/questions を呼び出して問題リストを取得する。|問題取得 API|
+|6|QuestionService|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|指定テーマの問題を DB から検索し、QuestionResponse に変換する。|問題取得処理|
+|7|Repository層|select questions|List<Question>|DB から対象テーマの問題を取得する。|DB 取得|
+|8|Frontend|display questions|void|取得した問題一覧を UI に表示する。|画面表示|
+|9|Frontend|input answer|void|ユーザーが回答を入力し、送信ボタンを押す。|回答入力|
+|10|AnswerController|submitAnswer(AnswerRequest request)|AnswerResponse|POST /api/answers を受け取り、AnswerService.submitAnswer を呼び出す。|回答登録 API|
+|11|AnswerService|save(answer_entity)|Answer|回答エンティティを DB に保存する。|回答保存処理|
+|12|Repository層|INSERT answer|Answer|回答を DB に登録する。|DB 挿入|
+|13|AnswerController|return 201|AnswerResponse|登録成功をフロントに返す。|レスポンス返却|
+|14|Frontend|display success|void|成功メッセージを表示し、次の問題へ誘導する。|画面表示|
+|15|Frontend|getMyAnswers|void|「自分の回答」クリックで回答一覧取得を開始する。|回答一覧取得|
+|16|QuestionController|getMyAnswers(Integer userId)|List<AnswerResponse>|GET /api/answers/my を呼び出してユーザー回答を取得する。|回答一覧 API|
+|17|Repository層|findByUserId(Integer userId)|List<Answer>|DB からユーザー回答を取得する。|DB 取得|
+|18|QuestionController|return answers|List<AnswerResponse>|回答一覧をフロントに返す。|レスポンス返却|
+|19|Frontend|display answer status|void|回答状況を画面に表示する。|画面表示|
+endlegend
+
 @enduml

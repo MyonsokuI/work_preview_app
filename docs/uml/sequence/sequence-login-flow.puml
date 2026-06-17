@@ -72,8 +72,21 @@ legend right
 - 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
 
 |= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
-|1|AuthController|login(LoginRequest request)|LoginResponse|POST /api/auth/login のリクエストを受け取り、AuthService.login に委譲して LoginResponse を返す。|API エンドポイント処理|
-|2|AuthService|login(LoginRequest request)|LoginResponse|employeeId で User を検索し、パスワード照合後に JwtUtil でトークンを生成し、LoginResponse に userId/employeeId/name/role/token を設定して返す。|JWT 生成 / BusinessException でエラー処理|
+|1|Frontend|入力画面|void|ユーザーが社員IDとパスワードを入力する。|ビュー入力|
+|2|Frontend|POST /api/auth/login|LoginRequest|フォーム入力を JSON に変換し、認証 API に送信する。|API 呼び出し|
+|3|AuthController|login(LoginRequest request)|LoginResponse|リクエストを受け取り、AuthService.login を呼び出す。|API エンドポイント|
+|4|AuthService|login(LoginRequest request)|LoginResponse|employeeId で UserRepository.findByEmployeeId を呼び出してユーザーを取得する。|ユーザー検索|
+|5|UserRepository|findByEmployeeId(Integer employeeId)|Optional<User>|DB から該当ユーザーを検索する。|データ取得|
+|6|AuthService|password verification|boolean|取得した User のパスワードを入力値と比較して認証結果を判定する。|認証検証|
+|7|AuthService|generateToken(...)|String|認証成功時に JwtUtil で JWT を生成する。|JWT 生成|
+|8|AuthService|build LoginResponse|LoginResponse|トークンとユーザー情報を LoginResponse に詰めて返却する。|レスポンス生成|
+|9|AuthController|return LoginResponse|LoginResponse|AuthService からの応答をフロントに返す。|レスポンス返却|
+|10|Frontend|save token|void|受け取ったトークンを localStorage に保存する。|ローカル保存|
+|11|Frontend|cache user info|void|ユーザー情報をキャッシュして次の画面で利用する。|状態保持|
+|12|Frontend|redirect dashboard|void|ログイン成功後にダッシュボードへ遷移する。|画面遷移|
+|13|AuthService|throw exception|void|パスワード不一致時に例外を投げる。|エラー処理|
+|14|AuthController|return 401|void|例外を受けて 401 Unauthorized を返す。|エラー応答|
+|15|Frontend|display error|void|エラーメッセージを画面に表示する。|エラー表示|
 endlegend
 
 @enduml

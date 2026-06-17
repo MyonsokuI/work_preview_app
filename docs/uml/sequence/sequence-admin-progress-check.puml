@@ -66,4 +66,36 @@ admin --> admin: 未完了者を確認
 
 admin -> admin: フォローアップが必要な\nユーザーを特定
 
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|管理画面|AdminConsole.jsx|GET /api/admin/progress|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|Authorization|String|Bearer トークン|
+|output|progressList|List<QuestionProgressDto>|各問題の進捗データ|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|click progress|void|管理者が進捗確認ボタンをクリックし、API 呼び出しを開始する。|画面操作|
+|2|ProgressController|getProgress()|List<QuestionProgressDto>|GET /api/admin/progress を受け取り、ProgressService.getProgress を呼び出す。|API エンドポイント|
+|3|ProgressService|getProgress()|List<QuestionProgressDto>|QuestionRepository.findAll で全問題を取得し、各問題の未完了/完了情報を集計する。|進捗算出処理|
+|4|QuestionRepository|findAll()|List<Question>|DB から全問題を取得する。|問題取得|
+|5|JdbcTemplate|queryForList(...)|List<String>|未回答ユーザー名リストを SQL で取得する。|未完了ユーザー取得|
+|6|JdbcTemplate|queryForObject(...)|Integer|完了ユーザー数を SQL で取得する。|完了者数取得|
+|7|ProgressService|aggregate progress|QuestionProgressDto|各問題ごとの集計結果を DTO に詰める。|DTO 変換|
+|8|ProgressService|return list|List<QuestionProgressDto>|集計した進捗リストをコントローラに返す。|レスポンス生成|
+|9|ProgressController|return 200 OK|List<QuestionProgressDto>|進捗リストをフロントに返す。|レスポンス返却|
+|10|Frontend|render progress|void|受け取った進捗データをテーブル/カード形式で表示する。|画面表示|
+|11|Frontend|highlight detail|void|詳細表示をクリックした問題の未完了者リストをハイライトする。|詳細表示|
+|12|Admin|identify follow-up|void|未完了者を確認し、フォローアップ対象を特定する。|分析|
+endlegend
+
 @enduml
