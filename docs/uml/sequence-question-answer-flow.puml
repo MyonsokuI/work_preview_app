@@ -1,0 +1,82 @@
+@startuml 問題回答フロー
+autonumber
+title 問題取得・回答提出シーケンス
+
+actor User as user
+participant "Frontend\n(MainScreen)" as frontend
+participant "QuestionController" as qController
+participant "QuestionService" as qService
+participant "AnswerController" as aController
+participant "AnswerService" as aService
+participant "Repository層" as repo
+participant "Database" as db
+
+== 初期化フェーズ ==
+user -> frontend: メイン画面にアクセス
+frontend -> qController: GET /api/themes\n+ Authorization: Bearer token
+qController -> qService: getAllThemes()
+qService -> repo: select * from themes
+repo -> db: SELECT * FROM themes
+db --> repo: Theme entities
+repo --> qService: List<Theme>
+qService --> qController: List<ThemeResponse>
+qController --> frontend: 200 OK\nthemes list
+
+frontend -> frontend: テーマごとにUIレンダリング
+
+== 問題取得フェーズ ==
+user -> frontend: テーマをクリック
+frontend -> qController: GET /api/themes/{themeId}/questions\n+ Authorization: Bearer token
+qController -> qService: getQuestionsByTheme(themeId)
+qService -> repo: select * from questions\nwhere theme_id = ?
+repo -> db: SELECT * FROM questions\nWHERE theme_id = ?
+db --> repo: Question entities
+repo --> qService: List<Question>
+qService --> qController: List<QuestionResponse>
+qController --> frontend: 200 OK\nquestions list
+
+frontend -> frontend: 問題一覧をUIに表示
+
+== 回答フェーズ ==
+user -> frontend: 問題を選択
+frontend -> frontend: 質問詳細を表示
+
+user -> frontend: 回答を入力\n送信ボタン
+frontend -> aController: POST /api/answers\n{userId, questionId, answer}\n+ Authorization: Bearer token
+
+aController -> aService: submitAnswer(AnswerRequest)
+
+aService -> repo: save(answer_entity)
+repo -> db: INSERT INTO answers\n(user_id, question_id, answer, ...)
+db --> repo: saved answer
+
+note over repo, db
+    自動タイムスタンプ記録
+    created_at: 現在時刻
+end note
+
+repo --> aService: Answer entity
+aService --> aController: AnswerResponse\n{answerId, status: SUCCESS}
+aController --> frontend: 201 Created
+
+frontend -> frontend: 成功メッセージ表示
+frontend -> frontend: 次の問題へ
+
+note over user, db
+    ユーザーは複数の問題に
+    順序に従って回答していく
+end note
+
+== 進捗確認フェーズ ==
+user -> frontend: 「自分の回答」をクリック
+frontend -> qController: GET /api/answers/my?userId=X\n+ Authorization: Bearer token
+qController -> repo: findByUserId(userId)
+repo -> db: SELECT * FROM answers\nWHERE user_id = X
+db --> repo: List<Answer>
+repo --> qController: List<Answer>
+qController --> frontend: 200 OK\nanswers list
+
+frontend -> frontend: 回答状況を表示
+frontend -> user: 完了状況を表示
+
+@enduml

@@ -1,0 +1,324 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam ArrowColor #0066cc
+skinparam ArrowFontColor #0066cc
+skinparam classFontSize 12
+skinparam packageFontSize 14
+skinparam classFontName "Arial"
+skinparam packageFontName "Arial"
+top to bottom direction
+
+package "controller" {
+  class PdfController {
+    -PdfService pdfService
+    -QuestionService questionService
+    +PdfController(pdfService: PdfService, questionService: QuestionService)
+    +getThemes(): List<ThemeWithQuestionsResponse>
+    +getAdminThemes(): List<ThemeWithQuestionsResponse>
+    +createTheme(request: ThemeRequest): ThemeResponse
+    +updateTheme(id: Integer, request: ThemeRequest): ThemeResponse
+    +deleteTheme(id: Integer): void
+  }
+  class QuestionController {
+    -QuestionService questionService
+    +QuestionController(questionService: QuestionService)
+    +getQuestionsByTheme(themeId: Integer): List<QuestionResponse>
+    +getAllQuestions(): List<QuestionResponse>
+    +getQuestion(id: Integer): QuestionResponse
+    +createQuestion(request: QuestionRequest): QuestionResponse
+    +updateQuestion(id: Integer, question: QuestionRequest): QuestionResponse
+    +deleteQuestion(id: Integer): void
+  }
+  class AnswerController {
+    -AnswerService answerService
+    +AnswerController(answerService: AnswerService)
+    +createAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+    +updateAnswer(id: Integer, request: AnswerRequest): AnswerResponse
+    +getMyAnswers(userId: Integer): List<AnswerResponse>
+    +getAnswersByQuestion(questionId: Integer): List<AnswerResponse>
+    +upsertAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+  }
+  class UserController {
+    -UserService userService
+    +UserController(userService: UserService)
+    +createUser(request: UserRequest): UserResponse
+    +getUsers(): List<UserResponse>
+    +getUser(id: Integer): UserResponse
+  }
+  class AuthController {
+    -AuthService authService
+    +AuthController(authService: AuthService)
+    +login(request: LoginRequest): LoginResponse
+    +logout(): String
+  }
+  class ReviewController {
+    -ReviewService reviewService
+    +ReviewController(reviewService: ReviewService)
+    +createReview(reviewerId: Integer, request: ReviewRequest): ReviewResponse
+    +getReviewsByAnswer(answerId: Integer): List<ReviewResponse>
+    +deleteReview(reviewId: Integer): void
+  }
+  class ProgressController {
+    -QuestionRepository questionRepository
+    -JdbcTemplate jdbcTemplate
+    +getProgress(): List<QuestionProgressDto>
+  }
+}
+
+package "service" {
+  class PdfService {
+    -PdfRepository pdfRepository
+    +PdfService(pdfRepository: PdfRepository)
+    +getAllThemesForAdmin(): List<ThemeResponse>
+    +getPublicThemes(): List<ThemeResponse>
+    +createTheme(request: ThemeRequest): ThemeResponse
+    +updateTheme(id: Integer, request: ThemeRequest): ThemeResponse
+    +updateStatus(id: Integer, status: String): ThemeResponse
+    +deleteTheme(id: Integer): void
+  }
+  class QuestionService {
+    -QuestionRepository questionRepository
+    -PdfRepository pdfRepository
+    +QuestionService(questionRepository: QuestionRepository, pdfRepository: PdfRepository)
+    +getAllQuestions(): List<QuestionResponse>
+    +getQuestionsByTheme(themeId: Integer): List<QuestionResponse>
+    +getQuestion(id: Integer): QuestionResponse
+    +createQuestion(request: QuestionRequest): QuestionResponse
+    +updateQuestion(id: Integer, request: QuestionRequest): QuestionResponse
+    +deleteQuestion(id: Integer): void
+  }
+  class AnswerService {
+    -AnswerRepository answerRepository
+    -QuestionRepository questionRepository
+    -UserRepository userRepository
+    +AnswerService(answerRepository: AnswerRepository, questionRepository: QuestionRepository, userRepository: UserRepository)
+    +createAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+    +updateAnswer(id: Integer, request: AnswerRequest): AnswerResponse
+    +getMyAnswers(userId: Integer): List<AnswerResponse>
+    +getAnswersByQuestion(questionId: Integer): List<AnswerResponse>
+    +upsertAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+  }
+  class UserService {
+    -UserRepository userRepository
+    +UserService(userRepository: UserRepository)
+    +createUser(request: UserRequest): UserResponse
+    +getAllUsers(): List<UserResponse>
+    +getUser(id: Integer): UserResponse
+  }
+  class AuthService {
+    -UserRepository userRepository
+    -JwtUtil jwtUtil
+    +AuthService(userRepository: UserRepository, jwtUtil: JwtUtil)
+    +login(request: LoginRequest): LoginResponse
+  }
+  class ReviewService {
+    -ReviewRepository reviewRepository
+    -AnswerRepository answerRepository
+    -UserRepository userRepository
+    +ReviewService(reviewRepository: ReviewRepository, answerRepository: AnswerRepository, userRepository: UserRepository)
+    +createReview(reviewerId: Integer, request: ReviewRequest): ReviewResponse
+    +getReviewsByAnswer(answerId: Integer): List<ReviewResponse>
+    +deleteReview(reviewId: Integer): void
+  }
+}
+
+package "repository" {
+  interface PdfRepository
+  interface QuestionRepository
+  interface AnswerRepository
+  interface UserRepository
+  interface ReviewRepository
+}
+
+package "security" {
+  class JwtUtil
+}
+
+package "util" {
+  class StatusCalculator
+}
+
+package "entity" {
+  class Pdf {
+    -Integer pdfId
+    -String title
+    -String filePath
+    -User uploader
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -ContentsStatus status
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+  class Question {
+    -Integer questionId
+    -Pdf pdf
+    -String questionText
+    -String correctAnswer
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -List<Answer> answers
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+  class Answer {
+    -Integer answerId
+    -User user
+    -Question question
+    -String answerContent
+    -LocalDateTime submittedAt
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+  class Review {
+    -Integer reviewId
+    -Answer answer
+    -User reviewer
+    -String comment
+    -LocalDateTime createdAt
+  }
+  class User {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -String password
+    -UserStatus status
+    -Role roles
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+}
+
+package "dto" {
+  class ThemeRequest {
+    -String title
+    -String fileUrl
+    -String status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+  class ThemeResponse {
+    -Integer pdfId
+    -String title
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -String fileUrl
+  }
+  class ThemeWithQuestionsResponse {
+    -Integer pdfId
+    -String title
+    -String fileUrl
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -List<QuestionResponse> questions
+  }
+  class QuestionRequest {
+    -Integer pdfId
+    -String questionText
+    -String correctAnswer
+    -String status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+  class QuestionResponse {
+    -Integer questionId
+    -String questionText
+    -String correctAnswer
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+  class AnswerRequest {
+    -Integer questionId
+    -String answerContent
+  }
+  class AnswerResponse {
+    -Integer answerId
+    -Integer questionId
+    -Integer userId
+    -String userName
+    -String answerContent
+    -LocalDateTime submittedAt
+  }
+  class ReviewRequest {
+    -Integer answerId
+    -String comment
+  }
+  class ReviewResponse {
+    -Integer reviewId
+    -Integer answerId
+    -Integer reviewerId
+    -String reviewerName
+    -String comment
+    -LocalDateTime createdAt
+  }
+  class UserRequest {
+    -Integer employeeId
+    -String name
+    -String password
+  }
+  class UserResponse {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -UserStatus status
+    -Role role
+  }
+  class LoginRequest {
+    -Integer employeeId
+    -String password
+  }
+  class LoginResponse {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -String role
+    -String token
+  }
+  class QuestionProgressDto {
+    -Integer questionId
+    -String questionText
+    -long answeredUserCount
+    -long totalUserCount
+    -List<String> uncompletedUsers
+  }
+}
+
+PdfRepository <|.. PdfService
+QuestionRepository <|.. QuestionService
+AnswerRepository <|.. AnswerService
+UserRepository <|.. UserService
+UserRepository <|.. AuthService
+
+PdfService --> PdfRepository
+QuestionService --> QuestionRepository
+QuestionService --> PdfRepository
+AnswerService --> AnswerRepository
+AnswerService --> QuestionRepository
+AnswerService --> UserRepository
+ReviewService --> ReviewRepository
+ReviewService --> AnswerRepository
+ReviewService --> UserRepository
+
+PdfController --> PdfService
+PdfController --> QuestionService
+QuestionController --> QuestionService
+AnswerController --> AnswerService
+UserController --> UserService
+AuthController --> AuthService
+ReviewController --> ReviewService
+ProgressController --> QuestionRepository
+
+Question --> Pdf
+Answer --> Question
+Answer --> User
+Review --> Answer
+Review --> User
+Pdf --> User
+
+ThemeWithQuestionsResponse --> QuestionResponse
+@enduml

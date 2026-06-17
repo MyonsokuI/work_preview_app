@@ -1,0 +1,77 @@
+autonumber
+authController -> authService: login(LoginRequest)
+authService -> userRepo: findByEmployeeId(employeeId)
+authService -> authService: パスワード検証\nBCryptで比較
+@startuml ログインフロー
+
+title ユーザーログインシーケンス（番号付け・色分け）
+
+actor User as user
+participant "Frontend\n(React/Vite)" as frontend
+participant "AuthController" as authController
+participant "AuthService" as authService
+participant "UserRepository" as userRepo
+participant "Database" as db
+participant "JwtFilter" as jwtFilter
+
+' 色ルール: 赤 = データを受け取る（ビュー入力、DBのSELECT結果など）、青 = データを渡す（POST/INSERT/UPDATE等）
+
+user -> frontend: <color:red>① 入力: 社員ID/パスワード</color>
+frontend -> authController: <color:blue>② POST /api/auth/login\n{employeeId, password}</color>
+
+authController -> authService: <color:blue>③ login(LoginRequest)</color>
+
+authService -> userRepo: <color:blue>④ findByEmployeeId(employeeId)</color>
+userRepo -> db: <color:blue>⑤ SELECT * FROM users WHERE employee_id = ?</color>
+db --> userRepo: <color:red>⑥ User entity</color>
+
+authService -> authService: <color:red>⑦ パスワード検証結果（真/偽）</color>
+
+alt パスワード正しい
+    authService -> authService: <color:blue>⑧ JWT token を生成（sign）</color>
+    authService --> authController: <color:red>⑨ LoginResponse {token, employeeId, name, roles}</color>
+    
+    authController --> frontend: <color:red>⑩ 200 OK {token, userData}</color>
+    
+    frontend -> frontend: <color:blue>⑪ token を localStorage に保存</color>
+    frontend -> frontend: <color:blue>⑫ ユーザー情報をキャッシュ</color>
+    
+    frontend --> user: <color:blue>⑬ ダッシュボードへ遷移（表示）</color>
+    
+    note over user, db
+        以後のAPI呼び出しでは Authorization ヘッダーに token を付与
+    end note
+    
+else パスワード間違い
+    authService --> authController: <color:red>⑭ AuthenticationException</color>
+    authController --> frontend: <color:red>⑮ 401 Unauthorized</color>
+    frontend --> user: <color:red>⑯ エラーメッセージ表示</color>
+end
+
+'② エンドポイント　設計する機能内で使用するページのエンドポイントを指定する。
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|ログイン画面|xxx.jsx|/api/auth/login[POST]|
+
+
+'③ インプット・アウトプット:ユーザーに提供する機能単位で記述する。
+|= input/output |= 変数名 |=型|=説明|
+|input|employeeId|Integer|社員ID(NotNull)|
+|input|password|String|パスワード(NotBlank)|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照） 　   
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+　（メソッドが呼び出される条件、メソッド内での条件分岐、変数にはどのような値が入っているか）
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|LoginController|LoginDto|String|xxx|xxx|
+endlegend
+
+@enduml
+
+
+@enduml
