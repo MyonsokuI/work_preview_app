@@ -12,52 +12,52 @@ participant "Repository層" as repo
 participant "Database" as db
 
 == 初期化フェーズ ==
-user -> frontend: メイン画面にアクセス
-frontend -> qController: GET /api/themes\n+ Authorization: Bearer token
-qController -> qService: getAllThemes()
-qService -> repo: select * from themes
-repo -> db: SELECT * FROM themes
-db --> repo: Theme entities
-repo --> qService: List<Theme>
-qService --> qController: List<ThemeResponse>
-qController --> frontend: 200 OK\nthemes list
+user -> frontend: <color:red>メイン画面にアクセス</color>
+frontend -> qController: <color:blue>GET /api/themes\n+ Authorization: Bearer token</color>
+qController -> qService: <color:blue>getAllThemes()</color>
+qService -> repo: <color:blue>select * from themes</color>
+repo -> db: <color:blue>SELECT * FROM themes</color>
+db --> repo: <color:red>Theme entities</color>
+repo --> qService: <color:red>List<Theme></color>
+qService --> qController: <color:red>List<ThemeResponse></color>
+qController --> frontend: <color:red>200 OK\nthemes list</color>
 
-frontend -> frontend: テーマごとにUIレンダリング
+frontend -> frontend: <color:red>テーマごとにUIレンダリング</color>
 
 == 問題取得フェーズ ==
-user -> frontend: テーマをクリック
-frontend -> qController: GET /api/themes/{themeId}/questions\n+ Authorization: Bearer token
-qController -> qService: getQuestionsByTheme(themeId)
+user -> frontend: <color:red>テーマをクリック</color>
+frontend -> qController: <color:blue>GET /api/themes/{themeId}/questions\n+ Authorization: Bearer token</color>
+qController -> qService: <color:blue>getQuestionsByTheme(themeId)</color>
 qService -> repo: select * from questions\nwhere theme_id = ?
 repo -> db: SELECT * FROM questions\nWHERE theme_id = ?
-db --> repo: Question entities
-repo --> qService: List<Question>
-qService --> qController: List<QuestionResponse>
-qController --> frontend: 200 OK\nquestions list
+db --> repo: <color:red>Question entities</color>
+repo --> qService: <color:red>List<Question></color>
+qService --> qController: <color:red>List<QuestionResponse></color>
+qController --> frontend: <color:red>200 OK\nquestions list</color>
 
-frontend -> frontend: 問題一覧をUIに表示
+frontend -> frontend: <color:red>問題一覧をUIに表示</color>
 
 == 回答フェーズ ==
-user -> frontend: 問題を選択
-frontend -> frontend: 質問詳細を表示
+user -> frontend: <color:red>問題を選択</color>
+frontend -> frontend: <color:red>質問詳細を表示</color>
 
-user -> frontend: 回答を入力\n送信ボタン
-frontend -> aController: POST /api/answers\n{userId, questionId, answer}\n+ Authorization: Bearer token
+user -> frontend: <color:red>回答を入力\n送信ボタン</color>
+frontend -> aController: <color:blue>POST /api/answers\n{userId, questionId, answer}\n+ Authorization: Bearer token</color>
 
-aController -> aService: submitAnswer(AnswerRequest)
+aController -> aService: <color:blue>submitAnswer(AnswerRequest)</color>
 
-aService -> repo: save(answer_entity)
-repo -> db: INSERT INTO answers\n(user_id, question_id, answer, ...)
-db --> repo: saved answer
+aService -> repo: <color:blue>save(answer_entity)</color>
+repo -> db: <color:blue>INSERT INTO answers\n(user_id, question_id, answer, ...)</color>
+db --> repo: <color:red>saved answer</color>
 
 note over repo, db
     自動タイムスタンプ記録
     created_at: 現在時刻
 end note
 
-repo --> aService: Answer entity
+repo --> aService: <color:red>Answer entity</color>
 aService --> aController: AnswerResponse\n{answerId, status: SUCCESS}
-aController --> frontend: 201 Created
+aController --> frontend: <color:red>201 Created</color>
 
 frontend -> frontend: 成功メッセージ表示
 frontend -> frontend: 次の問題へ
@@ -68,13 +68,13 @@ note over user, db
 end note
 
 == 進捗確認フェーズ ==
-user -> frontend: 「自分の回答」をクリック
-frontend -> qController: GET /api/answers/my?userId=X\n+ Authorization: Bearer token
-qController -> repo: findByUserId(userId)
-repo -> db: SELECT * FROM answers\nWHERE user_id = X
-db --> repo: List<Answer>
-repo --> qController: List<Answer>
-qController --> frontend: 200 OK\nanswers list
+user -> frontend: <color:red>「自分の回答」をクリック</color>
+frontend -> qController: <color:blue>GET /api/answers/my?userId=X\n+ Authorization: Bearer token</color>
+qController -> repo: <color:blue>findByUserId(userId)</color>
+repo -> db: <color:blue>SELECT * FROM answers\nWHERE user_id = X</color>
+db --> repo: <color:red>List<Answer></color>
+repo --> qController: <color:red>List<Answer></color>
+qController --> frontend: <color:red>200 OK\nanswers list</color>
 
 frontend -> frontend: 回答状況を表示
 frontend -> user: 完了状況を表示

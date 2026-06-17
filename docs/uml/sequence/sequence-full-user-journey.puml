@@ -2,6 +2,8 @@
 autonumber
 title アプリケーション全体フロー（ユーザージャーニー）
 
+' 色ルール: 赤 = データ受信・表示（ビュー入力、DB結果など）、青 = データ送信・API/DB 操作
+
 actor "新規ユーザー" as newUser
 participant "登録画面\n(Register)" as regScreen
 participant "UserController" as uController
@@ -25,52 +27,53 @@ newUser -> regScreen: ユーザー登録画面
 newUser -> regScreen: 社員ID/パスワード入力
 regScreen -> uController: POST /api/users\n{employeeId, name, password, roles}
 
-uController -> uService: createUser(UserRequest)
-uService -> uService: パスワードをハッシュ化
-uService -> db: INSERT INTO users
-db --> uService: User saved
-uService --> uController: UserResponse
-uController --> regScreen: 201 Created
-regScreen --> newUser: 登録完了メッセージ
+uController -> uService: <color:blue>④ createUser(UserRequest)</color>
+uService -> uService: <color:blue>⑤ パスワードをハッシュ化</color>
+uService -> db: <color:blue>⑥ INSERT INTO users</color>
+db --> uService: <color:red>⑦ User saved</color>
+uService --> uController: <color:red>⑧ UserResponse</color>
+uController --> regScreen: <color:red>⑨ 201 Created</color>
+regScreen --> newUser: <color:red>⑩ 登録完了メッセージ</color>
 
 == ログインフェーズ ==
-user -> loginScreen: ログイン画面
-user -> loginScreen: 社員ID/パスワード入力
-loginScreen -> authController: POST /api/auth/login
-authController -> authService: login(LoginRequest)
-authService -> db: SELECT FROM users\nWHERE employee_id = ?
-db --> authService: User entity
-authService -> authService: パスワード検証
-authService -> authService: JWT token生成
-authService --> authController: LoginResponse\n{token, ...}
-authController --> loginScreen: 200 OK
-loginScreen -> loginScreen: token を localStorage保存
-loginScreen --> user: ダッシュボードに遷移
+user -> loginScreen: <color:red>① ログイン画面</color>
+user -> loginScreen: <color:red>② 社員ID/パスワード入力</color>
+loginScreen -> authController: <color:blue>③ POST /api/auth/login</color>
+authController -> authService: <color:blue>④ login(LoginRequest)</color>
+authService -> db: <color:blue>⑤ SELECT FROM users\nWHERE employee_id = ?</color>
+db --> authService: <color:red>⑥ User entity</color>
+authService -> authService: <color:red>⑦ パスワード検証</color>
+authService -> authService: <color:blue>⑧ JWT token生成</color>
+authService --> authController: <color:red>⑨ LoginResponse\n{token, ...}</color>
+authController --> loginScreen: <color:red>⑩ 200 OK</color>
+loginScreen -> loginScreen: <color:blue>⑪ token を localStorage保存</color>
+loginScreen --> user: <color:blue>⑫ ダッシュボードに遷移</color>
 
 == メイン操作フェーズ ==
-user -> mainScreen: メイン画面表示
-mainScreen -> api: GET /api/themes\n+ Bearer token
-api -> db: SELECT FROM themes
-db --> api: themes
-api --> mainScreen: themes list
-mainScreen --> user: テーマ一覧表示
+user -> mainScreen: <color:red>① メイン画面表示</color>
+mainScreen -> api: <color:blue>② GET /api/themes\n+ Bearer token</color>
+api -> db: <color:blue>③ SELECT FROM themes</color>
+db --> api: <color:red>④ themes</color>
+api --> mainScreen: <color:red>⑤ themes list</color>
+mainScreen --> user: <color:red>⑥ テーマ一覧表示</color>
 
-user -> mainScreen: テーマ選択
-mainScreen -> api: GET /api/themes/{id}/questions
-api -> db: SELECT FROM questions
-db --> api: questions
-api --> mainScreen: questions list
-mainScreen --> user: 問題一覧表示
+user -> mainScreen: <color:red>⑦ テーマ選択</color>
+mainScreen -> api: <color:blue>⑧ GET /api/themes/{id}/questions</color>
+api -> db: <color:blue>⑨ SELECT FROM questions</color>
+db --> api: <color:red>⑩ questions</color>
+api --> mainScreen: <color:red>⑪ questions list</color>
+mainScreen --> user: <color:red>⑫ 問題一覧表示</color>
 
-user -> mainScreen: 問題選択
-mainScreen --> user: 問題詳細表示
+user -> mainScreen: <color:red>⑬ 問題選択</color>
+mainScreen --> user: <color:red>⑭ 問題詳細表示</color>
 
-user -> mainScreen: 回答入力・送信
-mainScreen -> api: POST /api/answers\n{userId, questionId, answer}
-api -> db: INSERT INTO answers
-db --> api: answer saved
-api --> mainScreen: 201 Created
-mainScreen --> user: 成功メッセージ
+user -> mainScreen: <color:red>⑮ 回答入力・送信</color>
+mainScreen -> api: <color:blue>⑯ POST /api/answers</color>
+mainScreen -> api: <color:blue>{userId, questionId, answer}</color>
+api -> db: <color:blue>⑰ INSERT INTO answers</color>
+db --> api: <color:red>⑱ answer saved</color>
+api --> mainScreen: <color:red>⑲ 201 Created</color>
+mainScreen --> user: <color:red>⑳ 成功メッセージ</color>
 
 == 管理者フェーズ ==
 note over admin
@@ -78,14 +81,15 @@ note over admin
     管理者が進捗確認
 end note
 
-admin -> adminScreen: 管理者コンソール
-adminScreen -> progressApi: GET /api/admin/progress
-progressApi -> db: SELECT questions\n+ 各問題の完了者/未完了者
-db --> progressApi: progress data
-progressApi --> adminScreen: progress list
-adminScreen --> admin: 進捗表示\n（表/グラフ）
+admin -> adminScreen: <color:red>① 管理者コンソール</color>
+adminScreen -> progressApi: <color:blue>② GET /api/admin/progress</color>
+progressApi -> db: <color:blue>③ SELECT questions\n+ 各問題の完了者/未完了者</color>
+db --> progressApi: <color:red>④ progress data</color>
+progressApi --> adminScreen: <color:red>⑤ progress list</color>
+adminScreen --> admin: <color:red>⑥ 進捗表示\n（表/グラフ）</color>
 
-admin -> admin: 進捗を分析\nフォローアップ対象を確認
+admin -> admin: <color:red>⑦ 進捗を分析</color>
+admin -> admin: <color:red>⑧ フォローアップ対象を確認</color>
 
 note over newUser, admin
     定期的に上記フローを繰り返す

@@ -13,10 +13,10 @@ participant "Service" as service
 participant "Database" as db
 
 == ログイン後の認証付きリクエスト ==
-user -> frontend: API呼び出し\n(例: 問題一覧取得)
+user -> frontend: <color:red>API呼び出し\n(例: 問題一覧取得)</color>
 
-frontend -> frontend: localStorage から token 取得
-frontend -> http: GET /api/themes\nAuthorization: Bearer eyJhbGc...
+frontend -> frontend: <color:blue>localStorage から token 取得</color>
+frontend -> http: <color:blue>GET /api/themes\nAuthorization: Bearer eyJhbGc...</color>
 
 note over http
     トークン形式:
@@ -24,41 +24,41 @@ note over http
 end note
 
 == JwtFilter による検証 ==
-http -> filter: HTTP Request 受け取り
-filter -> filter: Authorization ヘッダーを確認
+http -> filter: <color:blue>HTTP Request 受け取り</color>
+filter -> filter: <color:blue>Authorization ヘッダーを確認</color>
 
 alt トークンが存在
-    filter -> filter: Bearer プレフィックスを除去\nトークンを抽出
+    filter -> filter: <color:blue>Bearer プレフィックスを除去\nトークンを抽出</color>
     
-    filter -> jwtUtil: validateToken(token)
+    filter -> jwtUtil: <color:blue>validateToken(token)</color>
     
-    jwtUtil -> jwtUtil: 署名を検証\n(秘密鍵で)
+    jwtUtil -> jwtUtil: <color:blue>署名を検証\n(秘密鍵で)</color>
     
     alt 署名が有効
-        jwtUtil -> jwtUtil: 有効期限を確認
+        jwtUtil -> jwtUtil: <color:blue>有効期限を確認</color>
         
         alt トークンが期限内
-            jwtUtil -> jwtUtil: クレーム（employeeId等）を抽出
-            jwtUtil --> filter: true (有効)
+            jwtUtil -> jwtUtil: <color:blue>クレーム（employeeId等）を抽出</color>
+            jwtUtil --> filter: <color:red>true (有効)</color>
             
-            filter -> filter: employeeId をクレームから抽出
-            filter -> secContext: authentication を設定\nユーザー情報をセット
+            filter -> filter: <color:blue>employeeId をクレームから抽出</color>
+            filter -> secContext: <color:blue>authentication を設定\nユーザー情報をセット</color>
             
-            filter --> controller: リクエストを通す
+            filter --> controller: <color:blue>リクエストを通す</color>
             
         else トークンが期限切れ
-            jwtUtil --> filter: false (期限切れ)
-            filter --> http: 401 Unauthorized\n「トークンが期限切れです」
-            http --> frontend: 401 エラー
-            frontend -> frontend: ログイン画面へリダイレクト
-            frontend --> user: 再度ログイン
+            jwtUtil --> filter: <color:red>false (期限切れ)</color>
+            filter --> http: <color:red>401 Unauthorized\n「トークンが期限切れです」</color>
+            http --> frontend: <color:red>401 エラー</color>
+            frontend -> frontend: <color:blue>ログイン画面へリダイレクト</color>
+            frontend --> user: <color:red>再度ログイン</color>
         end
         
     else 署名が無効（改ざんされた）
-        jwtUtil --> filter: false (無効)
-        filter --> http: 401 Unauthorized\n「無効なトークン」
-        http --> frontend: 401 エラー
-        frontend --> user: エラーメッセージ表示
+        jwtUtil --> filter: <color:red>false (無効)</color>
+        filter --> http: <color:red>401 Unauthorized\n「無効なトークン」</color>
+        http --> frontend: <color:red>401 エラー</color>
+        frontend --> user: <color:red>エラーメッセージ表示</color>
     end
     
 else トークンが存在しない
@@ -75,14 +75,14 @@ note over controller, db
     ユーザー情報を取得可能
 end note
 
-controller -> service: ビジネスロジック実行
-service -> db: データベース アクセス
-db --> service: データ返却
-service --> controller: 結果返却
+controller -> service: <color:blue>ビジネスロジック実行</color>
+service -> db: <color:blue>データベース アクセス</color>
+db --> service: <color:red>データ返却</color>
+service --> controller: <color:red>結果返却</color>
 
-controller --> http: 200 OK\nレスポンス JSON
-http --> frontend: レスポンス
-frontend --> user: 画面に結果表示
+controller --> http: <color:red>200 OK\nレスポンス JSON</color>
+http --> frontend: <color:red>レスポンス</color>
+frontend --> user: <color:red>画面に結果表示</color>
 
 '② エンドポイント設計
 legend right

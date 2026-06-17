@@ -11,28 +11,28 @@ participant "JdbcTemplate" as jdbc
 participant "Database" as db
 
 == 進捗画面初期化 ==
-admin -> frontend: 管理者コンソール\n「進捗確認」をクリック
-frontend -> pController: GET /api/admin/progress\n+ Authorization: Bearer admin_token
+admin -> frontend: <color:red>① 管理者コンソール\n「進捗確認」をクリック</color>
+frontend -> pController: <color:blue>② GET /api/admin/progress\n+ Authorization: Bearer admin_token</color>
 
-pController -> pService: getProgress()
+pController -> pService: <color:blue>③ getProgress()</color>
 
-pService -> qRepo: findAll()
-qRepo -> db: SELECT * FROM questions
-db --> qRepo: All Question entities
+pService -> qRepo: <color:blue>④ findAll()</color>
+qRepo -> db: <color:blue>⑤ SELECT * FROM questions</color>
+db --> qRepo: <color:red>⑥ All Question entities</color>
 
-pService -> pService: 各問題ごとに処理開始
+pService -> pService: <color:blue>⑦ 各問題ごとに処理開始</color>
 
 loop 全問題分繰り返し
     
-    pService -> jdbc: 未完了ユーザーを取得
-    jdbc -> db: SELECT u.name FROM users u\nWHERE UPPER(u.roles) = 'USER'\nAND u.user_id NOT IN (\n  SELECT a.user_id FROM answers a\n  WHERE a.question_id = ? AND a.user_id IS NOT NULL\n)
-    db --> jdbc: uncompletedUsers list
+    pService -> jdbc: <color:blue>⑧ 未完了ユーザーを取得</color>
+    jdbc -> db: <color:blue>⑨ SELECT u.name FROM users u\nWHERE UPPER(u.roles) = 'USER'\nAND u.user_id NOT IN (\n  SELECT a.user_id FROM answers a\n  WHERE a.question_id = ? AND a.user_id IS NOT NULL\n)</color>
+    db --> jdbc: <color:red>⑩ uncompletedUsers list</color>
     
-    pService -> jdbc: 完了ユーザー数を取得
-    jdbc -> db: SELECT COUNT(DISTINCT a.user_id)\nFROM answers a\nJOIN users u ON a.user_id = u.user_id\nWHERE a.question_id = ?\nAND UPPER(u.roles) = 'USER'
-    db --> jdbc: answeredCount
+    pService -> jdbc: <color:blue>⑪ 完了ユーザー数を取得</color>
+    jdbc -> db: <color:blue>⑫ SELECT COUNT(DISTINCT a.user_id)\nFROM answers a\nJOIN users u ON a.user_id = u.user_id\nWHERE a.question_id = ?\nAND UPPER(u.roles) = 'USER'</color>
+    db --> jdbc: <color:red>⑬ answeredCount</color>
     
-    pService -> pService: QuestionProgressDto に集約
+    pService -> pService: <color:blue>⑭ QuestionProgressDto に集約</color>
     note over pService
         {
           questionId: X,
