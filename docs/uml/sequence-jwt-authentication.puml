@@ -1,0 +1,87 @@
+@startuml JWT認証フロー
+autonumber
+title JWT トークン検証・認証フロー
+
+actor User as user
+participant "Frontend" as frontend
+participant "HTTP Request\n(Authorization Header)" as http
+participant "JwtFilter" as filter
+participant "JwtUtil" as jwtUtil
+participant "SecurityContext" as secContext
+participant "Controller" as controller
+participant "Service" as service
+participant "Database" as db
+
+== ログイン後の認証付きリクエスト ==
+user -> frontend: API呼び出し\n(例: 問題一覧取得)
+
+frontend -> frontend: localStorage から token 取得
+frontend -> http: GET /api/themes\nAuthorization: Bearer eyJhbGc...
+
+note over http
+    トークン形式:
+    Bearer {JWT_TOKEN}
+end note
+
+== JwtFilter による検証 ==
+http -> filter: HTTP Request 受け取り
+filter -> filter: Authorization ヘッダーを確認
+
+alt トークンが存在
+    filter -> filter: Bearer プレフィックスを除去\nトークンを抽出
+    
+    filter -> jwtUtil: validateToken(token)
+    
+    jwtUtil -> jwtUtil: 署名を検証\n(秘密鍵で)
+    
+    alt 署名が有効
+        jwtUtil -> jwtUtil: 有効期限を確認
+        
+        alt トークンが期限内
+            jwtUtil -> jwtUtil: クレーム（employeeId等）を抽出
+            jwtUtil --> filter: true (有効)
+            
+            filter -> filter: employeeId をクレームから抽出
+            filter -> secContext: authentication を設定\nユーザー情報をセット
+            
+            filter --> controller: リクエストを通す
+            
+        else トークンが期限切れ
+            jwtUtil --> filter: false (期限切れ)
+            filter --> http: 401 Unauthorized\n「トークンが期限切れです」
+            http --> frontend: 401 エラー
+            frontend -> frontend: ログイン画面へリダイレクト
+            frontend --> user: 再度ログイン
+        end
+        
+    else 署名が無効（改ざんされた）
+        jwtUtil --> filter: false (無効)
+        filter --> http: 401 Unauthorized\n「無効なトークン」
+        http --> frontend: 401 エラー
+        frontend --> user: エラーメッセージ表示
+    end
+    
+else トークンが存在しない
+    filter --> http: 403 Forbidden\n\"Authorization ヘッダーが必要です\"
+    http --> frontend: 403 エラー
+    frontend --> user: ログイン画面へ
+end
+
+== 認証成功後の処理 ==
+note over controller, db
+    Authentication がセットされている
+    コントローラーから
+    @AuthenticationPrincipal で
+    ユーザー情報を取得可能
+end note
+
+controller -> service: ビジネスロジック実行
+service -> db: データベース アクセス
+db --> service: データ返却
+service --> controller: 結果返却
+
+controller --> http: 200 OK\nレスポンス JSON
+http --> frontend: レスポンス
+frontend --> user: 画面に結果表示
+
+@enduml

@@ -1,0 +1,96 @@
+@startuml 全体ユーザージャーニー
+autonumber
+title アプリケーション全体フロー（ユーザージャーニー）
+
+actor "新規ユーザー" as newUser
+participant "登録画面\n(Register)" as regScreen
+participant "UserController" as uController
+participant "UserService" as uService
+participant "Database" as db
+
+actor "既存ユーザー" as user
+participant "ログイン画面\n(Login)" as loginScreen
+participant "AuthController" as authController
+participant "AuthService" as authService
+
+participant "メイン画面\n(MainScreen)" as mainScreen
+participant "QuestionAPI\nAnswerAPI" as api
+
+actor Admin as admin
+participant "管理画面\n(AdminConsole)" as adminScreen
+participant "ProgressAPI" as progressApi
+
+== 登録フェーズ ==
+newUser -> regScreen: ユーザー登録画面
+newUser -> regScreen: 社員ID/パスワード入力
+regScreen -> uController: POST /api/users\n{employeeId, name, password, roles}
+
+uController -> uService: createUser(UserRequest)
+uService -> uService: パスワードをハッシュ化
+uService -> db: INSERT INTO users
+db --> uService: User saved
+uService --> uController: UserResponse
+uController --> regScreen: 201 Created
+regScreen --> newUser: 登録完了メッセージ
+
+== ログインフェーズ ==
+user -> loginScreen: ログイン画面
+user -> loginScreen: 社員ID/パスワード入力
+loginScreen -> authController: POST /api/auth/login
+authController -> authService: login(LoginRequest)
+authService -> db: SELECT FROM users\nWHERE employee_id = ?
+db --> authService: User entity
+authService -> authService: パスワード検証
+authService -> authService: JWT token生成
+authService --> authController: LoginResponse\n{token, ...}
+authController --> loginScreen: 200 OK
+loginScreen -> loginScreen: token を localStorage保存
+loginScreen --> user: ダッシュボードに遷移
+
+== メイン操作フェーズ ==
+user -> mainScreen: メイン画面表示
+mainScreen -> api: GET /api/themes\n+ Bearer token
+api -> db: SELECT FROM themes
+db --> api: themes
+api --> mainScreen: themes list
+mainScreen --> user: テーマ一覧表示
+
+user -> mainScreen: テーマ選択
+mainScreen -> api: GET /api/themes/{id}/questions
+api -> db: SELECT FROM questions
+db --> api: questions
+api --> mainScreen: questions list
+mainScreen --> user: 問題一覧表示
+
+user -> mainScreen: 問題選択
+mainScreen --> user: 問題詳細表示
+
+user -> mainScreen: 回答入力・送信
+mainScreen -> api: POST /api/answers\n{userId, questionId, answer}
+api -> db: INSERT INTO answers
+db --> api: answer saved
+api --> mainScreen: 201 Created
+mainScreen --> user: 成功メッセージ
+
+== 管理者フェーズ ==
+note over admin
+    別のタイミングで
+    管理者が進捗確認
+end note
+
+admin -> adminScreen: 管理者コンソール
+adminScreen -> progressApi: GET /api/admin/progress
+progressApi -> db: SELECT questions\n+ 各問題の完了者/未完了者
+db --> progressApi: progress data
+progressApi --> adminScreen: progress list
+adminScreen --> admin: 進捗表示\n（表/グラフ）
+
+admin -> admin: 進捗を分析\nフォローアップ対象を確認
+
+note over newUser, admin
+    定期的に上記フローを繰り返す
+    ユーザーは問題に回答
+    管理者は進捗を確認
+end note
+
+@enduml
