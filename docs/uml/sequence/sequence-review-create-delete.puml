@@ -1,0 +1,76 @@
+autonumber
+@startuml レビュー作成・削除フロー
+
+title レビュー作成/削除シーケンス（番号付け・色分け）
+
+actor User as user
+participant "Frontend\n(React/Vite)" as frontend
+participant "ReviewController" as reviewController
+participant "ReviewService" as reviewService
+participant "AnswerRepository" as answerRepo
+participant "UserRepository" as userRepo
+participant "ReviewRepository" as reviewRepo
+participant "Database" as db
+
+' 色ルール: 赤 = データを受け取る/返す、青 = データを渡す
+
+user -> frontend: <color:red>① レビュー入力 / 削除操作</color>
+alt レビュー作成
+    frontend -> reviewController: <color:blue>② POST /api/reviews?reviewerId={reviewerId}\n{answerId, comment}</color>
+    reviewController -> reviewService: <color:blue>③ createReview(reviewerId, ReviewRequest)</color>
+    reviewService -> answerRepo: <color:blue>④ findById(answerId)</color>
+    answerRepo -> db: <color:blue>⑤ SELECT * FROM answers WHERE answer_id = ?</color>
+    db --> answerRepo: <color:red>⑥ Answer entity</color>
+    reviewService -> userRepo: <color:blue>⑦ findById(reviewerId)</color>
+    userRepo -> db: <color:blue>⑧ SELECT * FROM users WHERE user_id = ?</color>
+    db --> userRepo: <color:red>⑨ User entity</color>
+    reviewService -> reviewRepo: <color:blue>⑩ save(Review)</color>
+    reviewRepo -> db: <color:blue>⑪ INSERT INTO reviews (...) VALUES (...)</color>
+    db --> reviewRepo: <color:red>⑫ Saved Review entity</color>
+    reviewService --> reviewController: <color:red>⑬ ReviewResponse</color>
+    reviewController --> frontend: <color:red>⑭ 201 Created</color>
+else レビュー削除
+    frontend -> reviewController: <color:blue>② DELETE /api/reviews/{reviewId}</color>
+    reviewController -> reviewService: <color:blue>③ deleteReview(reviewId)</color>
+    reviewService -> reviewRepo: <color:blue>④ deleteById(reviewId)</color>
+    reviewRepo -> db: <color:blue>⑤ DELETE FROM reviews WHERE review_id = ?</color>
+    reviewController --> frontend: <color:red>⑥ 204 No Content</color>
+end
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|レビュー画面|ReviewPanel.jsx|POST /api/reviews, DELETE /api/reviews/{reviewId}|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|answerId|Integer|回答ID|
+|input|comment|String|レビューコメント|
+|input|reviewerId|Integer|レビュアーID|
+|output|reviewId|Integer|レビューID|
+|output|reviewerName|String|レビュアー名|
+|output|createdAt|LocalDateTime|作成日時|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|レビュー入力|void|ユーザーが `answerId` と `comment` を入力してレビュー作成/削除を開始する。|ビュー入力|
+|2|ReviewController|createReview(Integer reviewerId, ReviewRequest request)|ReviewResponse|`POST /api/reviews?reviewerId={reviewerId}` のリクエストを受け取り、ReviewService.createReview を呼び出す。|レビュー登録 API 入口|
+|3|ReviewService|createReview(Integer reviewerId, ReviewRequest request)|ReviewResponse|`answerId` で Answer を検索し、`reviewerId` で User を検索する。両方存在すれば Review エンティティを生成して保存する。|レビュー作成処理|
+|4|AnswerRepository|findById(Integer answerId)|Optional<Answer>|データベースから対象の Answer を取得する。存在しない場合は例外につなげる。|Answer 取得|
+|5|UserRepository|findById(Integer reviewerId)|Optional<User>|データベースからレビュアー User を取得する。存在しない場合は例外につなげる。|User 取得|
+|6|ReviewRepository|save(Review)|Review|Review エンティティを保存し、保存済みエンティティを返す。|DB 挿入処理|
+|7|ReviewService|toResponse(Review review)|ReviewResponse|保存した Review を ReviewResponse に変換し、コントローラに返却する。|レスポンス生成|
+|8|ReviewController|createReview -> frontend|ReviewResponse|ReviewResponse をフロントに返却し、作成成功を通知する。|レスポンス返却|
+|9|ReviewController|deleteReview(Integer reviewId)|void|`DELETE /api/reviews/{reviewId}` のリクエストを受け取り、ReviewService.deleteReview を呼び出す。|レビュー削除 API 入口|
+|10|ReviewService|deleteReview(Integer reviewId)|void|ReviewRepository.deleteById を呼び出し、指定された Review を削除する。|レビュー削除処理|
+|11|ReviewRepository|deleteById(Integer reviewId)|void|データベースから指定 Review を削除する。|DB 削除処理|
+|12|ReviewController|deleteReview -> frontend|void|削除完了レスポンスを返却し、フロントに完了を通知する。|レスポンス返却|
+endlegend
+
+@enduml

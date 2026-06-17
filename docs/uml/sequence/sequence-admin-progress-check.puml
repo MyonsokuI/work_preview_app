@@ -1,0 +1,101 @@
+@startuml 管理者進捗確認フロー
+autonumber
+title 管理者による進捗確認シーケンス
+
+actor Admin as admin
+participant "Frontend\n(AdminConsole)" as frontend
+participant "ProgressController" as pController
+participant "ProgressService" as pService
+participant "QuestionRepository" as qRepo
+participant "JdbcTemplate" as jdbc
+participant "Database" as db
+
+== 進捗画面初期化 ==
+admin -> frontend: <color:red>① 管理者コンソール\n「進捗確認」をクリック</color>
+frontend -> pController: <color:blue>② GET /api/admin/progress\n+ Authorization: Bearer admin_token</color>
+
+pController -> pService: <color:blue>③ getProgress()</color>
+
+pService -> qRepo: <color:blue>④ findAll()</color>
+qRepo -> db: <color:blue>⑤ SELECT * FROM questions</color>
+db --> qRepo: <color:red>⑥ All Question entities</color>
+
+pService -> pService: <color:blue>⑦ 各問題ごとに処理開始</color>
+
+loop 全問題分繰り返し
+    
+    pService -> jdbc: <color:blue>⑧ 未完了ユーザーを取得</color>
+    jdbc -> db: <color:blue>⑨ SELECT u.name FROM users u\nWHERE UPPER(u.roles) = 'USER'\nAND u.user_id NOT IN (\n  SELECT a.user_id FROM answers a\n  WHERE a.question_id = ? AND a.user_id IS NOT NULL\n)</color>
+    db --> jdbc: <color:red>⑩ uncompletedUsers list</color>
+    
+    pService -> jdbc: <color:blue>⑪ 完了ユーザー数を取得</color>
+    jdbc -> db: <color:blue>⑫ SELECT COUNT(DISTINCT a.user_id)\nFROM answers a\nJOIN users u ON a.user_id = u.user_id\nWHERE a.question_id = ?\nAND UPPER(u.roles) = 'USER'</color>
+    db --> jdbc: <color:red>⑬ answeredCount</color>
+    
+    pService -> pService: <color:blue>⑭ QuestionProgressDto に集約</color>
+    note over pService
+        {
+          questionId: X,
+          answeredUserCount: Y,
+          uncompletedUsers: [名前1, 名前2, ...]
+        }
+    end note
+    
+end
+
+pService --> pController: List<QuestionProgressDto>
+pController --> frontend: 200 OK\nprogress list
+
+== 進捗表示 ==
+frontend -> frontend: 進捗情報をテーブル/カード形式でレンダリング
+
+frontend -> frontend: 各問題ごと表示:
+note over frontend
+  - 問題ID
+  - 完了者数/全員数
+  - 未完了者の名前リスト
+  - 進捗バー
+end note
+
+frontend --> admin: 進捗一覧を表示
+
+== 詳細確認（オプション） ==
+admin -> frontend: 特定の問題の「詳細」をクリック
+frontend -> frontend: 未完了者リストをハイライト
+admin --> admin: 未完了者を確認
+
+admin -> admin: フォローアップが必要な\nユーザーを特定
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|管理画面|AdminConsole.jsx|GET /api/admin/progress|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|Authorization|String|Bearer トークン|
+|output|progressList|List<QuestionProgressDto>|各問題の進捗データ|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|click progress|void|管理者が進捗確認ボタンをクリックし、API 呼び出しを開始する。|画面操作|
+|2|ProgressController|getProgress()|List<QuestionProgressDto>|GET /api/admin/progress を受け取り、ProgressService.getProgress を呼び出す。|API エンドポイント|
+|3|ProgressService|getProgress()|List<QuestionProgressDto>|QuestionRepository.findAll で全問題を取得し、各問題の未完了/完了情報を集計する。|進捗算出処理|
+|4|QuestionRepository|findAll()|List<Question>|DB から全問題を取得する。|問題取得|
+|5|JdbcTemplate|queryForList(...)|List<String>|未回答ユーザー名リストを SQL で取得する。|未完了ユーザー取得|
+|6|JdbcTemplate|queryForObject(...)|Integer|完了ユーザー数を SQL で取得する。|完了者数取得|
+|7|ProgressService|aggregate progress|QuestionProgressDto|各問題ごとの集計結果を DTO に詰める。|DTO 変換|
+|8|ProgressService|return list|List<QuestionProgressDto>|集計した進捗リストをコントローラに返す。|レスポンス生成|
+|9|ProgressController|return 200 OK|List<QuestionProgressDto>|進捗リストをフロントに返す。|レスポンス返却|
+|10|Frontend|render progress|void|受け取った進捗データをテーブル/カード形式で表示する。|画面表示|
+|11|Frontend|highlight detail|void|詳細表示をクリックした問題の未完了者リストをハイライトする。|詳細表示|
+|12|Admin|identify follow-up|void|未完了者を確認し、フォローアップ対象を特定する。|分析|
+endlegend
+
+@enduml

@@ -1,0 +1,143 @@
+@startuml 全体ユーザージャーニー
+autonumber
+title アプリケーション全体フロー（ユーザージャーニー）
+
+' 色ルール: 赤 = データ受信・表示（ビュー入力、DB結果など）、青 = データ送信・API/DB 操作
+
+actor "新規ユーザー" as newUser
+participant "登録画面\n(Register)" as regScreen
+participant "UserController" as uController
+participant "UserService" as uService
+participant "Database" as db
+
+actor "既存ユーザー" as user
+participant "ログイン画面\n(Login)" as loginScreen
+participant "AuthController" as authController
+participant "AuthService" as authService
+
+participant "メイン画面\n(MainScreen)" as mainScreen
+participant "QuestionAPI\nAnswerAPI" as api
+
+actor Admin as admin
+participant "管理画面\n(AdminConsole)" as adminScreen
+participant "ProgressAPI" as progressApi
+
+== 登録フェーズ ==
+newUser -> regScreen: ユーザー登録画面
+newUser -> regScreen: 社員ID/パスワード入力
+regScreen -> uController: POST /api/users\n{employeeId, name, password, roles}
+
+uController -> uService: <color:blue>④ createUser(UserRequest)</color>
+uService -> uService: <color:blue>⑤ パスワードをハッシュ化</color>
+uService -> db: <color:blue>⑥ INSERT INTO users</color>
+db --> uService: <color:red>⑦ User saved</color>
+uService --> uController: <color:red>⑧ UserResponse</color>
+uController --> regScreen: <color:red>⑨ 201 Created</color>
+regScreen --> newUser: <color:red>⑩ 登録完了メッセージ</color>
+
+== ログインフェーズ ==
+user -> loginScreen: <color:red>① ログイン画面</color>
+user -> loginScreen: <color:red>② 社員ID/パスワード入力</color>
+loginScreen -> authController: <color:blue>③ POST /api/auth/login</color>
+authController -> authService: <color:blue>④ login(LoginRequest)</color>
+authService -> db: <color:blue>⑤ SELECT FROM users\nWHERE employee_id = ?</color>
+db --> authService: <color:red>⑥ User entity</color>
+authService -> authService: <color:red>⑦ パスワード検証</color>
+authService -> authService: <color:blue>⑧ JWT token生成</color>
+authService --> authController: <color:red>⑨ LoginResponse\n{token, ...}</color>
+authController --> loginScreen: <color:red>⑩ 200 OK</color>
+loginScreen -> loginScreen: <color:blue>⑪ token を localStorage保存</color>
+loginScreen --> user: <color:blue>⑫ ダッシュボードに遷移</color>
+
+== メイン操作フェーズ ==
+user -> mainScreen: <color:red>① メイン画面表示</color>
+mainScreen -> api: <color:blue>② GET /api/themes\n+ Bearer token</color>
+api -> db: <color:blue>③ SELECT FROM themes</color>
+db --> api: <color:red>④ themes</color>
+api --> mainScreen: <color:red>⑤ themes list</color>
+mainScreen --> user: <color:red>⑥ テーマ一覧表示</color>
+
+user -> mainScreen: <color:red>⑦ テーマ選択</color>
+mainScreen -> api: <color:blue>⑧ GET /api/themes/{id}/questions</color>
+api -> db: <color:blue>⑨ SELECT FROM questions</color>
+db --> api: <color:red>⑩ questions</color>
+api --> mainScreen: <color:red>⑪ questions list</color>
+mainScreen --> user: <color:red>⑫ 問題一覧表示</color>
+
+user -> mainScreen: <color:red>⑬ 問題選択</color>
+mainScreen --> user: <color:red>⑭ 問題詳細表示</color>
+
+user -> mainScreen: <color:red>⑮ 回答入力・送信</color>
+mainScreen -> api: <color:blue>⑯ POST /api/answers</color>
+mainScreen -> api: <color:blue>{userId, questionId, answer}</color>
+api -> db: <color:blue>⑰ INSERT INTO answers</color>
+db --> api: <color:red>⑱ answer saved</color>
+api --> mainScreen: <color:red>⑲ 201 Created</color>
+mainScreen --> user: <color:red>⑳ 成功メッセージ</color>
+
+== 管理者フェーズ ==
+note over admin
+    別のタイミングで
+    管理者が進捗確認
+end note
+
+admin -> adminScreen: <color:red>① 管理者コンソール</color>
+adminScreen -> progressApi: <color:blue>② GET /api/admin/progress</color>
+progressApi -> db: <color:blue>③ SELECT questions\n+ 各問題の完了者/未完了者</color>
+db --> progressApi: <color:red>④ progress data</color>
+progressApi --> adminScreen: <color:red>⑤ progress list</color>
+adminScreen --> admin: <color:red>⑥ 進捗表示\n（表/グラフ）</color>
+
+admin -> admin: <color:red>⑦ 進捗を分析</color>
+admin -> admin: <color:red>⑧ フォローアップ対象を確認</color>
+
+note over newUser, admin
+    定期的に上記フローを繰り返す
+    ユーザーは問題に回答
+    管理者は進捗を確認
+end note
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|登録画面|Register.jsx|POST /api/users|
+|ログイン画面|Login.jsx|POST /api/auth/login|
+|メイン画面|MainScreen.jsx|GET /api/themes, GET /api/themes/{id}/questions, POST /api/answers|
+|管理画面|AdminConsole.jsx|GET /api/admin/progress|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|employeeId|Integer|ユーザー登録/ログインで使用される社員ID|
+|input|password|String|ユーザー登録/ログインで入力されるパスワード|
+|input|token|String|ログイン後に API へ付与される JWT トークン|
+|input|questionId|Integer|回答登録に使用される問題 ID|
+|output|LoginResponse|LoginResponse|ログイン成功時に返されるトークンとユーザー情報|
+|output|themes|List<ThemeResponse>|テーマ一覧のレスポンス|
+|output|questions|List<QuestionResponse>|問題一覧のレスポンス|
+|output|progressList|List<QuestionProgressDto>|管理者画面で表示する進捗データ|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|UserController|createUser(UserRequest)|UserResponse|POST /api/users を受け取り、UserService.createUser を呼び出してユーザー登録を行う。|ユーザー登録|
+|2|UserService|createUser(UserRequest)|UserResponse|パスワードをハッシュ化し、User エンティティを DB に保存する。|登録処理|
+|3|AuthController|login(LoginRequest)|LoginResponse|POST /api/auth/login を受け取り、AuthService.login を呼び出す。|ログイン処理|
+|4|AuthService|login(LoginRequest)|LoginResponse|社員IDでユーザー検索し、パスワード検証、JWT 生成を行う。|認証処理|
+|5|QuestionController|getAllThemes()|List<ThemeResponse>|GET /api/themes でテーマ一覧を取得し、画面へ返す。|テーマ取得|
+|6|QuestionService|getAllThemes()|List<ThemeResponse>|DB からテーマを読み込み、レスポンス DTO に変換する。|テーマ処理|
+|7|QuestionController|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|GET /api/themes/{id}/questions で問題一覧を取得する。|問題取得|
+|8|QuestionService|getQuestionsByTheme(Integer themeId)|List<QuestionResponse>|指定テーマの問題を DB から取得し、QuestionResponse に変換する。|問題処理|
+|9|AnswerController|submitAnswer(AnswerRequest)|AnswerResponse|POST /api/answers で回答情報を受け取り、回答を保存する。|回答登録|
+|10|AnswerService|saveAnswer(AnswerRequest)|Answer|回答を DB に挿入し、保存した回答を返す。|DB 保存|
+|11|ProgressController|getProgress()|List<QuestionProgressDto>|GET /api/admin/progress を受け取り、進捗集計を開始する。|進捗取得|
+|12|ProgressService|getProgress()|List<QuestionProgressDto>|全問題と未完了/完了状況を集計し、DTO リストを生成する。|進捗集計|
+|13|Frontend|redirect dashboard|void|ログイン成功後にユーザーをダッシュボードへ遷移させる。|画面遷移|
+|14|Frontend|render progress|void|管理者画面で進捗リストをテーブル/グラフで表示する。|画面表示|
+endlegend
+
+@enduml
