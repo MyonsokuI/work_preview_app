@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import QuestionTextField from "./QuestionTextField";
 import AnswerField from "./AnswerField";
 import ScheduleFields from "./ScheduleFields";
@@ -10,6 +10,8 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
     const [status, setStatus] = useState("draft");
     const [openAt, setOpenAt] = useState("");
     const [closeAt, setCloseAt] = useState("");
+    const [imagePath, setImagePath] = useState("");
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (currentQuestion) {
@@ -18,12 +20,19 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
             setStatus(currentQuestion.status || "draft");
             setOpenAt(currentQuestion.openAt?.substring(0, 16) || "");
             setCloseAt(currentQuestion.closeAt?.substring(0, 16) || "");
+            setImagePath(currentQuestion.imagePath || "");
         } else {
             setQuestionText("");
             setCorrectAnswer("");
             setStatus("draft");
             setOpenAt("");
             setCloseAt("");
+            setImagePath("");
+        }
+
+        // 別の問題へ切り替えたら、ファイル選択欄の表示もリセットする
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
         }
     }, [currentQuestion]);
 
@@ -35,6 +44,27 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
         );
     }
 
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            // 先ほど作成した ImageController のエンドポイントを叩く
+            const response = await fetch("http://localhost:8080/api/upload/question", {
+                method: "POST",
+                body: formData,
+            });
+            const path = await response.text();
+            setImagePath(path); // サーバーから返ってきたパスを保持
+            //console.log(path);
+        } catch (error) {
+            alert("画像のアップロードに失敗しましたにゃ");
+        }
+        console.log(imagePath);
+    };
     const handleDelete = () => {
         if (!currentQuestion.questionId) return; // 新規作成中の場合は何もしない
         onDelete(currentQuestion.pdfId, currentQuestion.questionId);
@@ -44,6 +74,7 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        console.log("送信データを確認:", { questionText, correctAnswer, imagePath });
         if (!questionText.trim() || !correctAnswer.trim()) {
             alert("必須項目です");
             return;
@@ -55,7 +86,8 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
             correctAnswer: correctAnswer.trim(),
             status,
             openAt: openAt || null,
-            closeAt: closeAt || null
+            closeAt: closeAt || null,
+            imagePath: imagePath || null
         });
     };
 
@@ -80,6 +112,24 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
                     setCloseAt={setCloseAt}
                 /> */}
 
+                {/* 画像添付エリア */}
+                <div style={{ marginTop: "10px" }}>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "bold", marginBottom: "5px" }}>
+                        問題画像（任意）
+                    </label>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                    />
+
+                    {imagePath && (
+                        <div style={{ marginTop: "10px" }}>
+                            <img src={"http://localhost:8080" + encodeURI(imagePath)} alt="Preview" style={{ maxWidth: "200px", borderRadius: "8px" }} />
+                        </div>
+                    )}
+                </div>
                 <div style={{
                     display: "flex",
                     justifyContent: "flex-end", // 💡 これを space-between から変更

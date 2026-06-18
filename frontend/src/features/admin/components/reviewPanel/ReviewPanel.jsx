@@ -11,6 +11,11 @@ export default function ReviewPanel({ questionId }) {
 
     const reviewerId = 1;
 
+    const getImageUrl = (path) => {
+        if (!path) return "";
+        return `http://localhost:8080${encodeURI(path)}`;
+    };
+
     // ----------------------
     // 回答取得（API統一版）
     // ----------------------
@@ -139,7 +144,25 @@ export default function ReviewPanel({ questionId }) {
                                 borderRadius: "6px"
                             }}
                         >
-                            {selectedAnswer.answerContent}
+                            <div style={{ whiteSpace: "pre-wrap", marginBottom: selectedAnswer.imagePath ? 10 : 0 }}>
+                                {selectedAnswer.answerContent}
+                            </div>
+
+                            {selectedAnswer.imagePath && (
+                                <div style={{ display: "flex", justifyContent: "center" }}>
+                                    <img
+                                        src={getImageUrl(selectedAnswer.imagePath)}
+                                        alt="回答画像"
+                                        style={{
+                                            maxWidth: "100%",
+                                            maxHeight: 280,
+                                            objectFit: "contain",
+                                            borderRadius: 8,
+                                            display: "block"
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <h4>レビュー履歴</h4>

@@ -11,7 +11,6 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     // モード判定: currentTheme があれば編集、なければ新規作成
     const isNewMode = !!(currentTheme && currentTheme.isNew);
 
-    console.log(currentTheme.status)
     useEffect(() => {
         if (currentTheme && !currentTheme.isNew) {
             setTitle(currentTheme.title || "");
