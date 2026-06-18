@@ -1,0 +1,41 @@
+autonumber
+@startuml ログアウトフロー
+
+title ユーザーログアウトシーケンス（番号付け・色分け）
+
+actor User as user
+participant "Frontend\n(React/Vite)" as frontend
+participant "AuthController" as authController
+
+' 色ルール: 赤 = データを受け取る（ビュー入力、レスポンスなど）、青 = データを渡す（POST/UPDATE等）
+
+user -> frontend: <color:red>① ログアウト操作</color>
+frontend -> authController: <color:blue>② POST /api/auth/logout</color>
+
+authController --> frontend: <color:red>③ 200 OK "ログアウトしました"</color>
+frontend -> frontend: <color:blue>④ localStorage から token/currentUser を削除</color>
+frontend --> user: <color:blue>⑤ ログイン画面へ遷移 / ログアウト完了表示</color>
+
+'② エンドポイント　設計する機能内で使用するページのエンドポイントを指定する。
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|ログイン画面|Login.jsx|POST /api/auth/logout|
+
+'③ インプット・アウトプット:ユーザーに提供する機能単位で記述する。
+|= input/output |= 変数名 |=型|=説明|
+|input|none|なし|ログアウトリクエスト|
+|output|message|String|"ログアウトしました"|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+　（メソッドが呼び出される条件、メソッド内での条件分岐、変数にはどのような値が入っているか）
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|AuthController|logout()|String|POST /api/auth/logout を受け取り、固定メッセージを返却する。|API エンドポイント処理|
+endlegend
+
+@enduml
