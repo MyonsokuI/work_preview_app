@@ -7,6 +7,7 @@ import MainContent from "../components/main_screen/MainContent";
 export default function MainScreen() {
   const navigate = useNavigate();
   const textareaRef = useRef(null);
+  const answerFileInputRef = useRef(null);
 
   // =========================
   // Safe styles
@@ -59,6 +60,7 @@ export default function MainScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [answerMap, setAnswerMap] = useState({});
   const [draftAnswer, setDraftAnswer] = useState("");
+  const [draftAnswerImagePath, setDraftAnswerImagePath] = useState("");
   const [saved, setSaved] = useState(false);
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isAnswersOpen, setIsAnswersOpen] = useState(false);
@@ -105,11 +107,18 @@ export default function MainScreen() {
       try {
         const data = await userApi.getMyAnswers(userId);
         const map = {};
-        (data || []).forEach((a) => {
-          const qid = a.questionId ?? a.question_id;
-          if (!qid) return;
-          map[String(qid)] = a;
-        });
+        if (Array.isArray(data)) {
+          data.forEach((a) => {
+            const qid = a.questionId ?? a.question_id;
+            if (!qid) return;
+            map[String(qid)] = {
+              answerId: a.answerId,
+              questionId: qid,
+              answerContent: a.answerContent ?? "",
+              imagePath: a.imagePath ?? "",
+            };
+          });
+        }
         setAnswerMap(map);
       } catch (e) {
         console.error(e);
@@ -144,6 +153,11 @@ export default function MainScreen() {
     setIsAnswersOpen(false);
     setIsModelOpen(false);
     setIsReviewOpen(false);
+    setDraftAnswerImagePath(answerMap[String(qid)]?.imagePath || "");
+
+    if (answerFileInputRef.current) {
+      answerFileInputRef.current.value = "";
+    }
   }, [activeQuestion, answerMap]);
 
   // =========================
@@ -168,13 +182,18 @@ export default function MainScreen() {
     if (!qid) return;
 
     try {
-      const res = await userApi.upsertAnswer(userId, qid, draftAnswer);
-
+      const res = await userApi.upsertAnswer(
+        userId,
+        qid,
+        draftAnswer,
+        draftAnswerImagePath
+      );
       setAnswerMap((prev) => ({
         ...prev,
         [String(qid)]: {
           answerId: res.answerId,
           answerContent: res.answerContent,
+          imagePath: res.imagePath || "",
         },
       }));
 
@@ -182,6 +201,26 @@ export default function MainScreen() {
       setTimeout(() => setSaved(false), 1200);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleAnswerImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/upload/answer", {
+        method: "POST",
+        body: formData,
+      });
+      const path = await response.text();
+      setDraftAnswerImagePath(path);
+    } catch (error) {
+      console.error(error);
+      alert("回答画像のアップロードに失敗しました");
     }
   };
 
@@ -254,11 +293,11 @@ export default function MainScreen() {
     ...styles.sidebar,
     width: isSidebarOpen ? 340 : 0,
     minWidth: isSidebarOpen ? 340 : 0,
-    padding: isSidebarOpen ? 10 : 0, 
+    padding: isSidebarOpen ? 10 : 0,
     borderRight: isSidebarOpen ? "1px solid #ddd" : "none",
-    overflowX: "hidden", 
+    overflowX: "hidden",
     overflowY: isSidebarOpen ? "auto" : "hidden",
-    visibility: isSidebarOpen ? "visible" : "hidden", 
+    visibility: isSidebarOpen ? "visible" : "hidden",
     transition: "width 0.25s ease, padding 0.25s ease, visibility 0.25s",
     position: "relative",
   };
@@ -266,9 +305,9 @@ export default function MainScreen() {
   // 三本線（☰）ボタン：常にサイドバーの右エッジの「外側」に配置
   const toggleButtonStyle = {
     position: "absolute",
-    left: isSidebarOpen ? 348 : 12, 
+    left: isSidebarOpen ? 348 : 12,
     top: 12,
-    zIndex: 1010, 
+    zIndex: 1010,
     width: 32,
     height: 32,
     display: "flex",
@@ -321,8 +360,11 @@ export default function MainScreen() {
       <MainContent
         activeQuestion={activeQuestion}
         textareaRef={textareaRef}
+        answerFileInputRef={answerFileInputRef}
         draftAnswer={draftAnswer}
         setDraftAnswer={setDraftAnswer}
+        draftAnswerImagePath={draftAnswerImagePath}
+        handleAnswerImageUpload={handleAnswerImageUpload}
         handleSave={handleSave}
         saved={saved}
         isModelOpen={isModelOpen}
@@ -338,7 +380,7 @@ export default function MainScreen() {
           ...styles,
           main: {
             ...(styles.main || {}),
-            paddingLeft: isSidebarOpen ? 20 : 56, 
+            paddingLeft: isSidebarOpen ? 20 : 56,
             paddingTop: 20,
             transition: "padding-left 0.25s ease",
           },

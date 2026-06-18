@@ -35,13 +35,14 @@ export const userApi = {
     /**
      * 3. 回答を新規登録・更新（共通upsert）するにゃ
      */
-    upsertAnswer: async (userId, questionId, content) => {
+    upsertAnswer: async (userId, questionId, content, imagePath = null) => {
         const res = await fetch(`${BASE_URL}/answers/upsert?userId=${userId}`, {
             method: "POST",
             headers: getAuthHeaders(),
             body: JSON.stringify({
                 questionId: questionId,
                 answerContent: content,
+                imagePath: imagePath || null,
             }),
         });
         if (!res.ok) throw new Error("回答の保存に失敗しましたにゃ");

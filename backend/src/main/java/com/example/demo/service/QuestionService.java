@@ -75,7 +75,7 @@ public class QuestionService {
         q.setCorrectAnswer(request.getCorrectAnswer());
         q.setOpenAt(request.getOpenAt());
         q.setCloseAt(request.getCloseAt());
-
+        q.setImagePath(request.getImagePath());
         // 💡 登録時のステータス決定ロジック（Themeと同じにゃ！）
         if ("draft".equalsIgnoreCase(request.getStatus())) {
             q.setStatus(ContentsStatus.DRAFT);
@@ -104,6 +104,7 @@ public class QuestionService {
         existing.setCorrectAnswer(request.getCorrectAnswer());
         existing.setOpenAt(request.getOpenAt());
         existing.setCloseAt(request.getCloseAt());
+        existing.setImagePath(request.getImagePath());
 
         // 💡 更新時のステータス決定ロジック
         if ("draft".equalsIgnoreCase(request.getStatus())) {
@@ -137,6 +138,8 @@ public class QuestionService {
         res.setStatus(q.getStatus());
         res.setOpenAt(q.getOpenAt());
         res.setCloseAt(q.getCloseAt());
+        res.setImagePath(q.getImagePath());
+
         return res;
     }
 }

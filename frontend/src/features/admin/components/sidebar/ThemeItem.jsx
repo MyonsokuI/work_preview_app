@@ -5,7 +5,7 @@ export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQues
         if (!text) return "";
         return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
     };
-    console.log(theme);
+
     return (
         <div className={styles.themeItem}>
             {/* 💡 ヘッダークリック時に「進捗画面を表示」を呼び出す */}

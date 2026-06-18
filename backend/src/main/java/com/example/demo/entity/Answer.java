@@ -32,6 +32,9 @@ public class Answer {
     @Column(columnDefinition = "TEXT")
     private String answerContent;
 
+    @Column(name = "image_path", length = 255)
+    private String imagePath;
+
     private LocalDateTime submittedAt;
 
     @CreatedDate

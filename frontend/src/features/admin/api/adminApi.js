@@ -55,21 +55,21 @@ export const adminApi = {
     },
 
     // --- 問題 (Questions) 関連 ---
-    async createQuestion(themeId, questionText = "新しい問題内容", correctAnswer = "模範解答") {
+    async createQuestion(questionData) {
         const response = await fetch(`${BASE_URL}/questions`, {
             method: "POST",
             headers: getAuthHeaders(),
-            body: JSON.stringify({ pdfId: themeId, questionText, correctAnswer }),
+            body: JSON.stringify(questionData),
         });
         if (!response.ok) throw new Error("問題の作成に失敗しました");
         return response.json();
     },
 
-    async updateQuestion(questionId, { questionText, correctAnswer, pdfId }) {
+    async updateQuestion(questionId, questionData) {
         const response = await fetch(`${BASE_URL}/questions/${questionId}`, {
             method: "PUT",
             headers: getAuthHeaders(),
-            body: JSON.stringify({ questionText, correctAnswer, pdfId }),
+            body: JSON.stringify(questionData),
         });
         if (!response.ok) throw new Error("問題の更新に失敗しました");
         return response.json();

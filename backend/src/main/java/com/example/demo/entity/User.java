@@ -9,6 +9,8 @@ import com.example.demo.entity.enums.Role;
 import com.example.demo.entity.enums.UserStatus;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
@@ -28,9 +30,13 @@ public class User {
     @Column(name = "employee_id")
     private Integer employeeId;
 
+    @NotBlank(message = "名前は必須です")
+    @Size(min = 1, max = 20, message = "名前は1文字以上20文字以内で入力してください")
     @Column(nullable = false, length = 100)
     private String name;
 
+    @NotBlank(message = "パスワードは必須です")
+    @Size(min = 1, max = 12, message = "パスワードは1桁以上12桁以下で入力してください")
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
