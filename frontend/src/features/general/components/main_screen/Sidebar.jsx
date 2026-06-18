@@ -13,40 +13,36 @@ export default function Sidebar(props) {
   const setUserId = props?.setUserId ?? (() => {});
   const statusFilter = props?.statusFilter ?? "all";
   const setStatusFilter = props?.setStatusFilter ?? (() => {});
-  const themes = props?.filteredThemes ?? []; // ← ここは「未フィルタ元 or フィルタ済み」どっちでもOK
+  const themes = props?.filteredThemes ?? [];
+
   const openThemes = props?.openThemes ?? new Set();
   const setOpenThemes = props?.setOpenThemes ?? (() => {});
+
   const answerMap = props?.answerMap ?? {};
   const handleSelectQuestion = props?.handleSelectQuestion ?? (() => {});
   const getProgress = props?.getProgress ?? (() => ({ done: 0, total: 0 }));
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
+
   const styles = props?.styles ?? {};
 
-  // =========================
-  // ⭐ 検索（フォルダ名＋問題文）
-  // =========================
+  // 親から管理されている開閉ステート
+  const isSidebarOpen = props?.isSidebarOpen ?? true;
+
   const query = searchQuery.trim().toLowerCase();
 
   const filtered = (themes || []).filter((theme) => {
     if (!query) return true;
 
-    // -------------------------
-    // フォルダ名（複数キー対応）
-    // -------------------------
-    const folderName =
-      (
-        theme.title ??
-        theme.themeTitle ??
-        theme.pdfTitle ??
-        theme.name ??
-        ""
-      ).toLowerCase();
+    const folderName = (
+      theme.title ??
+      theme.themeTitle ??
+      theme.pdfTitle ??
+      theme.name ??
+      ""
+    ).toLowerCase();
 
     const matchFolder = folderName.includes(query);
 
-    // -------------------------
-    // 問題文
-    // -------------------------
     const matchQuestion = (theme.questions || []).some((q) =>
       (q.questionText ?? "").toLowerCase().includes(query)
     );
@@ -55,58 +51,105 @@ export default function Sidebar(props) {
   });
 
   return (
-    <div style={styles.sidebar || {}}>
-      {/* 検索 */}
-      <div style={styles.topBar || {}}>
-        <input
-          style={styles.search || {}}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="フォルダ名・問題文で検索"
-        />
-
-        <button
-          onClick={() => {
-            localStorage.clear();
-            setUserId(null);
-          }}
-          style={styles.logout || {}}
-        >
-          ログアウト
-        </button>
-      </div>
-
-      {/* フィルター */}
-      <div style={styles.filterRow || {}}>
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setStatusFilter(f.key)}
+    <aside
+      style={{
+        ...styles.sidebar,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* isSidebarOpen が true の時だけ中身を出す。
+        これにより、width: 0 になった際のコンテンツの「はみ出し」を完全に遮断します。
+      */}
+      {isSidebarOpen && (
+        <>
+          {/* =========================
+              TOP BAR
+             ========================= */}
+          <div
             style={{
-              ...(styles.filterButton || {}),
-              background: statusFilter === f.key ? "#2563eb" : "#f3f4f6",
-              color: statusFilter === f.key ? "#fff" : "#111",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 40px 6px 6px", // 右側の三本線ボタンと重ならないように右パディングを広めに確保
             }}
           >
-            {f.label}
-          </button>
-        ))}
-      </div>
+            {/* 検索窓 */}
+            <input
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                border: "1px solid #ccc",
+                borderRadius: 6,
+              }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="検索"
+            />
 
-      {/* リスト */}
-      {filtered.map((theme) => (
-        <ThemeItem
-          key={theme.pdfId}
-          theme={theme}
-          openThemes={openThemes}
-          setOpenThemes={setOpenThemes}
-          answerMap={answerMap}
-          handleSelectQuestion={handleSelectQuestion}
-          getProgress={getProgress}
-          getProgressColor={getProgressColor}
-          styles={styles}
-        />
-      ))}
-    </div>
+            {/* ログアウト */}
+            <button
+              onClick={() => {
+                localStorage.clear();
+                setUserId(null);
+              }}
+              style={{
+                padding: "6px 8px",
+                border: "1px solid #ddd",
+                background: "#fff",
+                borderRadius: 6,
+                cursor: "pointer",
+              }}
+            >
+              ログアウト
+            </button>
+          </div>
+
+          {/* =========================
+              FILTER
+             ========================= */}
+          <div style={{ display: "flex", gap: 6, padding: 6 }}>
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                style={{
+                  padding: "6px 8px",
+                  borderRadius: 8,
+                  border: "1px solid #ddd",
+                  background: statusFilter === f.key ? "#2563eb" : "#f3f4f6",
+                  color: statusFilter === f.key ? "#fff" : "#111",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* =========================
+              LIST
+             ========================= */}
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {filtered.map((theme) => (
+              <ThemeItem
+                key={String(theme.pdfId)}
+                theme={theme}
+                openThemes={openThemes}
+                setOpenThemes={setOpenThemes}
+                answerMap={answerMap}
+                handleSelectQuestion={handleSelectQuestion}
+                getProgress={getProgress}
+                getProgressColor={getProgressColor}
+                styles={styles}
+                isCollapsed={false}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </aside>
   );
 }

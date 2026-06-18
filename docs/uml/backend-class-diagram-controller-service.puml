@@ -1,0 +1,176 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam ArrowColor #0066cc
+skinparam ArrowFontColor #0066cc
+skinparam classFontSize 12
+skinparam packageFontSize 14
+skinparam classFontName "Arial"
+skinparam packageFontName "Arial"
+top to bottom direction
+
+package "controller" {
+  class PdfController {
+    -PdfService pdfService
+    -QuestionService questionService
+    +PdfController(pdfService: PdfService, questionService: QuestionService)
+    +getThemes(): List<ThemeWithQuestionsResponse>
+    +getAdminThemes(): List<ThemeWithQuestionsResponse>
+    +createTheme(request: ThemeRequest): ThemeResponse
+    +updateTheme(id: Integer, request: ThemeRequest): ThemeResponse
+    +deleteTheme(id: Integer): void
+  }
+
+  class QuestionController {
+    -QuestionService questionService
+    +QuestionController(questionService: QuestionService)
+    +getQuestionsByTheme(themeId: Integer): List<QuestionResponse>
+    +getAllQuestions(): List<QuestionResponse>
+    +getQuestion(id: Integer): QuestionResponse
+    +createQuestion(request: QuestionRequest): QuestionResponse
+    +updateQuestion(id: Integer, question: QuestionRequest): QuestionResponse
+    +deleteQuestion(id: Integer): void
+  }
+
+  class AnswerController {
+    -AnswerService answerService
+    +AnswerController(answerService: AnswerService)
+    +createAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+    +updateAnswer(id: Integer, request: AnswerRequest): AnswerResponse
+    +getMyAnswers(userId: Integer): List<AnswerResponse>
+    +getAnswersByQuestion(questionId: Integer): List<AnswerResponse>
+    +upsertAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+  }
+
+  class UserController {
+    -UserService userService
+    +UserController(userService: UserService)
+    +createUser(request: UserRequest): UserResponse
+    +getUsers(): List<UserResponse>
+    +getUser(id: Integer): UserResponse
+  }
+
+  class AuthController {
+    -AuthService authService
+    +AuthController(authService: AuthService)
+    +login(request: LoginRequest): LoginResponse
+    +logout(): String
+  }
+
+  class ReviewController {
+    -ReviewService reviewService
+    +ReviewController(reviewService: ReviewService)
+    +createReview(reviewerId: Integer, request: ReviewRequest): ReviewResponse
+    +getReviewsByAnswer(answerId: Integer): List<ReviewResponse>
+    +deleteReview(reviewId: Integer): void
+  }
+
+  class ProgressController {
+    -QuestionRepository questionRepository
+    -JdbcTemplate jdbcTemplate
+    +getProgress(): List<QuestionProgressDto>
+  }
+}
+
+package "service" {
+  class PdfService {
+    -PdfRepository pdfRepository
+    +PdfService(pdfRepository: PdfRepository)
+    +getAllThemesForAdmin(): List<ThemeResponse>
+    +getPublicThemes(): List<ThemeResponse>
+    +createTheme(request: ThemeRequest): ThemeResponse
+    +updateTheme(id: Integer, request: ThemeRequest): ThemeResponse
+    +updateStatus(id: Integer, status: String): ThemeResponse
+    +deleteTheme(id: Integer): void
+  }
+
+  class QuestionService {
+    -QuestionRepository questionRepository
+    -PdfRepository pdfRepository
+    +QuestionService(questionRepository: QuestionRepository, pdfRepository: PdfRepository)
+    +getAllQuestions(): List<QuestionResponse>
+    +getQuestionsByTheme(themeId: Integer): List<QuestionResponse>
+    +getQuestion(id: Integer): QuestionResponse
+    +createQuestion(request: QuestionRequest): QuestionResponse
+    +updateQuestion(id: Integer, request: QuestionRequest): QuestionResponse
+    +deleteQuestion(id: Integer): void
+  }
+
+  class AnswerService {
+    -AnswerRepository answerRepository
+    -QuestionRepository questionRepository
+    -UserRepository userRepository
+    +AnswerService(answerRepository: AnswerRepository, questionRepository: QuestionRepository, userRepository: UserRepository)
+    +createAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+    +updateAnswer(id: Integer, request: AnswerRequest): AnswerResponse
+    +getMyAnswers(userId: Integer): List<AnswerResponse>
+    +getAnswersByQuestion(questionId: Integer): List<AnswerResponse>
+    +upsertAnswer(request: AnswerRequest, userId: Integer): AnswerResponse
+  }
+
+  class UserService {
+    -UserRepository userRepository
+    +UserService(userRepository: UserRepository)
+    +createUser(request: UserRequest): UserResponse
+    +getAllUsers(): List<UserResponse>
+    +getUser(id: Integer): UserResponse
+  }
+
+  class AuthService {
+    -UserRepository userRepository
+    -JwtUtil jwtUtil
+    +AuthService(userRepository: UserRepository, jwtUtil: JwtUtil)
+    +login(request: LoginRequest): LoginResponse
+  }
+
+  class ReviewService {
+    -ReviewRepository reviewRepository
+    -AnswerRepository answerRepository
+    -UserRepository userRepository
+    +ReviewService(reviewRepository: ReviewRepository, answerRepository: AnswerRepository, userRepository: UserRepository)
+    +createReview(reviewerId: Integer, request: ReviewRequest): ReviewResponse
+    +getReviewsByAnswer(answerId: Integer): List<ReviewResponse>
+    +deleteReview(reviewId: Integer): void
+  }
+}
+
+package "repository" {
+  interface PdfRepository
+  interface QuestionRepository
+  interface AnswerRepository
+  interface UserRepository
+  interface ReviewRepository
+}
+
+package "security" {
+  class JwtUtil
+}
+
+package "util" {
+  class StatusCalculator
+}
+
+PdfController --> PdfService
+PdfController --> QuestionService
+QuestionController --> QuestionService
+AnswerController --> AnswerService
+UserController --> UserService
+AuthController --> AuthService
+ReviewController --> ReviewService
+ProgressController --> QuestionRepository
+
+PdfService --> PdfRepository
+PdfService --> StatusCalculator
+QuestionService --> QuestionRepository
+QuestionService --> PdfRepository
+QuestionService --> StatusCalculator
+AnswerService --> AnswerRepository
+AnswerService --> QuestionRepository
+AnswerService --> UserRepository
+ReviewService --> ReviewRepository
+ReviewService --> AnswerRepository
+ReviewService --> UserRepository
+UserService --> UserRepository
+AuthService --> UserRepository
+AuthService --> JwtUtil
+@enduml

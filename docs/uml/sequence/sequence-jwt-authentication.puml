@@ -1,0 +1,125 @@
+@startuml JWT認証フロー
+autonumber
+title JWT トークン検証・認証フロー
+
+actor User as user
+participant "Frontend" as frontend
+participant "HTTP Request\n(Authorization Header)" as http
+participant "JwtFilter" as filter
+participant "JwtUtil" as jwtUtil
+participant "SecurityContext" as secContext
+participant "Controller" as controller
+participant "Service" as service
+participant "Database" as db
+
+== ログイン後の認証付きリクエスト ==
+user -> frontend: <color:red>API呼び出し\n(例: 問題一覧取得)</color>
+
+frontend -> frontend: <color:blue>localStorage から token 取得</color>
+frontend -> http: <color:blue>GET /api/themes\nAuthorization: Bearer eyJhbGc...</color>
+
+note over http
+    トークン形式:
+    Bearer {JWT_TOKEN}
+end note
+
+== JwtFilter による検証 ==
+http -> filter: <color:blue>HTTP Request 受け取り</color>
+filter -> filter: <color:blue>Authorization ヘッダーを確認</color>
+
+alt トークンが存在
+    filter -> filter: <color:blue>Bearer プレフィックスを除去\nトークンを抽出</color>
+    
+    filter -> jwtUtil: <color:blue>validateToken(token)</color>
+    
+    jwtUtil -> jwtUtil: <color:blue>署名を検証\n(秘密鍵で)</color>
+    
+    alt 署名が有効
+        jwtUtil -> jwtUtil: <color:blue>有効期限を確認</color>
+        
+        alt トークンが期限内
+            jwtUtil -> jwtUtil: <color:blue>クレーム（employeeId等）を抽出</color>
+            jwtUtil --> filter: <color:red>true (有効)</color>
+            
+            filter -> filter: <color:blue>employeeId をクレームから抽出</color>
+            filter -> secContext: <color:blue>authentication を設定\nユーザー情報をセット</color>
+            
+            filter --> controller: <color:blue>リクエストを通す</color>
+            
+        else トークンが期限切れ
+            jwtUtil --> filter: <color:red>false (期限切れ)</color>
+            filter --> http: <color:red>401 Unauthorized\n「トークンが期限切れです」</color>
+            http --> frontend: <color:red>401 エラー</color>
+            frontend -> frontend: <color:blue>ログイン画面へリダイレクト</color>
+            frontend --> user: <color:red>再度ログイン</color>
+        end
+        
+    else 署名が無効（改ざんされた）
+        jwtUtil --> filter: <color:red>false (無効)</color>
+        filter --> http: <color:red>401 Unauthorized\n「無効なトークン」</color>
+        http --> frontend: <color:red>401 エラー</color>
+        frontend --> user: <color:red>エラーメッセージ表示</color>
+    end
+    
+else トークンが存在しない
+    filter --> http: 403 Forbidden\n\"Authorization ヘッダーが必要です\"
+    http --> frontend: 403 エラー
+    frontend --> user: ログイン画面へ
+end
+
+== 認証成功後の処理 ==
+note over controller, db
+    Authentication がセットされている
+    コントローラーから
+    @AuthenticationPrincipal で
+    ユーザー情報を取得可能
+end note
+
+controller -> service: <color:blue>ビジネスロジック実行</color>
+service -> db: <color:blue>データベース アクセス</color>
+db --> service: <color:red>データ返却</color>
+service --> controller: <color:red>結果返却</color>
+
+controller --> http: <color:red>200 OK\nレスポンス JSON</color>
+http --> frontend: <color:red>レスポンス</color>
+frontend --> user: <color:red>画面に結果表示</color>
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|全画面|AllPages|Authorization ヘッダー付き API 呼び出し| 
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|token|String|Bearer 形式の JWT トークン|
+|input|Authorization|String|HTTP Authorization ヘッダー|
+|output|Authentication|Authentication|SecurityContext に設定される認証情報|
+|output|response|JSON|API からのレスポンスデータ|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|read token|String|localStorage から JWT を取得する。|トークン取得|
+|2|Frontend|attach Authorization|void|Authorization ヘッダーに Bearer トークンを付与する。|ヘッダー付与|
+|3|HttpRequest|send request|Request|認証ヘッダー付き API リクエストを送信する。|HTTP 通信|
+|4|JwtFilter|doFilterInternal(...)|void|リクエストを受け取り Authorization ヘッダーの存在を確認する。|フィルタ処理|
+|5|JwtFilter|extractToken(String)|String|Bearer プレフィックスを除去してトークンを抽出する。|トークン抽出|
+|6|JwtUtil|validateToken(String token)|boolean|署名と有効期限を検証し、トークンの妥当性を判定する。|トークン検証|
+|7|JwtUtil|extractClaims(String token)|Claims|トークンからクレームを抽出する。|クレーム解析|
+|8|JwtFilter|setAuthentication(...)|void|SecurityContext に認証情報を設定する。|認証設定|
+|9|JwtFilter|chain.doFilter(...)|void|検証成功後、リクエストをコントローラーに渡す。|リクエスト継続|
+|10|JwtFilter|send 401/403|void|検証失敗時に 401/403 エラーを返す。|エラー応答|
+|11|Controller|handle request|Response|認証済みリクエストを受け取り、サービスメソッドを呼び出す。|コントローラー処理|
+|12|Service|execute business logic|Response|ビジネスロジックを実行し、データアクセスを行う。|サービス処理|
+|13|Database|query/save|Result|必要な DB 操作を実行する。|DB 参照/更新|
+|14|Service|return result|Response|処理結果をコントローラーに返す。|結果返却|
+|15|Controller|return response|Response|API レスポンスを HTTP 結果として返却する。|レスポンス返却|
+|16|Frontend|receive response|JSON|API レスポンスを受け取り、画面に表示する。|結果表示|
+endlegend
+
+@enduml
