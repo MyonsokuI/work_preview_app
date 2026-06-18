@@ -5,8 +5,11 @@ import general from "../../styles/General.module.css";
 export default function MainContent({
   activeQuestion,
   textareaRef,
+  answerFileInputRef,
   draftAnswer,
   setDraftAnswer,
+  draftAnswerImagePath,
+  handleAnswerImageUpload,
   handleSave,
   saved,
   isModelOpen,
@@ -30,6 +33,10 @@ export default function MainContent({
     wordBreak: "break-word",
   };
 
+  const questionImageUrl = activeQuestion?.imagePath
+    ? `http://localhost:8080${encodeURI(activeQuestion.imagePath)}`
+    : "";
+
   return (
     <div
       style={{
@@ -48,6 +55,30 @@ export default function MainContent({
             {activeQuestion.questionText ?? "無題の質問"}
           </h3>
 
+          {/* ===================== 問題画像 ===================== */}
+          {questionImageUrl && (
+            <div
+              style={{
+                marginTop: 12,
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={questionImageUrl}
+                alt="問題画像"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 320,
+                  objectFit: "contain",
+                  borderRadius: 8,
+                  display: "block",
+                }}
+              />
+            </div>
+          )}
+
           {/* ===================== 回答入力 ===================== */}
           <textarea
             ref={textareaRef}
@@ -59,6 +90,32 @@ export default function MainContent({
               minWidth: 0,
             }}
           />
+
+          <div style={{ marginTop: 10, marginBottom: 10 }}>
+            <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+              回答画像（任意）
+            </label>
+            <input
+              ref={answerFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAnswerImageUpload}
+            />
+            {draftAnswerImagePath && (
+              <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
+                <img
+                  src={`http://localhost:8080${encodeURI(draftAnswerImagePath)}`}
+                  alt="回答画像"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 240,
+                    objectFit: "contain",
+                    borderRadius: 8,
+                  }}
+                />
+              </div>
+            )}
+          </div>
 
           <button onClick={handleSave} className={general.primaryButton}>
             保存 {saved && "✔"}
@@ -100,10 +157,27 @@ export default function MainContent({
                   <div
                     key={a.answerId}
                     className={general.box}
-                    style={textWrapStyle}
+                    style={{ ...textWrapStyle, marginBottom: 12 }}
                   >
                     <strong>{a.userName ?? "匿名"}</strong>:{" "}
-                    {a.answerContent}
+                    <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>
+                      {a.answerContent}
+                    </div>
+                    {a.imagePath && (
+                      <div style={{ marginTop: 10, display: "flex", justifyContent: "center" }}>
+                        <img
+                          src={`http://localhost:8080${encodeURI(a.imagePath)}`}
+                          alt="他の回答画像"
+                          style={{
+                            maxWidth: "100%",
+                            maxHeight: 240,
+                            objectFit: "contain",
+                            borderRadius: 8,
+                            display: "block"
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))
               ))}

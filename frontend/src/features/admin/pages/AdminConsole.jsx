@@ -50,7 +50,16 @@ export default function AdminConsole() {
         setActiveQuestionId(null);
         setIsEditingTheme(false);   // 💡 編集モードON
         setActiveTab("edit");
-        setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
+        setCreatingQuestion({
+            isNew: true,
+            pdfId: themeId,
+            questionText: "",
+            correctAnswer: "",
+            status: "draft",
+            openAt: "",
+            closeAt: "",
+            imagePath: ""
+        });
     };
 
     // 共通の再取得用関数
@@ -72,12 +81,13 @@ export default function AdminConsole() {
                 correctAnswer: data.correctAnswer,
                 status: data.status,
                 openAt: data.openAt ? data.openAt + ":00" : null,
-                closeAt: data.closeAt ? data.closeAt + ":00" : null
+                closeAt: data.closeAt ? data.closeAt + ":00" : null,
+                imagePath: data.imagePath || null
             };
 
             const saved = data.isNew
-                ? await adminApi.createQuestion(body.pdfId, body.questionText, body.correctAnswer) // 💡 API経由で作成
-                : await adminApi.updateQuestion(data.questionId, body); // 💡 API経由で更新
+                ? await adminApi.createQuestion(body)
+                : await adminApi.updateQuestion(data.questionId, body);
 
             // UI状態の更新
             setThemes(themes.map(t => t.pdfId === body.pdfId ? {
