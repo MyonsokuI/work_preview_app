@@ -15,4 +15,5 @@ public class QuestionResponse {
     private ContentsStatus status;
     private LocalDateTime openAt;
     private LocalDateTime closeAt;
+    private String imagePath;
 }

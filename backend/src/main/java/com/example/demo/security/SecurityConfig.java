@@ -36,10 +36,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers("/api/upload/**").permitAll()
                         .requestMatchers("/api/themes/**").authenticated()
                         .requestMatchers("/api/answers/**").authenticated()
                         .requestMatchers("/api/questions/**").authenticated()
+                        .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter,

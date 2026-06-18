@@ -73,6 +73,7 @@ CREATE TABLE answers (
     user_id INTEGER,
     question_id INTEGER,
     answer_content TEXT,
+    image_path VARCHAR(255),
     submitted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
