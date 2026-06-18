@@ -49,6 +49,7 @@ Table answers {
   user_id int [ref: > users.user_id]
   question_id int [ref: > questions.question_id]
   answer_content text
+  answer_path varchar
   submitted_at timestamp
   created_at timestamp
   updated_at timestamp

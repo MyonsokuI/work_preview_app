@@ -1,5 +1,5 @@
 -- =====================================
--- DB Initialization Script (大文字版)
+-- DB Initialization Script (FIXED)
 -- PostgreSQL
 -- =====================================
 
@@ -7,7 +7,6 @@ DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS answers;
 DROP TABLE IF EXISTS questions;
 DROP TABLE IF EXISTS pdfs;
-DROP TABLE IF EXISTS pdf;
 DROP TABLE IF EXISTS users;
 
 -- =====================================
@@ -34,11 +33,7 @@ CREATE TABLE pdfs (
     uploader INTEGER,
     open_at TIMESTAMP,
     close_at TIMESTAMP,
-
-    -- デフォルト値を大文字に変更
-    status VARCHAR(20) DEFAULT 'DRAFT', 
-    -- DRAFT / SCHEDULED / PUBLISHED / CLOSED
-
+    status VARCHAR(20) DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
 
@@ -48,6 +43,11 @@ CREATE TABLE pdfs (
         ON DELETE SET NULL
 );
 
+CREATE INDEX idx_pdfs_uploader ON pdfs(uploader);
+
+-- =====================================
+-- 3. questions
+-- =====================================
 CREATE TABLE questions (
     question_id SERIAL PRIMARY KEY,
     pdf_id INTEGER,
@@ -55,8 +55,7 @@ CREATE TABLE questions (
     correct_answer TEXT,
     open_at TIMESTAMP,
     close_at TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'DRAFT', -- 大文字に変更
-
+    status VARCHAR(20) DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
 
@@ -68,11 +67,15 @@ CREATE TABLE questions (
 
 CREATE INDEX idx_questions_pdf_id ON questions(pdf_id);
 
+-- =====================================
+-- 4. answers
+-- =====================================
 CREATE TABLE answers (
     answer_id SERIAL PRIMARY KEY,
     user_id INTEGER,
     question_id INTEGER,
     answer_content TEXT,
+    answer_path VARCHAR(500),
     submitted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
@@ -94,6 +97,9 @@ CREATE UNIQUE INDEX idx_answers_user_question
 CREATE INDEX idx_answers_submitted_at
     ON answers(submitted_at);
 
+-- =====================================
+-- 5. reviews
+-- =====================================
 CREATE TABLE reviews (
     review_id SERIAL PRIMARY KEY,
     answer_id INTEGER,
@@ -114,9 +120,9 @@ CREATE TABLE reviews (
 
 CREATE INDEX idx_reviews_answer_id ON reviews(answer_id);
 
--- =========================
--- users (データを大文字に修正)
--- =========================
+-- =====================================
+-- users seed
+-- =====================================
 INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 (1, 10000001, 'admin', 'password', 'ACTIVE', 'ADMIN'),
 (2, 10000002, 'user1', 'hashed_user', 'ACTIVE', 'USER'),
@@ -129,11 +135,13 @@ INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 (9, 10000009, 'user8', 'pass123', 'INACTIVE', 'USER'),
 (10, 10000010, 'user9', 'pass123', 'ACTIVE', 'USER');
 
-SELECT setval('users_user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 1));
+SELECT setval('users_user_id_seq',
+    COALESCE((SELECT MAX(user_id) FROM users), 1)
+);
 
--- =========================
--- pdfs (データを大文字に修正)
--- =========================
+-- =====================================
+-- pdfs seed
+-- =====================================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
 (1, 'Java基礎', '/files/java_basic.pdf', 1, 'PUBLISHED'),
 (2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'PUBLISHED'),
@@ -141,11 +149,13 @@ INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
 (4, 'Spring Boot基礎', '/files/springboot_basic.pdf', 1, 'PUBLISHED'),
 (5, 'React基礎', '/files/react_basic.pdf', 1, 'PUBLISHED');
 
-SELECT setval('pdfs_pdf_id_seq', COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1));
+SELECT setval('pdfs_pdf_id_seq',
+    COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1)
+);
 
--- =========================
--- questions (データを大文字に修正)
--- =========================
+-- =====================================
+-- questions seed（元のまま維持）
+-- =====================================
 INSERT INTO questions (pdf_id, question_text, correct_answer, status, open_at, close_at) VALUES
 (1, 'Javaとは何か？', 'プログラミング言語', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
 (1, 'クラスとは何か？', 'オブジェクトの設計図', 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
@@ -168,11 +178,13 @@ INSERT INTO questions (pdf_id, question_text, correct_answer, status, open_at, c
 (5, 'Stateとは？', '状態管理', 'PUBLISHED', NULL, NULL),
 (5, 'Propsとは？', '親から渡される値', 'PUBLISHED', NULL, NULL);
 
-SELECT setval('questions_question_id_seq', COALESCE((SELECT MAX(question_id) FROM questions), 1));
+SELECT setval('questions_question_id_seq',
+    COALESCE((SELECT MAX(question_id) FROM questions), 1)
+);
 
--- =========================
--- answers
--- =========================
+-- =====================================
+-- answers seed（そのまま）
+-- =====================================
 INSERT INTO answers (user_id, question_id, answer_content, submitted_at)
 SELECT
     ((q.question_id + s.n) % 8) + 2,
@@ -184,8 +196,13 @@ CROSS JOIN (
     SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
 ) s;
 
-SELECT setval('answers_answer_id_seq', COALESCE((SELECT MAX(answer_id) FROM answers), 1));
+SELECT setval('answers_answer_id_seq',
+    COALESCE((SELECT MAX(answer_id) FROM answers), 1)
+);
 
+-- =====================================
+-- reviews seed
+-- =====================================
 INSERT INTO reviews (answer_id, reviewer_id, comment)
 SELECT
     answer_id,
@@ -194,4 +211,6 @@ SELECT
 FROM answers
 WHERE answer_id % 3 = 0;
 
-SELECT setval('reviews_review_id_seq', COALESCE((SELECT MAX(review_id) FROM reviews), 1));
+SELECT setval('reviews_review_id_seq',
+    COALESCE((SELECT MAX(review_id) FROM reviews), 1)
+);
