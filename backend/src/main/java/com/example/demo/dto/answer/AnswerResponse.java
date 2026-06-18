@@ -10,5 +10,6 @@ public class AnswerResponse {
     private Integer userId;
     private String userName;
     private String answerContent;
+    private String imagePath;
     private LocalDateTime submittedAt;
 }

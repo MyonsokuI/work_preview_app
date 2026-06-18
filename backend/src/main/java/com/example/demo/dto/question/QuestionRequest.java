@@ -24,4 +24,5 @@ public class QuestionRequest {
     private String status;
     private LocalDateTime openAt;
     private LocalDateTime closeAt;
+    private String imagePath;
 }

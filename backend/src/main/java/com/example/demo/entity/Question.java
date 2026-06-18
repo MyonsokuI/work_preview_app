@@ -43,6 +43,8 @@ public class Question {
 
     private LocalDateTime closeAt;
 
+    @Column(length = 255) // パスを保存するのに十分な長さ
+    private String imagePath; // 💡 これを追加するだけ！
     // 🚀 ここを追記にゃ！
     // 問題が消えたら、その問題に対する回答（answers）も残さずシュッと全消去するにゃ！
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)

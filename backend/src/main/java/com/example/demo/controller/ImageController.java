@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -17,18 +19,55 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class ImageController {
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/upload/question")
+    public ResponseEntity<String> uploadQuestionImage(@RequestParam("file") MultipartFile file) {
         try {
-            // ファイル名を安全に取得し、指定ディレクトリに保存
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            // 1. 日時フォーマットを作成（例: 20260618_143005）
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+            // 2. 元の拡張子を取得（例: .png）
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            // 3. ファイル名を結合
+            String fileName = timestamp + extension;
+
+            // 4. 保存先と保存処理（以下同じ）
             Path uploadPath = Paths.get("uploads/");
             if (!Files.exists(uploadPath))
                 Files.createDirectories(uploadPath);
 
             Files.copy(file.getInputStream(), uploadPath.resolve(fileName));
 
-            // 保存したパスを返す
+            return ResponseEntity.ok("/images/" + fileName);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("アップロード失敗にゃ");
+        }
+    }
+
+    @PostMapping("/upload/answer")
+    public ResponseEntity<String> uploadAnswerImage(@RequestParam("file") MultipartFile file) {
+        try {
+            // 問題画像と同じロジックで、日時ベースのファイル名に統一
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            String fileName = timestamp + extension;
+
+            Path uploadPath = Paths.get("uploads/");
+            if (!Files.exists(uploadPath))
+                Files.createDirectories(uploadPath);
+
+            Files.copy(file.getInputStream(), uploadPath.resolve(fileName));
+
             return ResponseEntity.ok("/images/" + fileName);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("アップロード失敗にゃ");
