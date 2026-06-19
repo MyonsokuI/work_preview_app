@@ -224,12 +224,20 @@ export default function MainScreen() {
     }
   };
 
+  const isQuestionAnswered = (question) => {
+    if (!question) return false;
+
+    const qid = question.questionId ?? question.question_id;
+    const answer = answerMap[String(qid)] || {};
+    const content = (answer.answerContent || "").trim();
+    const imagePath = (answer.imagePath || "").trim();
+
+    return content.length > 0 || imagePath.length > 0;
+  };
+
   const getProgress = (theme) => {
     const qs = theme.questions || [];
-    const done = qs.filter((q) => {
-      const qid = q.questionId ?? q.question_id;
-      return (answerMap[String(qid)]?.answerContent || "").trim().length > 0;
-    }).length;
+    const done = qs.filter((q) => isQuestionAnswered(q)).length;
 
     return { done, total: qs.length };
   };
@@ -243,41 +251,49 @@ export default function MainScreen() {
   // =========================
   // Filtering
   // =========================
-  const hideEmpty = searchQuery.trim().length > 0;
-
   const filteredThemes = themes
     .map((theme) => {
-      // 1. 質問を検索ワードで絞り込む
-      const filteredQuestions = (theme.questions || []).filter((q) => {
-        const qid = q.questionId ?? q.question_id;
-        const has = !!answerMap[String(qid)];
+      const searchText = searchQuery.trim().toLowerCase();
+      const themeTitle = (theme.title ?? "").toLowerCase();
+      const matchesThemeTitle = !searchText || themeTitle.includes(searchText);
 
-        // ステータスフィルターの判定
-        if (statusFilter === "completed" && !has) return false;
-        if (statusFilter === "uncompleted" && has) return false;
+      const visibleQuestions = (theme.questions || []).filter((q) => {
+        const questionText = (q.questionText ?? "").toLowerCase();
+        const matchesQuestionSearch =
+          !searchText || matchesThemeTitle || questionText.includes(searchText);
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "completed" && isQuestionAnswered(q)) ||
+          (statusFilter === "uncompleted" && !isQuestionAnswered(q));
 
-        // 検索ワードの判定
-        if (searchQuery) {
-          return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-        return true;
+        return matchesQuestionSearch && matchesStatus;
       });
-
-      // 2. テーマ自体を表示するかどうかの判定
-      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
 
       return {
         ...theme,
-        // 💡 修正：テーマタイトルがマッチしていれば全問題を表示、そうでなければ絞り込んだ質問を表示
-        questions: isThemeMatch ? (theme.questions || []) : filteredQuestions,
-        _count: isThemeMatch ? (theme.questions || []).length : filteredQuestions.length
+        questions: matchesThemeTitle ? (theme.questions || []).filter((q) => {
+          const matchesStatus =
+            statusFilter === "all" ||
+            (statusFilter === "completed" && isQuestionAnswered(q)) ||
+            (statusFilter === "uncompleted" && !isQuestionAnswered(q));
+          return matchesStatus;
+        }) : visibleQuestions,
+        _count: matchesThemeTitle
+          ? (theme.questions || []).filter((q) => {
+            const matchesStatus =
+              statusFilter === "all" ||
+              (statusFilter === "completed" && isQuestionAnswered(q)) ||
+              (statusFilter === "uncompleted" && !isQuestionAnswered(q));
+            return matchesStatus;
+          }).length
+          : visibleQuestions.length,
+        matchesThemeTitle,
       };
     })
     .filter((theme) => {
-      // 最終的に、テーマ名にマッチするか、または質問が残っているテーマだけを残す
-      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
-      return isThemeMatch || (theme._count ?? 0) > 0;
+      return theme.matchesThemeTitle || (theme._count ?? 0) > 0;
     });
+
   if (!userId) return <div>loading...</div>;
 
   const sortedThemes = [...filteredThemes].sort(

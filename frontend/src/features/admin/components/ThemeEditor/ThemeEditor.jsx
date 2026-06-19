@@ -26,7 +26,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
             setFileUrl("");
             setOpenAt("");
             setCloseAt("");
-            setStatus("draft");
+            setStatus("published");
         }
     }, [currentTheme]);
 

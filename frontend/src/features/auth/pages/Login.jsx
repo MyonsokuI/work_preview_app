@@ -75,7 +75,7 @@ export default function Login() {
                     />
                 </div>
                 <button type="submit" style={{ width: "100%", padding: "12px", backgroundColor: "#0066cc", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "16px", transition: "background-color 0.2s" }}>
-                    ログインするにゃ
+                    ログイン
                 </button>
             </form>
 
