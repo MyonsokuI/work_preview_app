@@ -23,8 +23,8 @@ public class ProgressController {
 
     @GetMapping("/progress")
     public List<QuestionProgressDto> getProgress() {
-        // 🚀 1. DBに登録されている「すべての問題」を愚直に全件取得するにゃ！
-        // これで追加・編集したばかりの問題も100%漏れなくリストに入ってくるにゃ！
+        // 🚀 1. DBに登録されている「すべての問題」を愚直に全件取得する！
+        // これで追加・編集したばかりの問題も100%漏れなくリストに入ってくる！
         List<Question> allQuestions = questionRepository.findAll();
         List<QuestionProgressDto> resultList = new ArrayList<>();
 
@@ -32,7 +32,7 @@ public class ProgressController {
             QuestionProgressDto dto = new QuestionProgressDto();
             dto.setQuestionId(q.getQuestionId());
 
-            // 💡 2. 未完了の受講生リストをSQLで取得（大文字・小文字のブレもUPPERで防衛にゃ！）
+            // 💡 2. 未完了の受講生リストをSQLで取得（大文字・小文字のブレもUPPERで防衛！）
             String uncompletedSql = "SELECT u.name FROM users u " +
                     "WHERE UPPER(u.roles) = 'USER' " +
                     "AND u.user_id NOT IN (" +
@@ -42,7 +42,7 @@ public class ProgressController {
             List<String> uncompletedUsers = jdbcTemplate.queryForList(uncompletedSql, String.class, q.getQuestionId());
             dto.setUncompletedUsers(uncompletedUsers);
 
-            // 💡 3. 完了した人数をSQLで綺麗に数えるにゃ！
+            // 💡 3. 完了した人数をSQLで綺麗に数える！
             String answeredSql = "SELECT COUNT(DISTINCT a.user_id) FROM answers a " +
                     "JOIN users u ON a.user_id = u.user_id " +
                     "WHERE a.question_id = ? AND UPPER(u.roles) = 'USER'";
@@ -50,7 +50,7 @@ public class ProgressController {
             dto.setAnsweredUserCount(answeredCount != null ? answeredCount : 0);
 
             // 🚀 【ここが分母の決定打！】
-            // 「一般ユーザーの総数」を確実に割り出してDTOに入れるにゃ！
+            // 「一般ユーザーの総数」を確実に割り出してDTOに入れる！
             String totalUserSql = "SELECT COUNT(*) FROM users WHERE UPPER(roles) = 'USER'";
             Integer totalCount = jdbcTemplate.queryForObject(totalUserSql, Integer.class);
             dto.setTotalUserCount(totalCount != null ? totalCount : 0);

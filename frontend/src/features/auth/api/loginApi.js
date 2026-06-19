@@ -2,7 +2,7 @@ const BASE_URL = "http://localhost:8080/api/auth";
 
 export const authApi = {
     /**
-     * 社員IDとパスワードを送信してログイン認証を行いますにゃ
+     * 社員IDとパスワードを送信してログイン認証を行います
      * @param {number} EmployeeId
      * @param {string} password 
      * @returns {Promise<Object>} ログインに成功したユーザーデータ (employeeId, name, status)
@@ -20,7 +20,7 @@ export const authApi = {
         });
 
         if (!response.ok) {
-            throw new Error("社員IDまたはパスワードが違いますにゃ");
+            throw new Error("社員IDまたはパスワードが違います");
         }
 
         return await response.json();

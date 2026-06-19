@@ -20,20 +20,20 @@ export const adminApi = {
         return response.json();
     },
 
-    // 💡 拡張：引数をオブジェクト (themeData) で受け取るように変更にゃ！
+    // 💡 拡張：引数をオブジェクト (themeData) で受け取るように変更！
     // themeData の中身のイメージ： { title, status, openAt, closeAt }
     async createTheme(themeData) {
         const response = await fetch(`${BASE_URL}/themes`, {
             method: "POST",
             headers: getAuthHeaders(),
-            // Java側の ThemeRequest にそのままマッピングできるようにJSON化するにゃ🐾
+            // Java側の ThemeRequest にそのままマッピングできるようにJSON化する🐾
             body: JSON.stringify(themeData),
         });
         if (!response.ok) throw new Error("テーマの作成に失敗しました");
         return response.json();
     },
 
-    // 💡 拡張：更新時もタイトルだけでなく、時間やステータスもまとめて更新できるように変更にゃ！
+    // 💡 拡張：更新時もタイトルだけでなく、時間やステータスもまとめて更新できるように変更！
     // themeData の中身のイメージ： { title, status, openAt, closeAt }
     async updateTheme(themeId, themeData) {
         const response = await fetch(`${BASE_URL}/themes/${themeId}`, {

@@ -44,7 +44,7 @@ public class ImageController {
 
             return ResponseEntity.ok("/images/" + fileName);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("アップロード失敗にゃ");
+            return ResponseEntity.status(500).body("アップロード失敗");
         }
     }
 
@@ -70,7 +70,7 @@ public class ImageController {
 
             return ResponseEntity.ok("/images/" + fileName);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("アップロード失敗にゃ");
+            return ResponseEntity.status(500).body("アップロード失敗");
         }
     }
 }

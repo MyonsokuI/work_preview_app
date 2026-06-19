@@ -30,7 +30,7 @@ export default function Register() {
             navigate("/login");
         } catch (err) {
             console.error(err);
-            setMessage(err.message || "登録に失敗しましたにゃ");
+            setMessage(err.message || "登録に失敗しました");
         }
     };
 
@@ -104,16 +104,17 @@ const styles = {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "#f1f5f9",
+        backgroundColor: "#f8fafc",
         padding: "20px",
     },
     card: {
         width: "100%",
-        maxWidth: "400px",
+        maxWidth: "420px",
         backgroundColor: "#fff",
         padding: "32px",
         borderRadius: "16px",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+        border: "1px solid #dbe3ee",
+        boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
     },
     title: {
         textAlign: "center",

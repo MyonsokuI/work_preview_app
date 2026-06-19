@@ -73,6 +73,14 @@ export default function AdminConsole() {
         setActiveTab("progress"); // 💡 進捗タブを強制的に選択
         setCreatingQuestion(null); // 新規作成モードは解除
     };
+
+    const handleSelectTheme = (themeId) => {
+        setActiveThemeId(themeId);
+        setActiveQuestionId(null);
+        setCreatingQuestion(null);
+        setIsEditingTheme(false);
+    };
+
     const handleSaveQuestion = async (data) => {
         try {
             const body = {
@@ -98,10 +106,10 @@ export default function AdminConsole() {
             setCreatingQuestion(null);
             setActiveQuestionId(saved.questionId);
             await refreshThemes();
-            alert("保存完了しましたにゃ！");
+            alert("保存完了しました！");
         } catch (err) {
             console.error(err);
-            alert("保存に失敗しましたにゃ");
+            alert("保存に失敗しました");
         }
     };
 
@@ -113,7 +121,7 @@ export default function AdminConsole() {
         alert("ステータス更新しました");
     };
 
-    // handleDeleteQuestion も API を使うように修正するにゃ！
+    // handleDeleteQuestion も API を使うように修正する！
     const handleDeleteQuestion = async (tid, qid) => {
         if (!window.confirm("本当に削除しますか？")) return;
         try {
@@ -121,7 +129,7 @@ export default function AdminConsole() {
             setThemes(themes.map(t => t.pdfId === tid ? { ...t, questions: t.questions.filter(q => q.questionId !== qid) } : t));
             await refreshThemes();
         } catch (err) {
-            alert("削除失敗しましたにゃ");
+            alert("削除失敗しました");
         }
     };
 
@@ -188,10 +196,10 @@ export default function AdminConsole() {
             setActiveThemeId(null);
             setActiveQuestionId(null);
 
-            alert("テーマを削除しましたにゃ！");
+            alert("テーマを削除しました！");
         } catch (err) {
             console.error(err);
-            alert("テーマの削除に失敗しましたにゃ...");
+            alert("テーマの削除に失敗しました...");
         }
         await refreshThemes();
     };
@@ -226,6 +234,7 @@ export default function AdminConsole() {
                     setActiveQuestionId(qid);
                     setActiveTab(tab);
                 }}
+                onThemeSelect={handleSelectTheme}
                 onAddQuestion={handleStartAddQuestion}
                 onAddTheme={handleStartAddTheme}
                 onLogout={() => {
@@ -241,23 +250,23 @@ export default function AdminConsole() {
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto", minHeight: "100vh" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #e2e8f0", paddingBottom: "14px" }}>
                     {/* 💡 ここに開くボタンを配置 */}
                     {!isSidebarOpen && (
-                        <button onClick={() => setIsSidebarOpen(true)} style={{ cursor: "pointer" }}>
+                        <button onClick={() => setIsSidebarOpen(true)} style={{ cursor: "pointer", background: "#fff", border: "1px solid #dbe3ee", borderRadius: 10, padding: "8px 10px" }}>
                             ☰
                         </button>
                     )}
-                    <div style={{ fontSize: "14px", color: "#666", display: "flex", alignItems: "left", gap: "8px" }}>
+                    <div style={{ fontSize: "14px", color: "#64748b", display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 12px", borderRadius: 999 }}>
                         選択中：
-                        <strong>{currentTheme?.title || "テーマを選択してください"}</strong>
+                        <strong style={{ color: "#0f172a" }}>{currentTheme?.title || "テーマを選択してください"}</strong>
                     </div>
                     {currentTheme && (
                         <div style={{ display: "flex", gap: "8px" }}>
                             {/* テーマ設定ボタン */}
                             <button
                                 onClick={() => { setIsEditingTheme(true); setCreatingQuestion(null); setActiveTab(null); }}
-                                style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: isEditingTheme ? "#64748b" : "#fff", color: isEditingTheme ? "#fff" : "#333" }}
+                                style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: isEditingTheme ? "#0f172a" : "#fff", color: isEditingTheme ? "#fff" : "#334155", fontWeight: 700 }}
                             >
                                 ⚙️ テーマ編集
                             </button>
@@ -265,9 +274,9 @@ export default function AdminConsole() {
                             {/* 問題がある場合のみ表示されるタブ */}
                             {(currentTheme.questions?.length > 0 || creatingQuestion) && (
                                 <>
-                                    <button onClick={() => { setIsEditingTheme(false); setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "edit" && !isEditingTheme) ? "#0066cc" : "#fff", color: (activeTab === "edit" && !isEditingTheme) ? "#fff" : "#333" }}>📝 問題の編集</button>
-                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("review"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "review" && !isEditingTheme) ? "#a7a528" : "#fff", color: (activeTab === "review" && !isEditingTheme) ? "#fff" : "#333" }}>💬 レビュー</button>
-                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("progress"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "progress" && !isEditingTheme) ? "#28a745" : "#fff", color: (activeTab === "progress" && !isEditingTheme) ? "#fff" : "#333" }}>📊 進捗確認</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "edit" && !isEditingTheme) ? "#2563eb" : "#fff", color: (activeTab === "edit" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>📝 問題の編集</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("review"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "review" && !isEditingTheme) ? "#f59e0b" : "#fff", color: (activeTab === "review" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>💬 レビュー</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("progress"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "progress" && !isEditingTheme) ? "#16a34a" : "#fff", color: (activeTab === "progress" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>📊 進捗確認</button>
                                 </>
                             )}
                         </div>
@@ -287,12 +296,12 @@ export default function AdminConsole() {
                     />
                 ) : !currentTheme ? (
                     <div style={{ textAlign: "center", marginTop: "40px", color: "#999" }}>
-                        左側のリストからテーマを選択してにゃ。
+                        左側のリストからテーマを選択して。
                     </div>
                 ) : (!currentTheme.questions || currentTheme.questions.length === 0) && !creatingQuestion ? (
                     <div style={{ textAlign: "center", marginTop: "40px", color: "#666" }}>
                         このテーマにはまだ問題がありません。<br />
-                        サイドバーから「新しい問題を追加」するか、「テーマ設定」を調整してくださいにゃ！
+                        サイドバーから「新しい問題を追加」するか、「テーマ設定」を調整してください！
                     </div>
                 ) : (
                     <>

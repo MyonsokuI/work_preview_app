@@ -13,30 +13,87 @@ export default function MainScreen() {
   // Safe styles
   // =========================
   const baseStyles = {
-    wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif", overflow: "hidden" },
-    sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10, backgroundColor: "#fff" },
+    wrapper: {
+      display: "flex",
+      height: "100vh",
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      overflow: "hidden",
+      background: "#f8fafc",
+    },
+    sidebar: {
+      width: 340,
+      borderRight: "1px solid #e2e8f0",
+      padding: 12,
+      backgroundColor: "#fff",
+      boxShadow: "inset -1px 0 0 #f1f5f9",
+    },
     topBar: { display: "flex", gap: 8, marginBottom: 10 },
-    search: { flex: 1, padding: "6px 10px", border: "1px solid #ccc", borderRadius: 6 },
-    logout: { padding: "6px 10px", border: "1px solid #ddd", background: "#fff" },
-    filterRow: { display: "flex", gap: 8 },
-    filterButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" },
-    theme: {
-      padding: 10,
-      borderRadius: 6,
+    search: {
+      flex: 1,
+      padding: "10px 12px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+    },
+    logout: {
+      padding: "10px 12px",
+      border: "1px solid #dbe3ee",
+      background: "#fff",
+      borderRadius: 10,
       cursor: "pointer",
-      fontWeight: "bold",
+      color: "#334155",
+    },
+    filterRow: { display: "flex", gap: 8, padding: "0 4px 8px" },
+    filterButton: {
+      padding: "8px 12px",
+      borderRadius: 999,
+      border: "1px solid #dbe3ee",
+      background: "#f8fafc",
+      color: "#334155",
+      fontWeight: 600,
+    },
+    theme: {
+      padding: 14,
+      borderRadius: 12,
+      cursor: "pointer",
+      fontWeight: 700,
       justifyContent: "flex-start",
       textAlign: "left",
+      background: "#fff",
+      border: "1px solid #eef2ff",
+      marginBottom: 6,
     },
-    progressBg: { height: 4, background: "#eee", borderRadius: 10 },
-    progressBar: { height: 4, borderRadius: 10 },
-    progressText: { fontSize: 11, marginTop: 3, textAlign: "center" },
-    question: { padding: "6px 10px", fontSize: 13, cursor: "pointer" },
-    main: { flex: 1, padding: 20, overflowY: "auto" },
-    card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
-    textarea: { width: "100%", height: 120 },
-    save: { marginTop: 10, padding: "6px 14px", border: "1px solid #ccc" },
-    box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6 },
+    progressBg: { height: 6, background: "#eef2ff", borderRadius: 999 },
+    progressBar: { height: 6, borderRadius: 999 },
+    progressText: { fontSize: 11, marginTop: 4, marginBottom: 6, textAlign: "right", color: "#64748b" },
+    question: {
+      padding: "10px 12px",
+      fontSize: 13,
+      cursor: "pointer",
+      borderRadius: 10,
+      color: "#334155",
+      margin: "0 0 6px 12px",
+      background: "#f8fafc",
+    },
+    main: { flex: 1, padding: 28, overflowY: "auto", background: "#f8fafc" },
+    card: {
+      border: "1px solid #e2e8f0",
+      padding: 24,
+      borderRadius: 16,
+      background: "#fff",
+      boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+    },
+    textarea: {
+      width: "100%",
+      height: 150,
+      padding: 12,
+      borderRadius: 10,
+      border: "1px solid #cbd5e1",
+      resize: "vertical",
+      boxSizing: "border-box",
+    },
+    save: { marginTop: 10, padding: "10px 16px", border: "1px solid #cbd5e1" },
+    box: { background: "#f8fafc", padding: 12, marginTop: 8, borderRadius: 10, border: "1px solid #e2e8f0" },
   };
 
   const styles = baseStyles;
@@ -269,28 +326,28 @@ export default function MainScreen() {
         return matchesQuestionSearch && matchesStatus;
       });
 
+      const hasVisibleQuestions = visibleQuestions.length > 0;
+
+      const filteredByStatus = (theme.questions || []).filter((q) => {
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "completed" && isQuestionAnswered(q)) ||
+          (statusFilter === "uncompleted" && !isQuestionAnswered(q));
+        return matchesStatus;
+      });
+
       return {
         ...theme,
-        questions: matchesThemeTitle ? (theme.questions || []).filter((q) => {
-          const matchesStatus =
-            statusFilter === "all" ||
-            (statusFilter === "completed" && isQuestionAnswered(q)) ||
-            (statusFilter === "uncompleted" && !isQuestionAnswered(q));
-          return matchesStatus;
-        }) : visibleQuestions,
-        _count: matchesThemeTitle
-          ? (theme.questions || []).filter((q) => {
-            const matchesStatus =
-              statusFilter === "all" ||
-              (statusFilter === "completed" && isQuestionAnswered(q)) ||
-              (statusFilter === "uncompleted" && !isQuestionAnswered(q));
-            return matchesStatus;
-          }).length
-          : visibleQuestions.length,
+        questions: matchesThemeTitle ? filteredByStatus : visibleQuestions,
+        _count: matchesThemeTitle ? filteredByStatus.length : visibleQuestions.length,
         matchesThemeTitle,
+        hasVisibleQuestions,
       };
     })
     .filter((theme) => {
+      if (statusFilter !== "all") {
+        return theme.hasVisibleQuestions;
+      }
       return theme.matchesThemeTitle || (theme._count ?? 0) > 0;
     });
 

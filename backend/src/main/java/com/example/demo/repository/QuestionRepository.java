@@ -11,7 +11,7 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
 
     List<Question> findByPdf_PdfId(Integer pdfId);
 
-    // 🚀 フィールド名をエンティティ（questionId, answerId）に完全に合わせたにゃ！
+    // 🚀 フィールド名をエンティティ（questionId, answerId）に完全に合わせた！
     @Query("""
             SELECT new com.example.demo.dto.progress.QuestionProgressDto(
                 q.questionId,

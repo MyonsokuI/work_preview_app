@@ -39,7 +39,7 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
     if (!currentQuestion) {
         return (
             <div style={{ color: "#666", textAlign: "center", marginTop: "40px" }}>
-                左側から問題を選択してにゃ🐾
+                左側から問題を選択して🐾
             </div>
         );
     }
@@ -61,7 +61,7 @@ export default function QuestionEditor({ currentQuestion, onSave, onDelete, onCa
             setImagePath(path); // サーバーから返ってきたパスを保持
             //console.log(path);
         } catch (error) {
-            alert("画像のアップロードに失敗しましたにゃ");
+            alert("画像のアップロードに失敗しました");
         }
         console.log(imagePath);
     };

@@ -49,10 +49,10 @@ public class User {
     private Role roles;
 
     @CreatedDate
-    @Column(name = "created_at") // ★追加：ER図の新しい列にゃ
+    @Column(name = "created_at") // ★追加：ER図の新しい列
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at") // ★追加：ER図の新しい列にゃ
+    @Column(name = "updated_at") // ★追加：ER図の新しい列
     private LocalDateTime updatedAt;
 }

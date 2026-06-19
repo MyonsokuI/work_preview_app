@@ -9,11 +9,11 @@ public class QuestionProgressDto {
     private long totalUserCount;
     private List<String> uncompletedUsers;
 
-    // 🚀 【これが足りなかったにゃ！】デフォルトコンストラクタを追加
+    // 🚀 【これが足りなかった！】デフォルトコンストラクタを追加
     public QuestionProgressDto() {
     }
 
-    // ★JPQLの「SELECT new ...」に対応するコンストラクタ（残しておいて安全にゃ）
+    // ★JPQLの「SELECT new ...」に対応するコンストラクタ（残しておいて安全）
     public QuestionProgressDto(Integer questionId, long answeredUserCount) {
         this.questionId = questionId;
         this.answeredUserCount = answeredUserCount;

@@ -11,7 +11,7 @@ public class QuestionResponse {
     private String questionText;
     private String correctAnswer;
 
-    // 💡 フロントにステータスと時間を戻せるように追記にゃ！
+    // 💡 フロントにステータスと時間を戻せるように追記！
     private ContentsStatus status;
     private LocalDateTime openAt;
     private LocalDateTime closeAt;

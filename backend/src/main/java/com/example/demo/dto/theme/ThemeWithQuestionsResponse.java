@@ -11,7 +11,7 @@ import lombok.Data;
 public class ThemeWithQuestionsResponse {
   private Integer pdfId;
   private String title;
-  // 💡 こちらにもステータスと日時情報を追加にゃ！
+  // 💡 こちらにもステータスと日時情報を追加！
   private String fileUrl;
   private ContentsStatus status;
   private LocalDateTime openAt;

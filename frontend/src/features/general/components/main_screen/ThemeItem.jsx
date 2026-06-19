@@ -4,9 +4,9 @@ import pdfImage from "../../../../assets/pdf.jpeg";
 export default function ThemeItem(props) {
   const theme = props?.theme;
   const openThemes = props?.openThemes ?? new Set();
-  const setOpenThemes = props?.setOpenThemes ?? (() => {});
+  const setOpenThemes = props?.setOpenThemes ?? (() => { });
   const answerMap = props?.answerMap ?? {};
-  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => {});
+  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => { });
   const getProgress = props?.getProgress ?? (() => ({ done: 0, total: 0 }));
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
   const styles = props?.styles ?? {};
@@ -124,9 +124,13 @@ export default function ThemeItem(props) {
             <div
               key={qid}
               onClick={() => handleSelectQuestion(q)}
-              style={styles.question || {}}
+              style={{
+                ...(styles.question || {}),
+                borderLeft: doneFlag ? "3px solid #22c55e" : "3px solid transparent",
+                fontWeight: doneFlag ? 700 : 500,
+              }}
             >
-              📝
+              <span style={{ marginRight: 6 }}>📝</span>
 
               {/* 問題文（ellipsis） */}
               <span

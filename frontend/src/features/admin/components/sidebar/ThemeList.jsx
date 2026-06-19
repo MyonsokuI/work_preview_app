@@ -5,7 +5,8 @@ export default function ThemeList({
     themes,
     activeQuestionId,
     activeTab,
-    onSelect, // 追加
+    onSelect,
+    onThemeSelect,
     onAddQuestion,
     onDeleteQuestion,
     onThemeEdit
@@ -25,7 +26,8 @@ export default function ThemeList({
                     onToggle={handleToggle}
                     activeQuestionId={activeQuestionId}
                     activeTab={activeTab}
-                    onSelect={onSelect} // ここを修正
+                    onSelect={onSelect}
+                    onThemeSelect={onThemeSelect}
                     onAddQuestion={onAddQuestion}
                     onDeleteQuestion={onDeleteQuestion}
                     onThemeEdit={onThemeEdit}

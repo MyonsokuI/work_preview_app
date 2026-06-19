@@ -34,7 +34,7 @@ public class Question {
     @Column(columnDefinition = "TEXT")
     private String correctAnswer;
 
-    // 💡 ここから3つのフィールドを追記にゃ！
+    // 💡 ここから3つのフィールドを追記！
     @Column(length = 50)
     @Enumerated(EnumType.STRING)
     private ContentsStatus status; // DRAFT, SCHEDULED, PUBLISHED, CLOSED
@@ -45,8 +45,8 @@ public class Question {
 
     @Column(length = 255) // パスを保存するのに十分な長さ
     private String imagePath; // 💡 これを追加するだけ！
-    // 🚀 ここを追記にゃ！
-    // 問題が消えたら、その問題に対する回答（answers）も残さずシュッと全消去するにゃ！
+    // 🚀 ここを追記！
+    // 問題が消えたら、その問題に対する回答（answers）も残さずシュッと全消去する！
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers;
 

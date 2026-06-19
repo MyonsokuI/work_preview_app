@@ -70,6 +70,7 @@ export default function AdminSidebar(props) {
                     {...props}
                     themes={sortedThemes}
                     onSelect={props.onSelectQuestion}
+                    onThemeSelect={props.onThemeSelect}
                     onAddQuestion={props.onAddQuestion}
                     onDeleteQuestion={props.onDeleteQuestion}
                     onThemeEdit={props.onThemeEdit}

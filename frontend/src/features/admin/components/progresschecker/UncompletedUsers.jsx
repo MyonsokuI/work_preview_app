@@ -2,7 +2,7 @@ export default function UncompletedUsers({ uncompleted, isOpen, onToggle }) {
     if (!uncompleted.length) {
         return (
             <div style={{ color: "#28a745", fontSize: 12 }}>
-                ✨ 全員完了にゃ！
+                ✨ 全員完了！
             </div>
         );
     }

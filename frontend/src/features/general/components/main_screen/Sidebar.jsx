@@ -9,17 +9,17 @@ const FILTERS = [
 
 export default function Sidebar(props) {
   const searchQuery = props?.searchQuery ?? "";
-  const setSearchQuery = props?.setSearchQuery ?? (() => {});
-  const setUserId = props?.setUserId ?? (() => {});
+  const setSearchQuery = props?.setSearchQuery ?? (() => { });
+  const setUserId = props?.setUserId ?? (() => { });
   const statusFilter = props?.statusFilter ?? "all";
-  const setStatusFilter = props?.setStatusFilter ?? (() => {});
+  const setStatusFilter = props?.setStatusFilter ?? (() => { });
   const themes = props?.filteredThemes ?? [];
 
   const openThemes = props?.openThemes ?? new Set();
-  const setOpenThemes = props?.setOpenThemes ?? (() => {});
+  const setOpenThemes = props?.setOpenThemes ?? (() => { });
 
   const answerMap = props?.answerMap ?? {};
-  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => {});
+  const handleSelectQuestion = props?.handleSelectQuestion ?? (() => { });
   const getProgress = props?.getProgress ?? (() => ({ done: 0, total: 0 }));
   const getProgressColor = props?.getProgressColor ?? (() => "#ddd");
 
@@ -71,17 +71,18 @@ export default function Sidebar(props) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 6,
-              padding: "6px 40px 6px 6px", // 右側の三本線ボタンと重ならないように右パディングを広めに確保
+              gap: 8,
+              padding: "6px 40px 10px 6px",
             }}
           >
             {/* 検索窓 */}
             <input
               style={{
                 flex: 1,
-                padding: "6px 8px",
-                border: "1px solid #ccc",
-                borderRadius: 6,
+                padding: "10px 12px",
+                border: "1px solid #cbd5e1",
+                borderRadius: 10,
+                background: "#f8fafc",
               }}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,11 +96,13 @@ export default function Sidebar(props) {
                 setUserId(null);
               }}
               style={{
-                padding: "6px 8px",
-                border: "1px solid #ddd",
+                padding: "10px 12px",
+                border: "1px solid #dbe3ee",
                 background: "#fff",
-                borderRadius: 6,
+                borderRadius: 10,
                 cursor: "pointer",
+                color: "#334155",
+                fontWeight: 600,
               }}
             >
               ログアウト
@@ -109,19 +112,20 @@ export default function Sidebar(props) {
           {/* =========================
               FILTER
              ========================= */}
-          <div style={{ display: "flex", gap: 6, padding: 6 }}>
+          <div style={{ display: "flex", gap: 6, padding: "0 6px 8px" }}>
             {FILTERS.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setStatusFilter(f.key)}
                 style={{
-                  padding: "6px 8px",
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                  background: statusFilter === f.key ? "#2563eb" : "#f3f4f6",
-                  color: statusFilter === f.key ? "#fff" : "#111",
+                  padding: "8px 10px",
+                  borderRadius: 999,
+                  border: statusFilter === f.key ? "1px solid #2563eb" : "1px solid #dbe3ee",
+                  background: statusFilter === f.key ? "#2563eb" : "#f8fafc",
+                  color: statusFilter === f.key ? "#fff" : "#334155",
                   fontSize: 12,
                   cursor: "pointer",
+                  fontWeight: 700,
                 }}
               >
                 {f.label}
