@@ -127,7 +127,7 @@ CREATE INDEX idx_reviews_answer_id ON reviews(answer_id);
 -- =====================================
 INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 (1, 10000001, 'admin', 'password', 'ACTIVE', 'ADMIN'),
-(2, 10000002, 'user1', 'hashed_user', 'ACTIVE', 'USER'),
+(2, 10000002, 'user1', 'pass123', 'ACTIVE', 'USER'),
 (3, 10000003, 'user2', 'pass123', 'ACTIVE', 'USER'),
 (4, 10000004, 'user3', 'pass123', 'ACTIVE', 'USER'),
 (5, 10000005, 'user4', 'pass123', 'ACTIVE', 'USER'),
