@@ -155,11 +155,11 @@ SELECT setval('users_user_id_seq',
 -- seed pdfs
 -- =====================================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
-(1, 'Java基礎', '/files/java_basic.pdf', 1, 'PUBLISHED'),
-(2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'PUBLISHED'),
-(3, 'データベース設計', '/files/db_design.pdf', 1, 'PUBLISHED'),
-(4, 'Spring Boot基礎', '/files/springboot_basic.pdf', 1, 'PUBLISHED'),
-(5, 'React基礎', '/files/react_basic.pdf', 1, 'PUBLISHED');
+(1, 'Java基礎', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCZvSBkFjQnTKupDEQNOLWXAXQ_F0zf7nm5FnlDu8usahM?e=8CrlyI', 1, 'PUBLISHED'),
+(2, 'SQL基礎', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=083gmL', 1, 'PUBLISHED'),
+(3, 'データベース設計', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=uVLGAC', 1, 'PUBLISHED'),
+(4, 'Spring Boot基礎', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQAAMiNxJ6sNTon1hXZ5-wf2AfQ0MVwg_LZUTrbj0RdOjL4?e=wsux6w', 1, 'PUBLISHED'),
+(5, 'React基礎', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQD91ZcJqmbvSp70ujOJ96riAfSIzfEMPGwJzZm0MayreGs?e=ftZ1Hb', 1, 'PUBLISHED');
 
 SELECT setval('pdfs_pdf_id_seq',
     COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1)
