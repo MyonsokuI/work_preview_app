@@ -22,3 +22,7 @@ npm install
 
 # 開発用サーバーの起動
 npm run dev
+
+ログイン情報
+管理者id  id:10000001  password:password
+受講者id  id:10000002 ~ 10000010  password:pass123
