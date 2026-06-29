@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import com.example.demo.dto.progress.QuestionProgressDto;
 import com.example.demo.entity.Question;
 import com.example.demo.repository.QuestionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +14,14 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class ProgressController {
 
-    @Autowired
-    private QuestionRepository questionRepository;
+    private final QuestionRepository questionRepository;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+
+    ProgressController(JdbcTemplate jdbcTemplate, QuestionRepository questionRepository) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.questionRepository = questionRepository;
+    }
 
     @GetMapping("/progress")
     public List<QuestionProgressDto> getProgress() {
