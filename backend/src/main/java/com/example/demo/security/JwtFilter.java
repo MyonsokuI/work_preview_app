@@ -51,7 +51,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     }
 
-    // 🌟 これが正しい位置（if文の外、メソッドの中）に収まりましたにゃ！
+    // 🌟 これが正しい位置（if文の外、メソッドの中）に収まりました！
     filterChain.doFilter(request, response);
   }
 }

@@ -1,0 +1,142 @@
+autonumber
+@startuml テーマ・問題管理CRUDフロー
+
+title テーマ/問題管理シーケンス（番号付け・色分け）
+
+actor Admin as admin
+participant "Frontend\n(Admin UI)" as frontend
+participant "PdfController" as pdfController
+participant "PdfService" as pdfService
+participant "QuestionController" as questionController
+participant "QuestionService" as questionService
+participant "PdfRepository" as pdfRepo
+participant "QuestionRepository" as questionRepo
+participant "UserRepository" as userRepo
+participant "Database" as db
+
+' 色ルール: 赤 = データを受け取る/返す、青 = データを渡す
+
+admin -> frontend: <color:red>① 管理画面操作</color>
+
+alt テーマ作成
+    frontend -> pdfController: <color:blue>② POST /api/themes\n{title, fileUrl, status, openAt, closeAt}</color>
+    pdfController -> pdfService: <color:blue>③ createTheme(ThemeRequest, uploaderId)</color>
+    pdfService -> userRepo: <color:blue>④ findById(uploaderId)</color>
+    userRepo -> db: <color:blue>⑤ SELECT * FROM users WHERE user_id = ?</color>
+    db --> userRepo: <color:red>⑥ User entity</color>
+    pdfService -> pdfRepo: <color:blue>⑦ save(Pdf)</color>
+    pdfRepo -> db: <color:blue>⑧ INSERT INTO pdfs (...) VALUES (...)</color>
+    db --> pdfRepo: <color:red>⑨ Saved Pdf entity</color>
+    pdfService --> pdfController: <color:red>⑩ ThemeResponse</color>
+    pdfController --> frontend: <color:red>⑪ 201 Created</color>
+else テーマ更新
+    frontend -> pdfController: <color:blue>② PUT /api/themes/{id}\n{title, fileUrl, status, openAt, closeAt}</color>
+    pdfController -> pdfService: <color:blue>③ updateTheme(id, ThemeRequest, uploaderId)</color>
+    pdfService -> pdfRepo: <color:blue>④ findById(id)</color>
+    pdfRepo -> db: <color:blue>⑤ SELECT * FROM pdfs WHERE pdf_id = ?</color>
+    db --> pdfRepo: <color:red>⑥ Pdf entity</color>
+    pdfService -> userRepo: <color:blue>⑦ findById(uploaderId)</color>
+    userRepo -> db: <color:blue>⑧ SELECT * FROM users WHERE user_id = ?</color>
+    db --> userRepo: <color:red>⑨ User entity</color>
+    pdfService -> pdfRepo: <color:blue>⑩ save(Pdf)</color>
+    pdfRepo -> db: <color:blue>⑪ UPDATE pdfs SET ... WHERE pdf_id = ?</color>
+    db --> pdfRepo: <color:red>⑫ Updated Pdf entity</color>
+    pdfService --> pdfController: <color:red>⑬ ThemeResponse</color>
+    pdfController --> frontend: <color:red>⑭ 200 OK</color>
+else テーマ削除
+    frontend -> pdfController: <color:blue>② DELETE /api/themes/{id}</color>
+    pdfController -> pdfService: <color:blue>③ deleteTheme(id)</color>
+    pdfService -> pdfRepo: <color:blue>④ deleteById(id)</color>
+    pdfRepo -> db: <color:blue>⑤ DELETE FROM pdfs WHERE pdf_id = ?</color>
+    pdfController --> frontend: <color:red>⑥ 204 No Content</color>
+end
+
+' 問題管理フロー
+alt 問題作成
+    frontend -> questionController: <color:blue>⑫ POST /api/questions\n{pdfId, questionText, correctAnswer, status, openAt, closeAt}</color>
+    questionController -> questionService: <color:blue>⑬ createQuestion(QuestionRequest)</color>
+    questionService -> pdfRepo: <color:blue>⑭ findById(pdfId)</color>
+    pdfRepo -> db: <color:blue>⑮ SELECT * FROM pdfs WHERE pdf_id = ?</color>
+    db --> pdfRepo: <color:red>⑯ Pdf entity</color>
+    questionService -> questionRepo: <color:blue>⑰ save(Question)</color>
+    questionRepo -> db: <color:blue>⑱ INSERT INTO questions (...) VALUES (...)</color>
+    db --> questionRepo: <color:red>⑲ Saved Question entity</color>
+    questionService --> questionController: <color:red>⑳ QuestionResponse</color>
+    questionController --> frontend: <color:red>21 201 Created</color>
+else 問題更新
+    frontend -> questionController: <color:blue>⑫ PUT /api/questions/{id}\n{questionText, correctAnswer, status, openAt, closeAt}</color>
+    questionController -> questionService: <color:blue>⑬ updateQuestion(id, QuestionRequest)</color>
+    questionService -> questionRepo: <color:blue>⑭ findById(id)</color>
+    questionRepo -> db: <color:blue>⑮ SELECT * FROM questions WHERE question_id = ?</color>
+    db --> questionRepo: <color:red>⑯ Question entity</color>
+    questionService -> questionRepo: <color:blue>⑰ save(Question)</color>
+    questionRepo -> db: <color:blue>⑱ UPDATE questions SET ... WHERE question_id = ?</color>
+    db --> questionRepo: <color:red>⑲ Updated Question entity</color>
+    questionService --> questionController: <color:red>20 QuestionResponse</color>
+    questionController --> frontend: <color:red>21 200 OK</color>
+else 問題削除
+    frontend -> questionController: <color:blue>⑫ DELETE /api/questions/{id}</color>
+    questionController -> questionService: <color:blue>⑬ deleteQuestion(id)</color>
+    questionService -> questionRepo: <color:blue>⑭ deleteById(id)</color>
+    questionRepo -> db: <color:blue>⑮ DELETE FROM questions WHERE question_id = ?</color>
+    questionController --> frontend: <color:red>⑯ 204 No Content</color>
+end
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|管理画面|AdminConsole.jsx|POST /api/themes, PUT /api/themes/{id}, DELETE /api/themes/{id}, POST /api/questions, PUT /api/questions/{id}, DELETE /api/questions/{id}|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|title|String|テーマ名|
+|input|fileUrl|String|テーマファイルURL|
+|input|status|String|テーマ公開ステータス|
+|input|openAt|LocalDateTime|公開開始日時|
+|input|closeAt|LocalDateTime|公開終了日時|
+|input|questionText|String|問題文|
+|input|correctAnswer|String|正解|
+|output|pdfId|Integer|テーマID|
+|output|questionId|Integer|問題ID|
+|output|status|ContentsStatus|ステータス|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|テーマ管理操作|void|管理者がテーマの作成・更新・削除操作を開始する。|ビュー入力|
+|2|PdfController|createTheme(ThemeRequest request, Principal principal)|ThemeResponse|`POST /api/themes` を受け取り、Principal から uploaderId を取得して PdfService.createTheme を呼び出す。|テーマ作成 API 入口|
+|3|PdfService|createTheme(ThemeRequest request, Integer uploaderId)|ThemeResponse|User を取得し、Pdf エンティティを生成して status を計算し、保存して ThemeResponse を返す。|テーマ作成処理|
+|4|UserRepository|findById(Integer uploaderId)|Optional<User>|DB からアップロードユーザーを取得する。|User 取得|
+|5|PdfRepository|save(Pdf)|Pdf|テーマ情報を DB に保存し、保存済みエンティティを返す。|DB 挿入処理|
+|6|PdfController|createTheme -> frontend|ThemeResponse|ThemeResponse をフロントに返却し、作成結果を通知する。|レスポンス返却|
+|7|PdfController|updateTheme(Integer id, ThemeRequest request, Principal principal)|ThemeResponse|`PUT /api/themes/{id}` を受け取り、Principal から uploaderId を取得して PdfService.updateTheme を呼び出す。|テーマ更新 API 入口|
+|8|PdfService|updateTheme(Integer id, ThemeRequest request, Integer uploaderId)|ThemeResponse|既存 Pdf を取得し、更新内容を反映、Uploader を再設定し、保存して ThemeResponse を返す。|テーマ更新処理|
+|9|PdfRepository|findById(Integer id)|Optional<Pdf>|DB から対象テーマを取得する。|テーマ取得|
+|10|PdfRepository|save(Pdf)|Pdf|更新済みテーマを DB に保存し、保存済みエンティティを返す。|DB 更新処理|
+|11|PdfController|updateTheme -> frontend|ThemeResponse|ThemeResponse をフロントに返却し、更新結果を通知する。|レスポンス返却|
+|12|PdfController|deleteTheme(Integer id)|void|`DELETE /api/themes/{id}` を受け取り、PdfService.deleteTheme を呼び出す。|テーマ削除 API 入口|
+|13|PdfService|deleteTheme(Integer id)|void|PdfRepository.deleteById を呼び出し、対象テーマを DB から削除する。|テーマ削除処理|
+|14|PdfRepository|deleteById(Integer id)|void|DB から指定テーマを削除する。|DB 削除処理|
+|15|PdfController|deleteTheme -> frontend|void|削除完了レスポンスを返却し、削除結果を通知する。|レスポンス返却|
+|16|QuestionController|createQuestion(QuestionRequest request)|QuestionResponse|`POST /api/questions` を受け取り、QuestionService.createQuestion を呼び出す。|問題作成 API 入口|
+|17|QuestionService|createQuestion(QuestionRequest request)|QuestionResponse|Pdf を取得して存在確認し、Question エンティティを生成・保存し、QuestionResponse を返す。|問題作成処理|
+|18|PdfRepository|findById(Integer pdfId)|Optional<Pdf>|DB から対象テーマを取得する。|テーマ取得|
+|19|QuestionRepository|save(Question)|Question|問題を DB に保存し、保存済みエンティティを返す。|DB 挿入処理|
+|20|QuestionController|createQuestion -> frontend|QuestionResponse|QuestionResponse をフロントに返却し、作成結果を通知する。|レスポンス返却|
+|21|QuestionController|updateQuestion(Integer id, QuestionRequest request)|QuestionResponse|`PUT /api/questions/{id}` を受け取り、QuestionService.updateQuestion を呼び出す。|問題更新 API 入口|
+|22|QuestionService|updateQuestion(Integer id, QuestionRequest request)|QuestionResponse|既存 Question を取得し、更新内容を反映して保存し、QuestionResponse を返す。|問題更新処理|
+|23|QuestionRepository|findById(Integer id)|Optional<Question>|DB から対象 Question を取得する。|問題取得|
+|24|QuestionRepository|save(Question)|Question|更新済み問題を DB に保存し、保存済みエンティティを返す。|DB 更新処理|
+|25|QuestionController|updateQuestion -> frontend|QuestionResponse|QuestionResponse をフロントに返却し、更新結果を通知する。|レスポンス返却|
+|26|QuestionController|deleteQuestion(Integer id)|void|`DELETE /api/questions/{id}` を受け取り、QuestionService.deleteQuestion を呼び出す。|問題削除 API 入口|
+|27|QuestionService|deleteQuestion(Integer id)|void|QuestionRepository.deleteById を呼び出し、指定問題を DB から削除する。|問題削除処理|
+|28|QuestionRepository|deleteById(Integer id)|void|DB から指定問題を削除する。|DB 削除処理|
+|29|QuestionController|deleteQuestion -> frontend|void|削除完了レスポンスを返却し、削除結果を通知する。|レスポンス返却|
+endlegend
+
+@enduml

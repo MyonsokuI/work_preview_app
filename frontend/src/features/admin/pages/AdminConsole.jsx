@@ -16,6 +16,20 @@ export default function AdminConsole() {
     const [activeTab, setActiveTab] = useState("edit");
     const [creatingQuestion, setCreatingQuestion] = useState(null);
 
+    const styles = {
+        sidebar: {
+            width: 340,
+            borderRight: "1px solid #ddd",
+            flexShrink: 0 // サイドバーが縮まないようにする
+        },
+        main: {
+            flex: 1,
+            padding: "24px",
+            backgroundColor: "#fff",
+            overflowY: "auto",
+            minHeight: "100vh"
+        }
+    };
     // --- データ取得 ---
     useEffect(() => {
         const loadThemes = async () => {
@@ -36,15 +50,37 @@ export default function AdminConsole() {
         setActiveQuestionId(null);
         setIsEditingTheme(false);   // 💡 編集モードON
         setActiveTab("edit");
-        setCreatingQuestion({ isNew: true, pdfId: themeId, questionText: "", correctAnswer: "", status: "draft", openAt: "", closeAt: "" });
+        setCreatingQuestion({
+            isNew: true,
+            pdfId: themeId,
+            questionText: "",
+            correctAnswer: "",
+            status: "draft",
+            openAt: "",
+            closeAt: "",
+            imagePath: ""
+        });
     };
 
+    // 共通の再取得用関数
+    const refreshThemes = async () => {
+        const data = await adminApi.getThemes();
+        setThemes(data);
+    };
     // 新しいハンドラを作成
     const handleShowThemeProgress = (themeId) => {
         setActiveThemeId(themeId);
         setActiveTab("progress"); // 💡 進捗タブを強制的に選択
         setCreatingQuestion(null); // 新規作成モードは解除
     };
+
+    const handleSelectTheme = (themeId) => {
+        setActiveThemeId(themeId);
+        setActiveQuestionId(null);
+        setCreatingQuestion(null);
+        setIsEditingTheme(false);
+    };
+
     const handleSaveQuestion = async (data) => {
         try {
             const body = {
@@ -53,12 +89,13 @@ export default function AdminConsole() {
                 correctAnswer: data.correctAnswer,
                 status: data.status,
                 openAt: data.openAt ? data.openAt + ":00" : null,
-                closeAt: data.closeAt ? data.closeAt + ":00" : null
+                closeAt: data.closeAt ? data.closeAt + ":00" : null,
+                imagePath: data.imagePath || null
             };
 
             const saved = data.isNew
-                ? await adminApi.createQuestion(body.pdfId, body.questionText, body.correctAnswer) // 💡 API経由で作成
-                : await adminApi.updateQuestion(data.questionId, body); // 💡 API経由で更新
+                ? await adminApi.createQuestion(body)
+                : await adminApi.updateQuestion(data.questionId, body);
 
             // UI状態の更新
             setThemes(themes.map(t => t.pdfId === body.pdfId ? {
@@ -68,10 +105,11 @@ export default function AdminConsole() {
 
             setCreatingQuestion(null);
             setActiveQuestionId(saved.questionId);
-            alert("保存完了しましたにゃ！");
+            await refreshThemes();
+            alert("保存完了しました！");
         } catch (err) {
             console.error(err);
-            alert("保存に失敗しましたにゃ");
+            alert("保存に失敗しました");
         }
     };
 
@@ -83,14 +121,15 @@ export default function AdminConsole() {
         alert("ステータス更新しました");
     };
 
-    // handleDeleteQuestion も API を使うように修正するにゃ！
+    // handleDeleteQuestion も API を使うように修正する！
     const handleDeleteQuestion = async (tid, qid) => {
         if (!window.confirm("本当に削除しますか？")) return;
         try {
             await adminApi.deleteQuestion(qid);
             setThemes(themes.map(t => t.pdfId === tid ? { ...t, questions: t.questions.filter(q => q.questionId !== qid) } : t));
+            await refreshThemes();
         } catch (err) {
-            alert("削除失敗しましたにゃ");
+            alert("削除失敗しました");
         }
     };
 
@@ -112,12 +151,13 @@ export default function AdminConsole() {
     };
 
     // 💡 3. 保存後の処理を修正（既存の handleSaveTheme を上書き）
-    const handleSaveTheme = (savedTheme) => {
+    const handleSaveTheme = async (savedTheme) => {
         if (creatingTheme?.isNew) {
             setThemes([...themes, savedTheme]); // 新規ならリストに追加
         } else {
             setThemes(themes.map(t => t.pdfId === savedTheme.pdfId ? savedTheme : t));
         }
+        await refreshThemes();
         setCreatingTheme(null);   // クリア
         setIsEditingTheme(false); // 編集モード終了
     };
@@ -156,14 +196,31 @@ export default function AdminConsole() {
             setActiveThemeId(null);
             setActiveQuestionId(null);
 
-            alert("テーマを削除しましたにゃ！");
+            alert("テーマを削除しました！");
         } catch (err) {
             console.error(err);
-            alert("テーマの削除に失敗しましたにゃ...");
+            alert("テーマの削除に失敗しました...");
         }
+        await refreshThemes();
+    };
+
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // サイドバーとメインエリアのスタイルを動的に生成
+    const dynamicSidebarStyle = {
+        ...styles.sidebar,
+        width: isSidebarOpen ? 340 : 0,
+        overflow: "hidden",
+        transition: "width 0.25s ease-in-out",
+    };
+
+    const dynamicMainStyle = {
+        ...styles.main,
+        paddingLeft: isSidebarOpen ? 20 : 60,
+        transition: "padding-left 0.25s ease-in-out",
     };
     return (
-        <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
+        <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif", wordBreak: "break-all" }}>
             <AdminSidebar
                 themes={themes}
                 activeQuestionId={activeQuestionId}
@@ -177,25 +234,39 @@ export default function AdminConsole() {
                     setActiveQuestionId(qid);
                     setActiveTab(tab);
                 }}
+                onThemeSelect={handleSelectTheme}
                 onAddQuestion={handleStartAddQuestion}
                 onAddTheme={handleStartAddTheme}
-                onLogout={() => navigate("/login")}
+                onLogout={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("currentUser");
+                    navigate("/login");
+                }}
                 onDeleteQuestion={handleDeleteQuestion}
                 onThemeEdit={handleEditTheme}
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                styles={{ ...styles, sidebar: dynamicSidebarStyle }}
             />
 
             <div style={{ flex: 1, padding: "24px", backgroundColor: "#fff", overflowY: "auto", minHeight: "100vh" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
-                    <div style={{ fontSize: "14px", color: "#666", display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #e2e8f0", paddingBottom: "14px" }}>
+                    {/* 💡 ここに開くボタンを配置 */}
+                    {!isSidebarOpen && (
+                        <button onClick={() => setIsSidebarOpen(true)} style={{ cursor: "pointer", background: "#fff", border: "1px solid #dbe3ee", borderRadius: 10, padding: "8px 10px" }}>
+                            ☰
+                        </button>
+                    )}
+                    <div style={{ fontSize: "14px", color: "#64748b", display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", padding: "8px 12px", borderRadius: 999 }}>
                         選択中：
-                        <strong>{currentTheme?.title || "テーマを選択してください"}</strong>
+                        <strong style={{ color: "#0f172a" }}>{currentTheme?.title || "テーマを選択してください"}</strong>
                     </div>
                     {currentTheme && (
                         <div style={{ display: "flex", gap: "8px" }}>
                             {/* テーマ設定ボタン */}
                             <button
                                 onClick={() => { setIsEditingTheme(true); setCreatingQuestion(null); setActiveTab(null); }}
-                                style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: isEditingTheme ? "#64748b" : "#fff", color: isEditingTheme ? "#fff" : "#333" }}
+                                style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: isEditingTheme ? "#0f172a" : "#fff", color: isEditingTheme ? "#fff" : "#334155", fontWeight: 700 }}
                             >
                                 ⚙️ テーマ編集
                             </button>
@@ -203,9 +274,9 @@ export default function AdminConsole() {
                             {/* 問題がある場合のみ表示されるタブ */}
                             {(currentTheme.questions?.length > 0 || creatingQuestion) && (
                                 <>
-                                    <button onClick={() => { setIsEditingTheme(false); setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "edit" && !isEditingTheme) ? "#0066cc" : "#fff", color: (activeTab === "edit" && !isEditingTheme) ? "#fff" : "#333" }}>📝 問題の編集</button>
-                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("review"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "review" && !isEditingTheme) ? "#a7a528" : "#fff", color: (activeTab === "review" && !isEditingTheme) ? "#fff" : "#333" }}>💬 レビュー</button>
-                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("progress"); }} style={{ padding: "8px 16px", cursor: "pointer", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: (activeTab === "progress" && !isEditingTheme) ? "#28a745" : "#fff", color: (activeTab === "progress" && !isEditingTheme) ? "#fff" : "#333" }}>📊 進捗確認</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setCreatingQuestion(null); setActiveTab("edit"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "edit" && !isEditingTheme) ? "#2563eb" : "#fff", color: (activeTab === "edit" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>📝 問題の編集</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("review"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "review" && !isEditingTheme) ? "#f59e0b" : "#fff", color: (activeTab === "review" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>💬 レビュー</button>
+                                    <button onClick={() => { setIsEditingTheme(false); setActiveTab("progress"); }} style={{ padding: "9px 14px", cursor: "pointer", borderRadius: 999, border: "1px solid #dbe3ee", backgroundColor: (activeTab === "progress" && !isEditingTheme) ? "#16a34a" : "#fff", color: (activeTab === "progress" && !isEditingTheme) ? "#fff" : "#334155", fontWeight: 700 }}>📊 進捗確認</button>
                                 </>
                             )}
                         </div>
@@ -225,12 +296,12 @@ export default function AdminConsole() {
                     />
                 ) : !currentTheme ? (
                     <div style={{ textAlign: "center", marginTop: "40px", color: "#999" }}>
-                        左側のリストからテーマを選択してにゃ。
+                        左側のリストからテーマを選択して。
                     </div>
                 ) : (!currentTheme.questions || currentTheme.questions.length === 0) && !creatingQuestion ? (
                     <div style={{ textAlign: "center", marginTop: "40px", color: "#666" }}>
                         このテーマにはまだ問題がありません。<br />
-                        サイドバーから「新しい問題を追加」するか、「テーマ設定」を調整してくださいにゃ！
+                        サイドバーから「新しい問題を追加」するか、「テーマ設定」を調整してください！
                     </div>
                 ) : (
                     <>

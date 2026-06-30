@@ -17,4 +17,6 @@ public class ThemeRequest {
 
     private LocalDateTime openAt;
     private LocalDateTime closeAt;
+
+    private String fileUrl;
 }

@@ -20,8 +20,9 @@ public class QuestionRequest {
     @NotBlank(message = "正解は必須です")
     private String correctAnswer;
 
-    // 💡 フロントからステータスと公開・終了時間を受け取れるように追記にゃ！
+    // 💡 フロントからステータスと公開・終了時間を受け取れるように追記！
     private String status;
     private LocalDateTime openAt;
     private LocalDateTime closeAt;
+    private String imagePath;
 }

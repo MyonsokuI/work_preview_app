@@ -6,11 +6,13 @@ import java.util.List;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import com.example.demo.entity.enums.ContentsStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "pdf")
+@Table(name = "pdfs")
 @EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 @Getter
 @Setter
@@ -22,12 +24,15 @@ public class Pdf {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pdfId;
 
-    @Column(nullable = false, length = 25)
+    @Column(nullable = false, length = 255)
     private String title;
 
-    // 💡 4つのステータスを管理するカラムを追加（初期値: draft）
-    @Column(nullable = false, length = 15)
-    private String status = "draft";
+    @Column(name = "path", nullable = false, length = 255)
+    private String filePath;
+
+    @ManyToOne
+    @JoinColumn(name = "uploader", nullable = true)
+    private User uploader;
 
     // 💡 公開開始日時（予約時間用、null許容。空なら即時公開など）
     @Column(name = "open_at")
@@ -37,12 +42,17 @@ public class Pdf {
     @Column(name = "close_at")
     private LocalDateTime closeAt;
 
-    @OneToMany(mappedBy = "pdf", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Question> questions;
+    // 💡 4つのステータスを管理するカラムを追加（初期値: draft）
+    @Column(nullable = false, length = 15)
+    @Enumerated(EnumType.STRING)
+    private ContentsStatus status = ContentsStatus.DRAFT;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "pdf", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Question> questions;
 }

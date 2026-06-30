@@ -25,29 +25,26 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(
-                    org.springframework.security.config.http.SessionCreationPolicy.STATELESS
-                )
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                .requestMatchers("/api/themes/**").authenticated()
-                .requestMatchers("/api/answers/**").authenticated()
-                .requestMatchers("/api/questions/**").authenticated()
-                .requestMatchers("/api/user/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter,
-                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
-            );
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(
+                                org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/upload/**").permitAll()
+                        .requestMatchers("/api/themes/**").authenticated()
+                        .requestMatchers("/api/answers/**").authenticated()
+                        .requestMatchers("/api/questions/**").authenticated()
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/api/user/**").authenticated()
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtFilter,
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -55,7 +52,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:5173");
+        configuration.setAllowedOrigins(java.util.Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:5174"));
         configuration.addAllowedMethod("GET");
         configuration.addAllowedMethod("POST");
         configuration.addAllowedMethod("PUT");

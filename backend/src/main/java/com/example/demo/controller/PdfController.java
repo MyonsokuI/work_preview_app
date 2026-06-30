@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import org.springframework.web.bind.annotation.PathVariable;
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
 import com.example.demo.dto.theme.ThemeWithQuestionsResponse;
@@ -9,6 +8,7 @@ import com.example.demo.service.PdfService;
 import com.example.demo.service.QuestionService;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -52,11 +52,14 @@ public class PdfController {
             ThemeWithQuestionsResponse response = new ThemeWithQuestionsResponse();
             response.setPdfId(pdf.getPdfId());
             response.setTitle(pdf.getTitle());
+            response.setFileUrl(pdf.getFileUrl());
 
-            // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替えるにゃ！
+            // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替える！
             response.setStatus(pdf.getStatus());
             response.setOpenAt(pdf.getOpenAt());
             response.setCloseAt(pdf.getCloseAt());
+            response.setUpdatedAt(pdf.getUpdatedAt());
+            response.setCreatedAt(pdf.getCreatedAt());
 
             // 🚀 現在のテーマID（Integer）に紐づく問題一覧をServiceから取得
             List<QuestionResponse> questionList = questionService.getQuestionsByTheme(pdf.getPdfId());
@@ -70,8 +73,12 @@ public class PdfController {
      * テーマ作成
      */
     @PostMapping
-    public ThemeResponse createTheme(@RequestBody ThemeRequest request) {
-        return pdfService.createTheme(request);
+    public ThemeResponse createTheme(
+            @RequestBody ThemeRequest request,
+            Principal principal) {
+        // Principalからログイン中のユーザーID(名前/メールアドレス)を取得
+        String userId = principal.getName();
+        return pdfService.createTheme(request, Integer.parseInt(userId));
     }
 
     /**
@@ -80,9 +87,10 @@ public class PdfController {
     @PutMapping("/{id}")
     public ThemeResponse updateTheme(
             @PathVariable Integer id,
-            @RequestBody ThemeRequest request) {
-
-        return pdfService.updateTheme(id, request);
+            @RequestBody ThemeRequest request,
+            Principal principal) {
+        String userId = principal.getName();
+        return pdfService.updateTheme(id, request, Integer.parseInt(userId));
     }
 
     /**
@@ -93,5 +101,4 @@ public class PdfController {
         pdfService.deleteTheme(id);
     }
 
-    
 }

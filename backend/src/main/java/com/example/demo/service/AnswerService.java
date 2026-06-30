@@ -36,6 +36,7 @@ public class AnswerService {
 		Answer answer = new Answer();
 
 		answer.setAnswerContent(request.getAnswerContent());
+		answer.setImagePath(request.getImagePath());
 
 		answer.setQuestion(
 				questionRepository.findById(request.getQuestionId())
@@ -59,6 +60,7 @@ public class AnswerService {
 				.orElseThrow(() -> new BusinessException("回答が見つかりません"));
 
 		answer.setAnswerContent(request.getAnswerContent());
+		answer.setImagePath(request.getImagePath());
 
 		Answer saved = answerRepository.save(answer);
 
@@ -85,6 +87,7 @@ public class AnswerService {
 		AnswerResponse res = new AnswerResponse();
 		res.setAnswerId(answer.getAnswerId());
 		res.setAnswerContent(answer.getAnswerContent());
+		res.setImagePath(answer.getImagePath());
 		res.setQuestionId(answer.getQuestion().getQuestionId());
 		res.setUserId(answer.getUser().getUserId());
 		res.setSubmittedAt(answer.getSubmittedAt());
@@ -100,6 +103,7 @@ public class AnswerService {
 				.map(existingAnswer -> {
 					// 【更新ルート】
 					existingAnswer.setAnswerContent(request.getAnswerContent());
+					existingAnswer.setImagePath(request.getImagePath());
 					existingAnswer.setSubmittedAt(LocalDateTime.now());
 					Answer saved = answerRepository.save(existingAnswer);
 					return toResponse(saved);

@@ -1,0 +1,84 @@
+autonumber
+@startuml 回答作成・更新フロー
+
+title 回答作成/更新シーケンス（番号付け・色分け）
+
+actor User as user
+participant "Frontend\n(React/Vite)" as frontend
+participant "AnswerController" as answerController
+participant "AnswerService" as answerService
+participant "QuestionRepository" as questionRepo
+participant "UserRepository" as userRepo
+participant "AnswerRepository" as answerRepo
+participant "Database" as db
+
+' 色ルール: 赤 = データを受け取る/返す、青 = データを渡す
+
+user -> frontend: <color:red>① 回答入力 / 編集</color>
+alt 回答作成
+    frontend -> answerController: <color:blue>② POST /api/answers?userId={userId}\n{questionId, answerContent}</color>
+    answerController -> answerService: <color:blue>③ createAnswer(AnswerRequest, userId)</color>
+    answerService -> questionRepo: <color:blue>④ findById(questionId)</color>
+    questionRepo -> db: <color:blue>⑤ SELECT * FROM questions WHERE question_id = ?</color>
+    db --> questionRepo: <color:red>⑥ Question entity</color>
+    answerService -> userRepo: <color:blue>⑦ findById(userId)</color>
+    userRepo -> db: <color:blue>⑧ SELECT * FROM users WHERE user_id = ?</color>
+    db --> userRepo: <color:red>⑨ User entity</color>
+    answerService -> answerRepo: <color:blue>⑩ save(Answer)</color>
+    answerRepo -> db: <color:blue>⑪ INSERT INTO answers (...) VALUES (...)</color>
+    db --> answerRepo: <color:red>⑫ Saved Answer entity</color>
+    answerService --> answerController: <color:red>⑬ AnswerResponse</color>
+    answerController --> frontend: <color:red>⑭ 201 Created</color>
+else 回答更新
+    frontend -> answerController: <color:blue>② PUT /api/answers/{id}\n{questionId, answerContent}</color>
+    answerController -> answerService: <color:blue>③ updateAnswer(id, AnswerRequest)</color>
+    answerService -> answerRepo: <color:blue>④ findById(id)</color>
+    answerRepo -> db: <color:blue>⑤ SELECT * FROM answers WHERE answer_id = ?</color>
+    db --> answerRepo: <color:red>⑥ Answer entity</color>
+    answerService -> answerRepo: <color:blue>⑦ save(Answer)</color>
+    answerRepo -> db: <color:blue>⑧ UPDATE answers SET answer_content = ? WHERE answer_id = ?</color>
+    db --> answerRepo: <color:red>⑨ Updated Answer entity</color>
+    answerService --> answerController: <color:red>⑩ AnswerResponse</color>
+    answerController --> frontend: <color:red>⑪ 200 OK</color>
+end
+
+'② エンドポイント設計
+legend right
+|= 画面名 |= ファイル名 |=エンドポイント|
+|回答画面|AnswerEditor.jsx|POST /api/answers, PUT /api/answers/{id}|
+
+'③ インプット・アウトプット
+|= input/output |= 変数名 |=型|=説明|
+|input|questionId|Integer|問題ID|
+|input|answerContent|String|回答内容|
+|input|userId|Integer|回答者ユーザーID|
+|output|answerId|Integer|回答ID|
+|output|submittedAt|LocalDateTime|提出日時|
+|output|userName|String|回答者名|
+
+/'
+④ ①の図の詳細説明表
+- Javaクラス名：メソッドを実装するクラス名を記述する。（クラス図参照）
+- 処理メソッド名：使用するメソッド名を記述する。（クラス図参照）
+- 処理の流れ：メソッド内の処理内容を順番通りに日本語で説明する。図にも入力・出力の変数を示すが、言葉でより詳細に説明する。
+- 備考：（実装のヒントや使用想定の要素技術などを記述する。）'/
+
+|= No |= Javaクラス |=メソッド(引数)|=型 戻り値|=メソッド内の処理概要|=備考|
+|1|Frontend|回答入力|void|ユーザーが管理画面で `questionId` と `answerContent` を入力し、回答作成/更新操作を開始する。|ビュー入力|
+|2|AnswerController|createAnswer(AnswerRequest request, Integer userId)|AnswerResponse|`POST /api/answers?userId={userId}` のリクエストを受け取り、AnswerService.createAnswer を呼び出す。|回答登録 API 入口|
+|3|AnswerService|createAnswer(AnswerRequest request, Integer userId)|AnswerResponse|`questionId` を使って Question を検索し、`userId` を使って User を検索して存在確認を行う。|Question/User 存在確認|
+|4|QuestionRepository|findById(Integer questionId)|Optional<Question>|DB から対象 Question を取得する。存在しなければ例外を投げる。|Question 取得|
+|5|UserRepository|findById(Integer userId)|Optional<User>|DB から対象 User を取得する。存在しなければ例外を投げる。|User 取得|
+|6|AnswerService|保存処理|Answer|Answer エンティティを生成し、`submittedAt` を現在時刻に設定して AnswerRepository.save に渡す。|回答エンティティ生成|
+|7|AnswerRepository|save(Answer)|Answer|Answer を DB に保存し、保存済みエンティティを返す。|DB 挿入処理|
+|8|AnswerService|toResponse(Answer answer)|AnswerResponse|保存済み Answer の内容を AnswerResponse に変換する。|レスポンス変換|
+|9|AnswerController|createAnswer -> frontend|AnswerResponse|AnswerResponse をフロントに返却し、作成成功を通知する。|レスポンス返却|
+|10|AnswerController|updateAnswer(Integer id, AnswerRequest request)|AnswerResponse|`PUT /api/answers/{id}` のリクエストを受け取り、AnswerService.updateAnswer を呼び出す。|回答更新 API 入口|
+|11|AnswerService|updateAnswer(Integer id, AnswerRequest request)|AnswerResponse|回答 ID で既存 Answer を検索し、`answerContent` を更新して保存する。|回答更新処理|
+|12|AnswerRepository|findById(Integer id)|Optional<Answer>|DB から対象 Answer を取得する。存在しなければ例外を投げる。|回答取得|
+|13|AnswerRepository|save(Answer)|Answer|更新済み Answer を DB に保存し、保存済みエンティティを返す。|DB 更新処理|
+|14|AnswerService|toResponse(Answer answer)|AnswerResponse|更新済み Answer を AnswerResponse に変換する。|レスポンス変換|
+|15|AnswerController|updateAnswer -> frontend|AnswerResponse|AnswerResponse をフロントに返却し、更新成功を通知する。|レスポンス返却|
+endlegend
+
+@enduml

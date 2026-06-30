@@ -4,6 +4,8 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.dto.user.UserRequest;
 import com.example.demo.dto.user.UserResponse;
 import com.example.demo.entity.User;
+import com.example.demo.entity.enums.Role;
+import com.example.demo.entity.enums.UserStatus;
 import com.example.demo.exception.BusinessException;
 
 import org.springframework.stereotype.Service;
@@ -26,7 +28,7 @@ public class UserService {
                     UserResponse res = new UserResponse();
                     res.setUserId(user.getUserId());
                     res.setName(user.getName());
-                    res.setStatus(user.getStatus());
+                    res.setRole(user.getRoles());
                     return res;
                 })
                 .toList();
@@ -40,7 +42,7 @@ public class UserService {
         UserResponse res = new UserResponse();
         res.setUserId(user.getUserId());
         res.setName(user.getName());
-        res.setStatus(user.getStatus());
+        res.setRole(user.getRoles());
 
         return res;
     }
@@ -48,16 +50,24 @@ public class UserService {
     // ユーザー登録
     public UserResponse createUser(UserRequest req) {
 
-        if (userRepository.existsById(req.getEmployeeId())) {
-            throw new BusinessException("ID重複");
+        if (userRepository.existsByEmployeeId(req.getEmployeeId())) {
+            throw new BusinessException("社員IDは既に登録されています");
+        }
+        String name = req.getName();
+        if (name == null || name.strip().isEmpty()) {
+            throw new BusinessException("ユーザー名を入力してください");
+        }
+
+        if (!name.equals(name.strip())) {
+            throw new BusinessException("名前の先頭・末尾にスペースは使用できません");
         }
 
         User user = new User();
         user.setEmployeeId(req.getEmployeeId());
         user.setName(req.getName());
         user.setPassword(req.getPassword());
-        user.setStatus("active");
-        user.setRoles("USER");
+        user.setStatus(UserStatus.ACTIVE);
+        user.setRoles(Role.USER);
 
         User saved = userRepository.save(user);
 
@@ -65,7 +75,7 @@ public class UserService {
         UserResponse res = new UserResponse();
         res.setUserId(saved.getUserId());
         res.setName(saved.getName());
-        res.setStatus(saved.getStatus());
+        res.setRole(saved.getRoles());
 
         return res;
     }

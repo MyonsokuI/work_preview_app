@@ -20,20 +20,20 @@ export const adminApi = {
         return response.json();
     },
 
-    // 💡 拡張：引数をオブジェクト (themeData) で受け取るように変更にゃ！
+    // 💡 拡張：引数をオブジェクト (themeData) で受け取るように変更！
     // themeData の中身のイメージ： { title, status, openAt, closeAt }
     async createTheme(themeData) {
         const response = await fetch(`${BASE_URL}/themes`, {
             method: "POST",
             headers: getAuthHeaders(),
-            // Java側の ThemeRequest にそのままマッピングできるようにJSON化するにゃ🐾
+            // Java側の ThemeRequest にそのままマッピングできるようにJSON化する🐾
             body: JSON.stringify(themeData),
         });
         if (!response.ok) throw new Error("テーマの作成に失敗しました");
         return response.json();
     },
 
-    // 💡 拡張：更新時もタイトルだけでなく、時間やステータスもまとめて更新できるように変更にゃ！
+    // 💡 拡張：更新時もタイトルだけでなく、時間やステータスもまとめて更新できるように変更！
     // themeData の中身のイメージ： { title, status, openAt, closeAt }
     async updateTheme(themeId, themeData) {
         const response = await fetch(`${BASE_URL}/themes/${themeId}`, {
@@ -55,21 +55,21 @@ export const adminApi = {
     },
 
     // --- 問題 (Questions) 関連 ---
-    async createQuestion(themeId, questionText = "新しい問題内容", correctAnswer = "模範解答") {
+    async createQuestion(questionData) {
         const response = await fetch(`${BASE_URL}/questions`, {
             method: "POST",
             headers: getAuthHeaders(),
-            body: JSON.stringify({ pdfId: themeId, questionText, correctAnswer }),
+            body: JSON.stringify(questionData),
         });
         if (!response.ok) throw new Error("問題の作成に失敗しました");
         return response.json();
     },
 
-    async updateQuestion(questionId, { questionText, correctAnswer, pdfId }) {
+    async updateQuestion(questionId, questionData) {
         const response = await fetch(`${BASE_URL}/questions/${questionId}`, {
             method: "PUT",
             headers: getAuthHeaders(),
-            body: JSON.stringify({ questionText, correctAnswer, pdfId }),
+            body: JSON.stringify(questionData),
         });
         if (!response.ok) throw new Error("問題の更新に失敗しました");
         return response.json();

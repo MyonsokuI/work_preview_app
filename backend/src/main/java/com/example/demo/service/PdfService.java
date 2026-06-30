@@ -2,9 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.dto.theme.ThemeRequest;
 import com.example.demo.dto.theme.ThemeResponse;
-import com.example.demo.exception.BusinessException;
 import com.example.demo.entity.Pdf;
+import com.example.demo.entity.User;
+import com.example.demo.entity.enums.ContentsStatus;
+import com.example.demo.exception.BusinessException;
 import com.example.demo.repository.PdfRepository;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.util.StatusCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +19,15 @@ import java.util.List;
 public class PdfService {
 
     private final PdfRepository pdfRepository;
+    private final UserRepository userRepository;
 
-    public PdfService(PdfRepository pdfRepository) {
+    public PdfService(PdfRepository pdfRepository, UserRepository userRepository) {
         this.pdfRepository = pdfRepository;
+        this.userRepository = userRepository;
     }
 
     // =========================================
-    // 🔥 管理者：全テーマ取得
+    // 管理者：全取得
     // =========================================
     @Transactional
     public List<ThemeResponse> getAllThemesForAdmin() {
@@ -31,7 +36,7 @@ public class PdfService {
     }
 
     // =========================================
-    // 🔥 一般ユーザー：公開テーマのみ取得
+    // 一般ユーザー：公開のみ
     // =========================================
     @Transactional
     public List<ThemeResponse> getPublicThemes() {
@@ -44,15 +49,22 @@ public class PdfService {
                 .toList();
     }
 
+    // =========================================
+    // ステータス更新（内部統一）
+    // =========================================
     private List<Pdf> refreshStatuses() {
         List<Pdf> all = pdfRepository.findAll();
         boolean needsUpdate = false;
 
         for (Pdf pdf : all) {
-            String correctStatus = StatusCalculator.calculateStatus(
-                    pdf.getStatus(), pdf.getOpenAt(), pdf.getCloseAt());
-            if (!correctStatus.equals(pdf.getStatus())) {
-                pdf.setStatus(correctStatus);
+
+            ContentsStatus correct = StatusCalculator.calculateStatus(
+                    pdf.getStatus(),
+                    pdf.getOpenAt(),
+                    pdf.getCloseAt());
+
+            if (correct != pdf.getStatus()) {
+                pdf.setStatus(correct);
                 needsUpdate = true;
             }
         }
@@ -65,42 +77,58 @@ public class PdfService {
     }
 
     // =========================================
-    // 🔥 テーマ作成
+    // 作成
     // =========================================
     @Transactional
-    public ThemeResponse createTheme(ThemeRequest request) {
-
+    public ThemeResponse createTheme(ThemeRequest request, Integer uploaderId) {
         Pdf pdf = new Pdf();
         pdf.setTitle(request.getTitle());
+        pdf.setFilePath(request.getFileUrl());
         pdf.setOpenAt(request.getOpenAt());
         pdf.setCloseAt(request.getCloseAt());
-        pdf.setStatus(StatusCalculator.calculateStatus(request.getStatus(), request.getOpenAt(), request.getCloseAt()));
 
-        Pdf saved = pdfRepository.save(pdf);
-        return toResponse(saved);
+        // 💡 Userエンティティを取得してセット
+        User user = userRepository.findById(uploaderId)
+                .orElseThrow(() -> new BusinessException("アップロードユーザーが見つかりません"));
+        pdf.setUploader(user);
+
+        // 💡 引数を正確に渡す
+        pdf.setStatus(StatusCalculator.calculateStatus(
+                ContentsStatus.valueOf(request.getStatus().toUpperCase()),
+                request.getOpenAt(),
+                request.getCloseAt()));
+
+        return toResponse(pdfRepository.save(pdf));
     }
 
     // =========================================
-    // 🔥 テーマ更新
+    // 更新
     // =========================================
     @Transactional
-    public ThemeResponse updateTheme(Integer id, ThemeRequest updated) {
+    public ThemeResponse updateTheme(Integer id, ThemeRequest updated, Integer uploaderId) {
+        Pdf pdf = pdfRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
 
-        Pdf existing = pdfRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("テーマが見つかりません"));
+        pdf.setTitle(updated.getTitle());
+        pdf.setFilePath(updated.getFileUrl());
+        pdf.setOpenAt(updated.getOpenAt());
+        pdf.setCloseAt(updated.getCloseAt());
 
-        existing.setTitle(updated.getTitle());
-        existing.setOpenAt(updated.getOpenAt());
-        existing.setCloseAt(updated.getCloseAt());
-        existing.setStatus(
-                StatusCalculator.calculateStatus(updated.getStatus(), updated.getOpenAt(), updated.getCloseAt()));
+        // 💡 更新時もUserエンティティを取得してセット
+        User user = userRepository.findById(uploaderId)
+                .orElseThrow(() -> new BusinessException("アップロードユーザーが見つかりません"));
+        pdf.setUploader(user);
 
-        Pdf saved = pdfRepository.save(existing);
-        return toResponse(saved);
+        pdf.setStatus(StatusCalculator.calculateStatus(
+                ContentsStatus.valueOf(updated.getStatus().toUpperCase()),
+                updated.getOpenAt(),
+                updated.getCloseAt()));
+
+        return toResponse(pdfRepository.save(pdf));
     }
 
     // =========================================
-    // 🔥 管理者：ステータス更新
+    // ステータス更新（管理者）
     // =========================================
     @Transactional
     public ThemeResponse updateStatus(Integer id, String status) {
@@ -108,56 +136,55 @@ public class PdfService {
         Pdf pdf = pdfRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("テーマが見つかりません"));
 
-        pdf.setStatus(status);
+        pdf.setStatus(ContentsStatus.valueOf(status.toUpperCase()));
 
-        Pdf saved = pdfRepository.save(pdf);
-        return toResponse(saved);
+        return toResponse(pdfRepository.save(pdf));
     }
 
     // =========================================
-    // 🔥 削除
-    // =========================================
-    @Transactional
-    public void deleteTheme(Integer id) {
-        pdfRepository.deleteById(id);
-    }
-
-    // =========================================
-    // 🔥 公開判定ロジック（超重要）
+    // 公開判定
     // =========================================
     private boolean isPublic(Pdf pdf, LocalDateTime now) {
 
-        if (pdf.getStatus() == null) return false;
-
-        // 非公開系
-        if ("draft".equals(pdf.getStatus())) return false;
-        if ("closed".equals(pdf.getStatus())) return false;
-
-        // 公開前
-        if (pdf.getOpenAt() != null && pdf.getOpenAt().isAfter(now)) {
+        if (pdf.getStatus() == null)
             return false;
-        }
 
-        // 公開終了
-        if (pdf.getCloseAt() != null && pdf.getCloseAt().isBefore(now)) {
+        if (pdf.getStatus() == ContentsStatus.DRAFT)
             return false;
-        }
+        if (pdf.getStatus() == ContentsStatus.CLOSED)
+            return false;
+
+        if (pdf.getOpenAt() != null && pdf.getOpenAt().isAfter(now))
+            return false;
+
+        if (pdf.getCloseAt() != null && pdf.getCloseAt().isBefore(now))
+            return false;
 
         return true;
     }
 
     // =========================================
-    // 🔥 DTO変換
+    // DTO変換
     // =========================================
     private ThemeResponse toResponse(Pdf pdf) {
-
         ThemeResponse res = new ThemeResponse();
         res.setPdfId(pdf.getPdfId());
         res.setTitle(pdf.getTitle());
+        res.setFileUrl(pdf.getFilePath());
         res.setStatus(pdf.getStatus());
         res.setOpenAt(pdf.getOpenAt());
         res.setCloseAt(pdf.getCloseAt());
+        res.setUpdatedAt(pdf.getUpdatedAt());
+        res.setCreatedAt(pdf.getCreatedAt());
 
         return res;
+    }
+
+    // =========================================
+    // 削除
+    // =========================================
+    @Transactional
+    public void deleteTheme(Integer id) {
+        pdfRepository.deleteById(id);
     }
 }

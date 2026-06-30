@@ -1,0 +1,200 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam ArrowColor #0066cc
+skinparam ArrowFontColor #0066cc
+skinparam classFontSize 12
+skinparam packageFontSize 14
+skinparam classFontName "Arial"
+skinparam packageFontName "Arial"
+top to bottom direction
+
+package "entity" {
+  class Pdf {
+    -Integer pdfId
+    -String title
+    -String filePath
+    -User uploader
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -ContentsStatus status
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+
+  class Question {
+    -Integer questionId
+    -Pdf pdf
+    -String questionText
+    -String correctAnswer
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -List<Answer> answers
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+
+  class Answer {
+    -Integer answerId
+    -User user
+    -Question question
+    -String answerContent
+    -LocalDateTime submittedAt
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+
+  class Review {
+    -Integer reviewId
+    -Answer answer
+    -User reviewer
+    -String comment
+    -LocalDateTime createdAt
+  }
+
+  class User {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -String password
+    -UserStatus status
+    -Role roles
+    -LocalDateTime createdAt
+    -LocalDateTime updatedAt
+  }
+}
+
+package "dto" {
+  class ThemeRequest {
+    -String title
+    -String fileUrl
+    -String status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+
+  class ThemeResponse {
+    -Integer pdfId
+    -String title
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -String fileUrl
+  }
+
+  class ThemeWithQuestionsResponse {
+    -Integer pdfId
+    -String title
+    -String fileUrl
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+    -List<QuestionResponse> questions
+  }
+
+  class QuestionRequest {
+    -Integer pdfId
+    -String questionText
+    -String correctAnswer
+    -String status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+
+  class QuestionResponse {
+    -Integer questionId
+    -String questionText
+    -String correctAnswer
+    -ContentsStatus status
+    -LocalDateTime openAt
+    -LocalDateTime closeAt
+  }
+
+  class AnswerRequest {
+    -Integer questionId
+    -String answerContent
+  }
+
+  class AnswerResponse {
+    -Integer answerId
+    -Integer questionId
+    -Integer userId
+    -String userName
+    -String answerContent
+    -LocalDateTime submittedAt
+  }
+
+  class ReviewRequest {
+    -Integer answerId
+    -String comment
+  }
+
+  class ReviewResponse {
+    -Integer reviewId
+    -Integer answerId
+    -Integer reviewerId
+    -String reviewerName
+    -String comment
+    -LocalDateTime createdAt
+  }
+
+  class UserRequest {
+    -Integer employeeId
+    -String name
+    -String password
+  }
+
+  class UserResponse {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -UserStatus status
+    -Role role
+  }
+
+  class LoginRequest {
+    -Integer employeeId
+    -String password
+  }
+
+  class LoginResponse {
+    -Integer userId
+    -Integer employeeId
+    -String name
+    -String role
+    -String token
+  }
+
+  class QuestionProgressDto {
+    -Integer questionId
+    -String questionText
+    -long answeredUserCount
+    -long totalUserCount
+    -List<String> uncompletedUsers
+  }
+}
+
+package "repository" {
+  interface PdfRepository
+  interface QuestionRepository
+  interface AnswerRepository
+  interface UserRepository
+  interface ReviewRepository
+}
+
+package "enums" {
+  class ContentsStatus
+  class Role
+  class UserStatus
+}
+
+Question --> Pdf
+Answer --> Question
+Answer --> User
+Review --> Answer
+Review --> User
+Pdf --> User
+
+ThemeWithQuestionsResponse --> QuestionResponse
+@enduml

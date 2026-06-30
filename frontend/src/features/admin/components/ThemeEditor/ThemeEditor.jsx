@@ -6,6 +6,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     const [openAt, setOpenAt] = useState("");
     const [closeAt, setCloseAt] = useState("");
     const [status, setStatus] = useState("draft");
+    const [fileUrl, setFileUrl] = useState("");
 
     // モード判定: currentTheme があれば編集、なければ新規作成
     const isNewMode = !!(currentTheme && currentTheme.isNew);
@@ -13,27 +14,33 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
     useEffect(() => {
         if (currentTheme && !currentTheme.isNew) {
             setTitle(currentTheme.title || "");
-            setStatus(currentTheme.status || "draft");
+            setFileUrl(currentTheme.fileUrl || "");
+            setStatus(currentTheme.status
+                ? currentTheme.status.toLowerCase()
+                : "draft"
+            );
             setOpenAt(currentTheme.openAt ? currentTheme.openAt.substring(0, 16) : "");
             setCloseAt(currentTheme.closeAt ? currentTheme.closeAt.substring(0, 16) : "");
         } else {
             setTitle("");
+            setFileUrl("");
             setOpenAt("");
             setCloseAt("");
-            setStatus("draft");
+            setStatus("published");
         }
     }, [currentTheme]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!title.trim()) {
-            alert("タイトルは必須ですにゃ！🐾");
+            alert("タイトルは必須です！🐾");
             return;
         }
 
         try {
             const themeParams = {
                 title: title.trim(),
+                fileUrl,
                 status,
                 openAt: openAt ? openAt + ":00" : null,
                 closeAt: closeAt ? closeAt + ":00" : null
@@ -47,12 +54,13 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
             }
 
             onSave(result);
-            alert(isNewMode ? "テーマを新規作成しましたにゃ！🐾" : "テーマを更新しましたにゃ！🐾");
+            alert(isNewMode ? "テーマを新規作成しました！🐾" : "テーマを更新しました！🐾");
         } catch (error) {
             console.error(error);
             alert("サーバーとの通信に失敗しました。");
         }
     };
+
 
     return (
         <div style={{
@@ -78,6 +86,17 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                 </div>
 
                 <div>
+                    <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>PDF URL</label>
+                    <input
+                        type="url" // URL形式で入力させる
+                        placeholder="https://example.com/file.pdf"
+                        style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #cbd5e1" }}
+                        value={fileUrl}
+                        onChange={(e) => setFileUrl(e.target.value)}
+                    />
+                </div>
+
+                <div>
                     <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>公開ステータス</label>
                     <select
                         style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #cbd5e1" }}
@@ -85,7 +104,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                         onChange={(e) => setStatus(e.target.value)}
                     >
                         <option value="draft">未公開 (draft)</option>
-                        <option value="published">公開 (published)</option>
+                        <option value="published">公開 (published/scheduled)</option>
                     </select>
                 </div>
 
@@ -99,6 +118,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
                             onChange={(e) => setOpenAt(e.target.value)}
                         />
                     </div>
+
                     <div>
                         <label style={{ display: "block", marginBottom: 5, fontWeight: "bold" }}>終了日時</label>
                         <input

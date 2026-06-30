@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.question.QuestionRequest;
 import com.example.demo.dto.question.QuestionResponse;
 import com.example.demo.entity.Question;
+import com.example.demo.entity.enums.ContentsStatus;
 import com.example.demo.entity.Pdf;
 import com.example.demo.repository.QuestionRepository;
 import com.example.demo.util.StatusCalculator;
@@ -18,7 +19,7 @@ import java.util.List;
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
-    private final PdfRepository pdfRepository; // テーマ取得用にインジェクションにゃ
+    private final PdfRepository pdfRepository; // テーマ取得用にインジェクション
 
     public QuestionService(QuestionRepository questionRepository, PdfRepository pdfRepository) {
         this.questionRepository = questionRepository;
@@ -37,10 +38,12 @@ public class QuestionService {
         boolean needsUpdate = false;
 
         for (Question q : questions) {
-            String correctStatus = StatusCalculator.calculateStatus(q.getStatus(), q.getOpenAt(), q.getCloseAt());
-            if (!correctStatus.equals(q.getStatus())) {
+            ContentsStatus correctStatus = StatusCalculator.calculateStatus(
+                    q.getStatus(),
+                    q.getOpenAt(),
+                    q.getCloseAt());
+            if (correctStatus != q.getStatus()) {
                 q.setStatus(correctStatus);
-                needsUpdate = true;
             }
         }
 
@@ -59,7 +62,7 @@ public class QuestionService {
     }
 
     /**
-     * 🟢 問題新規作成（フロントで全部入力し終わった後にインサートされるにゃ！）
+     * 🟢 問題新規作成（フロントで全部入力し終わった後にインサートされる！）
      */
     @Transactional
     public QuestionResponse createQuestion(QuestionRequest request) {
@@ -72,16 +75,16 @@ public class QuestionService {
         q.setCorrectAnswer(request.getCorrectAnswer());
         q.setOpenAt(request.getOpenAt());
         q.setCloseAt(request.getCloseAt());
-
-        // 💡 登録時のステータス決定ロジック（Themeと同じにゃ！）
+        q.setImagePath(request.getImagePath());
+        // 💡 登録時のステータス決定ロジック（Themeと同じ！）
         if ("draft".equalsIgnoreCase(request.getStatus())) {
-            q.setStatus("draft");
+            q.setStatus(ContentsStatus.DRAFT);
         } else {
             LocalDateTime now = LocalDateTime.now();
             if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
-                q.setStatus("scheduled");
+                q.setStatus(ContentsStatus.SCHEDULED);
             } else {
-                q.setStatus("published");
+                q.setStatus(ContentsStatus.SCHEDULED);
             }
         }
 
@@ -101,18 +104,19 @@ public class QuestionService {
         existing.setCorrectAnswer(request.getCorrectAnswer());
         existing.setOpenAt(request.getOpenAt());
         existing.setCloseAt(request.getCloseAt());
+        existing.setImagePath(request.getImagePath());
 
         // 💡 更新時のステータス決定ロジック
         if ("draft".equalsIgnoreCase(request.getStatus())) {
-            existing.setStatus("draft");
+            existing.setStatus(ContentsStatus.DRAFT);
         } else {
             LocalDateTime now = LocalDateTime.now();
             if (request.getCloseAt() != null && request.getCloseAt().isBefore(now)) {
-                existing.setStatus("closed");
+                existing.setStatus(ContentsStatus.CLOSED);
             } else if (request.getOpenAt() != null && request.getOpenAt().isAfter(now)) {
-                existing.setStatus("scheduled");
+                existing.setStatus(ContentsStatus.SCHEDULED);
             } else {
-                existing.setStatus("published");
+                existing.setStatus(ContentsStatus.PUBLISHED);
             }
         }
 
@@ -134,6 +138,8 @@ public class QuestionService {
         res.setStatus(q.getStatus());
         res.setOpenAt(q.getOpenAt());
         res.setCloseAt(q.getCloseAt());
+        res.setImagePath(q.getImagePath());
+
         return res;
     }
 }
