@@ -1,7 +1,16 @@
 -- =====================================
 -- DB Initialization Script
--- PostgreSQL / NOT NULL強化版
+-- PostgreSQL / NOT NULL������
 -- =====================================
+CREATE ROLE "user" LOGIN PASSWORD 'password';
+GRANT CONNECT ON DATABASE work_db TO "user";
+\c work_db
+GRANT USAGE ON SCHEMA public TO "user";
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "user";
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "user";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "user";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO "user";
+
 
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS answers;
@@ -127,7 +136,7 @@ CREATE INDEX idx_reviews_answer_id ON reviews(answer_id);
 -- =====================================
 INSERT INTO users (user_id, employee_id, name, password, status, roles) VALUES
 (1, 10000001, 'admin', 'password', 'ACTIVE', 'ADMIN'),
-(2, 10000002, 'user1', 'hashed_user', 'ACTIVE', 'USER'),
+(2, 10000002, 'user1', 'pass123', 'ACTIVE', 'USER'),
 (3, 10000003, 'user2', 'pass123', 'ACTIVE', 'USER'),
 (4, 10000004, 'user3', 'pass123', 'ACTIVE', 'USER'),
 (5, 10000005, 'user4', 'pass123', 'ACTIVE', 'USER'),
@@ -145,11 +154,11 @@ SELECT setval('users_user_id_seq',
 -- seed pdfs
 -- =====================================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
-(1, 'Java基礎', '/files/java_basic.pdf', 1, 'PUBLISHED'),
-(2, 'SQL基礎', '/files/sql_basic.pdf', 1, 'PUBLISHED'),
-(3, 'データベース設計', '/files/db_design.pdf', 1, 'PUBLISHED'),
-(4, 'Spring Boot基礎', '/files/springboot_basic.pdf', 1, 'PUBLISHED'),
-(5, 'React基礎', '/files/react_basic.pdf', 1, 'PUBLISHED');
+(1, 'Java��b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCZvSBkFjQnTKupDEQNOLWXAXQ_F0zf7nm5FnlDu8usahM?e=8CrlyI', 1, 'PUBLISHED'),
+(2, 'SQL��b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=083gmL', 1, 'PUBLISHED'),
+(3, '�f�[�^�x�[�X�݌v', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=uVLGAC', 1, 'PUBLISHED'),
+(4, 'Spring Boot��b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQAAMiNxJ6sNTon1hXZ5-wf2AfQ0MVwg_LZUTrbj0RdOjL4?e=wsux6w', 1, 'PUBLISHED'),
+(5, 'React��b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQD91ZcJqmbvSp70ujOJ96riAfSIzfEMPGwJzZm0MayreGs?e=ftZ1Hb', 1, 'PUBLISHED');
 
 SELECT setval('pdfs_pdf_id_seq',
     COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1)
@@ -159,26 +168,26 @@ SELECT setval('pdfs_pdf_id_seq',
 -- seed questions
 -- =====================================
 INSERT INTO questions (pdf_id, question_text, correct_answer, image_path, status, open_at, close_at) VALUES
-(1, 'Javaとは何か？', 'プログラミング言語', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'クラスとは何か？', 'オブジェクトの設計図', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, '継承とは何か？', '既存クラスを引き継ぐ仕組み', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'ポリモーフィズムとは何か？', '同じ操作で異なる振る舞い', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'Java�Ƃ͉����H', '�v���O���~���O����', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, '�N���X�Ƃ͉����H', '�I�u�W�F�N�g�̐݌v�}', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, '�p���Ƃ͉����H', '�����N���X�������p���d�g��', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, '�|�����[�t�B�Y���Ƃ͉����H', '��������ňقȂ�U�镑��', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
 
-(2, 'SELECT文の役割は？', 'データ取得', NULL, 'PUBLISHED', NULL, NULL),
-(2, 'WHERE句の役割は？', '条件指定', NULL, 'PUBLISHED', NULL, NULL),
-(2, 'ORDER BY句の役割は？', '並び替え', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'SELECT���̖����́H', '�f�[�^�擾', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'WHERE��̖����́H', '�����w��', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'ORDER BY��̖����́H', '���ёւ�', NULL, 'PUBLISHED', NULL, NULL),
 
-(3, '主キーとは？', '行を一意に識別するキー', NULL, 'PUBLISHED', NULL, NULL),
-(3, '外部キーとは？', '他テーブルを参照するキー', NULL, 'PUBLISHED', NULL, NULL),
-(3, '正規化とは？', 'データ重複を減らすこと', NULL, 'PUBLISHED', NULL, NULL),
+(3, '��L�[�Ƃ́H', '�s����ӂɎ��ʂ���L�[', NULL, 'PUBLISHED', NULL, NULL),
+(3, '�O���L�[�Ƃ́H', '���e�[�u�����Q�Ƃ���L�[', NULL, 'PUBLISHED', NULL, NULL),
+(3, '���K���Ƃ́H', '�f�[�^�d�������炷����', NULL, 'PUBLISHED', NULL, NULL),
 
-(4, 'Controllerの役割は？', 'リクエスト処理', NULL, 'PUBLISHED', NULL, NULL),
-(4, 'Serviceの役割は？', '業務ロジック', NULL, 'PUBLISHED', NULL, NULL),
-(4, 'Repositoryの役割は？', 'DBアクセス', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Controller�̖����́H', '���N�G�X�g����', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Service�̖����́H', '�Ɩ����W�b�N', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Repository�̖����́H', 'DB�A�N�Z�X', NULL, 'PUBLISHED', NULL, NULL),
 
-(5, 'Componentとは？', 'UI部品', NULL, 'PUBLISHED', NULL, NULL),
-(5, 'Stateとは？', '状態管理', NULL, 'PUBLISHED', NULL, NULL),
-(5, 'Propsとは？', '親から渡される値', NULL, 'PUBLISHED', NULL, NULL);
+(5, 'Component�Ƃ́H', 'UI���i', NULL, 'PUBLISHED', NULL, NULL),
+(5, 'State�Ƃ́H', '��ԊǗ�', NULL, 'PUBLISHED', NULL, NULL),
+(5, 'Props�Ƃ́H', '�e����n�����l', NULL, 'PUBLISHED', NULL, NULL);
 
 SELECT setval('questions_question_id_seq',
     COALESCE((SELECT MAX(question_id) FROM questions), 1)
@@ -191,7 +200,7 @@ INSERT INTO answers (user_id, question_id, answer_content, image_path, submitted
 SELECT
     ((q.question_id + s.n) % 8) + 2,
     q.question_id,
-    '回答サンプル Question=' || q.question_id,
+    '�񓚃T���v�� Question=' || q.question_id,
     NULL,
     NOW() - (s.n || ' days')::INTERVAL
 FROM questions q
@@ -210,7 +219,7 @@ INSERT INTO reviews (answer_id, reviewer_id, comment)
 SELECT
     answer_id,
     1,
-    'よく書けています。'
+    '�悭�����Ă��܂��B'
 FROM answers
 WHERE answer_id % 3 = 0;
 

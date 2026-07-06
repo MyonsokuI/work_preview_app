@@ -54,7 +54,7 @@ public class PdfController {
             response.setTitle(pdf.getTitle());
             response.setFileUrl(pdf.getFileUrl());
 
-            // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替えるにゃ！
+            // 💡 新しく追加したステータスと日時情報をレスポンスDTOに詰め替える！
             response.setStatus(pdf.getStatus());
             response.setOpenAt(pdf.getOpenAt());
             response.setCloseAt(pdf.getCloseAt());

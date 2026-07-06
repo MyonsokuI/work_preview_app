@@ -13,30 +13,87 @@ export default function MainScreen() {
   // Safe styles
   // =========================
   const baseStyles = {
-    wrapper: { display: "flex", height: "100vh", fontFamily: "sans-serif", overflow: "hidden" },
-    sidebar: { width: 340, borderRight: "1px solid #ddd", padding: 10, backgroundColor: "#fff" },
+    wrapper: {
+      display: "flex",
+      height: "100vh",
+      fontFamily: "Inter, 'Segoe UI', sans-serif",
+      overflow: "hidden",
+      background: "#f8fafc",
+    },
+    sidebar: {
+      width: 340,
+      borderRight: "1px solid #e2e8f0",
+      padding: 12,
+      backgroundColor: "#fff",
+      boxShadow: "inset -1px 0 0 #f1f5f9",
+    },
     topBar: { display: "flex", gap: 8, marginBottom: 10 },
-    search: { flex: 1, padding: "6px 10px", border: "1px solid #ccc", borderRadius: 6 },
-    logout: { padding: "6px 10px", border: "1px solid #ddd", background: "#fff" },
-    filterRow: { display: "flex", gap: 8 },
-    filterButton: { padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" },
-    theme: {
-      padding: 10,
-      borderRadius: 6,
+    search: {
+      flex: 1,
+      padding: "10px 12px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+    },
+    logout: {
+      padding: "10px 12px",
+      border: "1px solid #dbe3ee",
+      background: "#fff",
+      borderRadius: 10,
       cursor: "pointer",
-      fontWeight: "bold",
+      color: "#334155",
+    },
+    filterRow: { display: "flex", gap: 8, padding: "0 4px 8px" },
+    filterButton: {
+      padding: "8px 12px",
+      borderRadius: 999,
+      border: "1px solid #dbe3ee",
+      background: "#f8fafc",
+      color: "#334155",
+      fontWeight: 600,
+    },
+    theme: {
+      padding: 14,
+      borderRadius: 12,
+      cursor: "pointer",
+      fontWeight: 700,
       justifyContent: "flex-start",
       textAlign: "left",
+      background: "#fff",
+      border: "1px solid #eef2ff",
+      marginBottom: 6,
     },
-    progressBg: { height: 4, background: "#eee", borderRadius: 10 },
-    progressBar: { height: 4, borderRadius: 10 },
-    progressText: { fontSize: 11, marginTop: 3, textAlign: "center" },
-    question: { padding: "6px 10px", fontSize: 13, cursor: "pointer" },
-    main: { flex: 1, padding: 20, overflowY: "auto" },
-    card: { border: "1px solid #ddd", padding: 20, borderRadius: 8 },
-    textarea: { width: "100%", height: 120 },
-    save: { marginTop: 10, padding: "6px 14px", border: "1px solid #ccc" },
-    box: { background: "#f3f4f6", padding: 10, marginTop: 8, borderRadius: 6 },
+    progressBg: { height: 6, background: "#eef2ff", borderRadius: 999 },
+    progressBar: { height: 6, borderRadius: 999 },
+    progressText: { fontSize: 11, marginTop: 4, marginBottom: 6, textAlign: "right", color: "#64748b" },
+    question: {
+      padding: "10px 12px",
+      fontSize: 13,
+      cursor: "pointer",
+      borderRadius: 10,
+      color: "#334155",
+      margin: "0 0 6px 12px",
+      background: "#f8fafc",
+    },
+    main: { flex: 1, padding: 28, overflowY: "auto", background: "#f8fafc" },
+    card: {
+      border: "1px solid #e2e8f0",
+      padding: 24,
+      borderRadius: 16,
+      background: "#fff",
+      boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+    },
+    textarea: {
+      width: "100%",
+      height: 150,
+      padding: 12,
+      borderRadius: 10,
+      border: "1px solid #cbd5e1",
+      resize: "vertical",
+      boxSizing: "border-box",
+    },
+    save: { marginTop: 10, padding: "10px 16px", border: "1px solid #cbd5e1" },
+    box: { background: "#f8fafc", padding: 12, marginTop: 8, borderRadius: 10, border: "1px solid #e2e8f0" },
   };
 
   const styles = baseStyles;
@@ -224,12 +281,20 @@ export default function MainScreen() {
     }
   };
 
+  const isQuestionAnswered = (question) => {
+    if (!question) return false;
+
+    const qid = question.questionId ?? question.question_id;
+    const answer = answerMap[String(qid)] || {};
+    const content = (answer.answerContent || "").trim();
+    const imagePath = (answer.imagePath || "").trim();
+
+    return content.length > 0 || imagePath.length > 0;
+  };
+
   const getProgress = (theme) => {
     const qs = theme.questions || [];
-    const done = qs.filter((q) => {
-      const qid = q.questionId ?? q.question_id;
-      return (answerMap[String(qid)]?.answerContent || "").trim().length > 0;
-    }).length;
+    const done = qs.filter((q) => isQuestionAnswered(q)).length;
 
     return { done, total: qs.length };
   };
@@ -243,41 +308,49 @@ export default function MainScreen() {
   // =========================
   // Filtering
   // =========================
-  const hideEmpty = searchQuery.trim().length > 0;
-
   const filteredThemes = themes
     .map((theme) => {
-      // 1. 質問を検索ワードで絞り込む
-      const filteredQuestions = (theme.questions || []).filter((q) => {
-        const qid = q.questionId ?? q.question_id;
-        const has = !!answerMap[String(qid)];
+      const searchText = searchQuery.trim().toLowerCase();
+      const themeTitle = (theme.title ?? "").toLowerCase();
+      const matchesThemeTitle = !searchText || themeTitle.includes(searchText);
 
-        // ステータスフィルターの判定
-        if (statusFilter === "completed" && !has) return false;
-        if (statusFilter === "uncompleted" && has) return false;
+      const visibleQuestions = (theme.questions || []).filter((q) => {
+        const questionText = (q.questionText ?? "").toLowerCase();
+        const matchesQuestionSearch =
+          !searchText || matchesThemeTitle || questionText.includes(searchText);
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "completed" && isQuestionAnswered(q)) ||
+          (statusFilter === "uncompleted" && !isQuestionAnswered(q));
 
-        // 検索ワードの判定
-        if (searchQuery) {
-          return q.questionText.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-        return true;
+        return matchesQuestionSearch && matchesStatus;
       });
 
-      // 2. テーマ自体を表示するかどうかの判定
-      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const hasVisibleQuestions = visibleQuestions.length > 0;
+
+      const filteredByStatus = (theme.questions || []).filter((q) => {
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "completed" && isQuestionAnswered(q)) ||
+          (statusFilter === "uncompleted" && !isQuestionAnswered(q));
+        return matchesStatus;
+      });
 
       return {
         ...theme,
-        // 💡 修正：テーマタイトルがマッチしていれば全問題を表示、そうでなければ絞り込んだ質問を表示
-        questions: isThemeMatch ? (theme.questions || []) : filteredQuestions,
-        _count: isThemeMatch ? (theme.questions || []).length : filteredQuestions.length
+        questions: matchesThemeTitle ? filteredByStatus : visibleQuestions,
+        _count: matchesThemeTitle ? filteredByStatus.length : visibleQuestions.length,
+        matchesThemeTitle,
+        hasVisibleQuestions,
       };
     })
     .filter((theme) => {
-      // 最終的に、テーマ名にマッチするか、または質問が残っているテーマだけを残す
-      const isThemeMatch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
-      return isThemeMatch || (theme._count ?? 0) > 0;
+      if (statusFilter !== "all") {
+        return theme.hasVisibleQuestions;
+      }
+      return theme.matchesThemeTitle || (theme._count ?? 0) > 0;
     });
+
   if (!userId) return <div>loading...</div>;
 
   const sortedThemes = [...filteredThemes].sort(

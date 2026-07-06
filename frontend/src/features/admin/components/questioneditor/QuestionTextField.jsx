@@ -1,7 +1,7 @@
 export default function QuestionTextField({ value, onChange }) {
     return (
         <div>
-            <label>問題文（必須）</label>
+            <label>問題文</label>
             <textarea
                 rows={4}
                 value={value}

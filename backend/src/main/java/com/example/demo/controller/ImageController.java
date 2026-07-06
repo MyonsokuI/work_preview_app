@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -44,7 +43,7 @@ public class ImageController {
 
             return ResponseEntity.ok("/images/" + fileName);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("アップロード失敗にゃ");
+            return ResponseEntity.status(500).body("アップロード失敗");
         }
     }
 
@@ -70,7 +69,7 @@ public class ImageController {
 
             return ResponseEntity.ok("/images/" + fileName);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("アップロード失敗にゃ");
+            return ResponseEntity.status(500).body("アップロード失敗");
         }
     }
 }

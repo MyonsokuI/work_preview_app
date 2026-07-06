@@ -19,7 +19,7 @@ import java.util.List;
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
-    private final PdfRepository pdfRepository; // テーマ取得用にインジェクションにゃ
+    private final PdfRepository pdfRepository; // テーマ取得用にインジェクション
 
     public QuestionService(QuestionRepository questionRepository, PdfRepository pdfRepository) {
         this.questionRepository = questionRepository;
@@ -62,7 +62,7 @@ public class QuestionService {
     }
 
     /**
-     * 🟢 問題新規作成（フロントで全部入力し終わった後にインサートされるにゃ！）
+     * 🟢 問題新規作成（フロントで全部入力し終わった後にインサートされる！）
      */
     @Transactional
     public QuestionResponse createQuestion(QuestionRequest request) {
@@ -76,7 +76,7 @@ public class QuestionService {
         q.setOpenAt(request.getOpenAt());
         q.setCloseAt(request.getCloseAt());
         q.setImagePath(request.getImagePath());
-        // 💡 登録時のステータス決定ロジック（Themeと同じにゃ！）
+        // 💡 登録時のステータス決定ロジック（Themeと同じ！）
         if ("draft".equalsIgnoreCase(request.getStatus())) {
             q.setStatus(ContentsStatus.DRAFT);
         } else {

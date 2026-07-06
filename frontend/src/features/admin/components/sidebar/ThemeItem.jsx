@@ -1,16 +1,29 @@
 import styles from '../../styles/AdminSidebar.module.css'; // 💡 ここで styles を定義しています
-import { useState } from "react";
-export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onAddQuestion, onThemeEdit }) {
+export default function ThemeItem({ theme, isOpen, onToggle, onSelect, onThemeSelect, onAddQuestion, onThemeEdit }) {
     const truncateText = (text, maxLength) => {
         if (!text) return "";
         return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
     };
 
+    const handleOpenTheme = () => {
+        const nextOpen = !isOpen;
+        onToggle(theme.pdfId);
+
+        if (nextOpen && onThemeSelect) {
+            onThemeSelect(theme.pdfId);
+            if (onSelect) {
+                onSelect(theme.pdfId, null, "progress");
+            }
+        }
+    };
+
     return (
         <div className={styles.themeItem}>
             {/* 💡 ヘッダークリック時に「進捗画面を表示」を呼び出す */}
-            <div className={`${styles.themeHeader} ${isOpen ? styles.active : ""
-                }`} onClick={() => onToggle(theme.pdfId)}>
+            <div
+                className={`${styles.themeHeader} ${isOpen ? styles.active : ""}`}
+                onClick={handleOpenTheme}
+            >
                 <span
                     style={{
                         marginRight: "8px",

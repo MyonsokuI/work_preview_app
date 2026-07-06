@@ -11,29 +11,29 @@ const getAuthHeaders = () => {
 
 export const userApi = {
     /**
-     * 1. 全てのテーマとそれに紐づく問題の一覧を取得するにゃ
+     * 1. 全てのテーマとそれに紐づく問題の一覧を取得する
      */
     getThemes: async () => {
         const res = await fetch(`${BASE_URL}/themes`, {
             headers: getAuthHeaders()
         });
-        if (!res.ok) throw new Error("テーマ一覧の取得に失敗しましたにゃ");
+        if (!res.ok) throw new Error("テーマ一覧の取得に失敗しました");
         return await res.json();
     },
 
     /**
-     * 2. 自分の回答一覧を取得するにゃ
+     * 2. 自分の回答一覧を取得する
      */
     getMyAnswers: async (userId) => {
         const res = await fetch(`${BASE_URL}/answers/my?userId=${userId}`, {
             headers: getAuthHeaders()
         });
-        if (!res.ok) throw new Error("自分の回答データの取得に失敗しましたにゃ");
+        if (!res.ok) throw new Error("自分の回答データの取得に失敗しました");
         return await res.json();
     },
 
     /**
-     * 3. 回答を新規登録・更新（共通upsert）するにゃ
+     * 3. 回答を新規登録・更新（共通upsert）する
      */
     upsertAnswer: async (userId, questionId, content, imagePath = null) => {
         const res = await fetch(`${BASE_URL}/answers/upsert?userId=${userId}`, {
@@ -45,18 +45,18 @@ export const userApi = {
                 imagePath: imagePath || null,
             }),
         });
-        if (!res.ok) throw new Error("回答の保存に失敗しましたにゃ");
+        if (!res.ok) throw new Error("回答の保存に失敗しました");
         return await res.json();
     },
 
     /**
-     * 4. 特定の問題に対する「他の受講者全員」の回答一覧を取得するにゃ
+     * 4. 特定の問題に対する「他の受講者全員」の回答一覧を取得する
      */
     getOtherAnswers: async (questionId) => {
         const res = await fetch(`${BASE_URL}/questions/${questionId}/answers`, {
             headers: getAuthHeaders()
         });
-        if (!res.ok) throw new Error("他の受講者の回答取得に失敗しましたにゃ");
+        if (!res.ok) throw new Error("他の受講者の回答取得に失敗しました");
         return await res.json();
     }
 };

@@ -26,14 +26,14 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
             setFileUrl("");
             setOpenAt("");
             setCloseAt("");
-            setStatus("draft");
+            setStatus("published");
         }
     }, [currentTheme]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!title.trim()) {
-            alert("タイトルは必須ですにゃ！🐾");
+            alert("タイトルは必須です！🐾");
             return;
         }
 
@@ -54,7 +54,7 @@ export default function ThemeEditor({ currentTheme, onSave, onCancel, onDelete }
             }
 
             onSave(result);
-            alert(isNewMode ? "テーマを新規作成しましたにゃ！🐾" : "テーマを更新しましたにゃ！🐾");
+            alert(isNewMode ? "テーマを新規作成しました！🐾" : "テーマを更新しました！🐾");
         } catch (error) {
             console.error(error);
             alert("サーバーとの通信に失敗しました。");

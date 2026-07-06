@@ -1,0 +1,47 @@
+services:
+  # ① データベース (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: spring-postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres_admin      # 初期構築（SQL実行）用の管理者名
+      POSTGRES_PASSWORD: admin_password  # 管理者のパスワード
+      POSTGRES_DB: work_db               # データベース名を work_db に指定
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # あなたが作ったSQLが入っているフォルダをDockerに認識させます
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+
+  # ② バックエンド (Spring Boot)
+  backend:
+    build: ./backend
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      # Spring Bootは「一般ユーザー（user）」を使って安全に接続します
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/work_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+
+  # ③ フロントエンド (React)
+  frontend:
+    build: ./frontend
+    container_name: react-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+# 👇 【ここを追加しました】データ保存用の領域の定義
+volumes:
+  pgdata:

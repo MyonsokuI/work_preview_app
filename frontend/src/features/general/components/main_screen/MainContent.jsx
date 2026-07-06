@@ -44,6 +44,9 @@ export default function MainContent({
         maxWidth: "100%",
         overflowX: "hidden", // 🔥 横スクロール完全防止
         minWidth: 0,
+        display: !activeQuestion ? "flex" : "block",
+        justifyContent: !activeQuestion ? "center" : "flex-start",
+        alignItems: !activeQuestion ? "center" : "stretch",
       }}
     >
       {!activeQuestion ? (
