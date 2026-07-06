@@ -1,8 +1,7 @@
 -- =====================================
 -- DB Initialization Script
--- PostgreSQL / NOT NULL‹­‰»”Å
+-- PostgreSQL / NOT NULLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 -- =====================================
-CREATE DATABASE work_db;
 CREATE ROLE "user" LOGIN PASSWORD 'password';
 GRANT CONNECT ON DATABASE work_db TO "user";
 \c work_db
@@ -155,11 +154,11 @@ SELECT setval('users_user_id_seq',
 -- seed pdfs
 -- =====================================
 INSERT INTO pdfs (pdf_id, title, path, uploader, status) VALUES
-(1, 'JavaŠî‘b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCZvSBkFjQnTKupDEQNOLWXAXQ_F0zf7nm5FnlDu8usahM?e=8CrlyI', 1, 'PUBLISHED'),
-(2, 'SQLŠî‘b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=083gmL', 1, 'PUBLISHED'),
-(3, 'ƒf[ƒ^ƒx[ƒXÝŒv', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=uVLGAC', 1, 'PUBLISHED'),
-(4, 'Spring BootŠî‘b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQAAMiNxJ6sNTon1hXZ5-wf2AfQ0MVwg_LZUTrbj0RdOjL4?e=wsux6w', 1, 'PUBLISHED'),
-(5, 'ReactŠî‘b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQD91ZcJqmbvSp70ujOJ96riAfSIzfEMPGwJzZm0MayreGs?e=ftZ1Hb', 1, 'PUBLISHED');
+(1, 'Javaï¿½ï¿½b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCZvSBkFjQnTKupDEQNOLWXAXQ_F0zf7nm5FnlDu8usahM?e=8CrlyI', 1, 'PUBLISHED'),
+(2, 'SQLï¿½ï¿½b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=083gmL', 1, 'PUBLISHED'),
+(3, 'ï¿½fï¿½[ï¿½^ï¿½xï¿½[ï¿½Xï¿½ÝŒv', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQCPszDtFeWrS7XcP9OELNe1AVDW1O5m8H-qjDUAyXjCVg8?e=uVLGAC', 1, 'PUBLISHED'),
+(4, 'Spring Bootï¿½ï¿½b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQAAMiNxJ6sNTon1hXZ5-wf2AfQ0MVwg_LZUTrbj0RdOjL4?e=wsux6w', 1, 'PUBLISHED'),
+(5, 'Reactï¿½ï¿½b', 'https://skywilljp.sharepoint.com/:b:/s/SW_24graduate/IQD91ZcJqmbvSp70ujOJ96riAfSIzfEMPGwJzZm0MayreGs?e=ftZ1Hb', 1, 'PUBLISHED');
 
 SELECT setval('pdfs_pdf_id_seq',
     COALESCE((SELECT MAX(pdf_id) FROM pdfs), 1)
@@ -169,26 +168,26 @@ SELECT setval('pdfs_pdf_id_seq',
 -- seed questions
 -- =====================================
 INSERT INTO questions (pdf_id, question_text, correct_answer, image_path, status, open_at, close_at) VALUES
-(1, 'Java‚Æ‚Í‰½‚©H', 'ƒvƒƒOƒ‰ƒ~ƒ“ƒOŒ¾Œê', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'ƒNƒ‰ƒX‚Æ‚Í‰½‚©H', 'ƒIƒuƒWƒFƒNƒg‚ÌÝŒv}', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'Œp³‚Æ‚Í‰½‚©H', 'Šù‘¶ƒNƒ‰ƒX‚ðˆø‚«Œp‚®Žd‘g‚Ý', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
-(1, 'ƒ|ƒŠƒ‚[ƒtƒBƒYƒ€‚Æ‚Í‰½‚©H', '“¯‚¶‘€ì‚ÅˆÙ‚È‚éU‚é•‘‚¢', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'Javaï¿½Æ‚Í‰ï¿½ï¿½ï¿½ï¿½H', 'ï¿½vï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½~ï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'ï¿½Nï¿½ï¿½ï¿½Xï¿½Æ‚Í‰ï¿½ï¿½ï¿½ï¿½H', 'ï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½ÌÝŒvï¿½}', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'ï¿½pï¿½ï¿½ï¿½Æ‚Í‰ï¿½ï¿½ï¿½ï¿½H', 'ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pï¿½ï¿½ï¿½dï¿½gï¿½ï¿½', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
+(1, 'ï¿½|ï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½tï¿½Bï¿½Yï¿½ï¿½ï¿½Æ‚Í‰ï¿½ï¿½ï¿½ï¿½H', 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅˆÙ‚È‚ï¿½Uï¿½é•‘ï¿½ï¿½', NULL, 'PUBLISHED', NOW() - INTERVAL '10 days', NOW() + INTERVAL '30 days'),
 
-(2, 'SELECT•¶‚Ì–ðŠ„‚ÍH', 'ƒf[ƒ^Žæ“¾', NULL, 'PUBLISHED', NULL, NULL),
-(2, 'WHERE‹å‚Ì–ðŠ„‚ÍH', 'ðŒŽw’è', NULL, 'PUBLISHED', NULL, NULL),
-(2, 'ORDER BY‹å‚Ì–ðŠ„‚ÍH', '•À‚Ñ‘Ö‚¦', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'SELECTï¿½ï¿½ï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'ï¿½fï¿½[ï¿½^ï¿½æ“¾', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'WHEREï¿½ï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'ï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½', NULL, 'PUBLISHED', NULL, NULL),
+(2, 'ORDER BYï¿½ï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'ï¿½ï¿½ï¿½Ñ‘Ö‚ï¿½', NULL, 'PUBLISHED', NULL, NULL),
 
-(3, 'ŽåƒL[‚Æ‚ÍH', 's‚ðˆêˆÓ‚ÉŽ¯•Ê‚·‚éƒL[', NULL, 'PUBLISHED', NULL, NULL),
-(3, 'ŠO•”ƒL[‚Æ‚ÍH', '‘¼ƒe[ƒuƒ‹‚ðŽQÆ‚·‚éƒL[', NULL, 'PUBLISHED', NULL, NULL),
-(3, '³‹K‰»‚Æ‚ÍH', 'ƒf[ƒ^d•¡‚ðŒ¸‚ç‚·‚±‚Æ', NULL, 'PUBLISHED', NULL, NULL),
+(3, 'ï¿½ï¿½Lï¿½[ï¿½Æ‚ÍH', 'ï¿½sï¿½ï¿½ï¿½ï¿½Ó‚ÉŽï¿½ï¿½Ê‚ï¿½ï¿½ï¿½Lï¿½[', NULL, 'PUBLISHED', NULL, NULL),
+(3, 'ï¿½Oï¿½ï¿½ï¿½Lï¿½[ï¿½Æ‚ÍH', 'ï¿½ï¿½ï¿½eï¿½[ï¿½uï¿½ï¿½ï¿½ï¿½ï¿½Qï¿½Æ‚ï¿½ï¿½ï¿½Lï¿½[', NULL, 'PUBLISHED', NULL, NULL),
+(3, 'ï¿½ï¿½ï¿½Kï¿½ï¿½ï¿½Æ‚ÍH', 'ï¿½fï¿½[ï¿½^ï¿½dï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç‚·ï¿½ï¿½ï¿½ï¿½', NULL, 'PUBLISHED', NULL, NULL),
 
-(4, 'Controller‚Ì–ðŠ„‚ÍH', 'ƒŠƒNƒGƒXƒgˆ—', NULL, 'PUBLISHED', NULL, NULL),
-(4, 'Service‚Ì–ðŠ„‚ÍH', '‹Æ–±ƒƒWƒbƒN', NULL, 'PUBLISHED', NULL, NULL),
-(4, 'Repository‚Ì–ðŠ„‚ÍH', 'DBƒAƒNƒZƒX', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Controllerï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'ï¿½ï¿½ï¿½Nï¿½Gï¿½Xï¿½gï¿½ï¿½ï¿½ï¿½', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Serviceï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'ï¿½Æ–ï¿½ï¿½ï¿½ï¿½Wï¿½bï¿½N', NULL, 'PUBLISHED', NULL, NULL),
+(4, 'Repositoryï¿½Ì–ï¿½ï¿½ï¿½ï¿½ÍH', 'DBï¿½Aï¿½Nï¿½Zï¿½X', NULL, 'PUBLISHED', NULL, NULL),
 
-(5, 'Component‚Æ‚ÍH', 'UI•”•i', NULL, 'PUBLISHED', NULL, NULL),
-(5, 'State‚Æ‚ÍH', 'ó‘ÔŠÇ—', NULL, 'PUBLISHED', NULL, NULL),
-(5, 'Props‚Æ‚ÍH', 'e‚©‚ç“n‚³‚ê‚é’l', NULL, 'PUBLISHED', NULL, NULL);
+(5, 'Componentï¿½Æ‚ÍH', 'UIï¿½ï¿½ï¿½i', NULL, 'PUBLISHED', NULL, NULL),
+(5, 'Stateï¿½Æ‚ÍH', 'ï¿½ï¿½ÔŠÇ—ï¿½', NULL, 'PUBLISHED', NULL, NULL),
+(5, 'Propsï¿½Æ‚ÍH', 'ï¿½eï¿½ï¿½ï¿½ï¿½nï¿½ï¿½ï¿½ï¿½ï¿½l', NULL, 'PUBLISHED', NULL, NULL);
 
 SELECT setval('questions_question_id_seq',
     COALESCE((SELECT MAX(question_id) FROM questions), 1)
@@ -201,7 +200,7 @@ INSERT INTO answers (user_id, question_id, answer_content, image_path, submitted
 SELECT
     ((q.question_id + s.n) % 8) + 2,
     q.question_id,
-    '‰ñ“šƒTƒ“ƒvƒ‹ Question=' || q.question_id,
+    'ï¿½ñ“šƒTï¿½ï¿½ï¿½vï¿½ï¿½ Question=' || q.question_id,
     NULL,
     NOW() - (s.n || ' days')::INTERVAL
 FROM questions q
@@ -220,7 +219,7 @@ INSERT INTO reviews (answer_id, reviewer_id, comment)
 SELECT
     answer_id,
     1,
-    '‚æ‚­‘‚¯‚Ä‚¢‚Ü‚·B'
+    'ï¿½æ‚­ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½B'
 FROM answers
 WHERE answer_id % 3 = 0;
 
